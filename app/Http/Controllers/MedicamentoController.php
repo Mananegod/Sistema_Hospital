@@ -16,7 +16,6 @@ class MedicamentoController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validamos que lleguen todos los campos del formulario
         $request->validate([
             'codigo_lote' => 'required',
             'nombre_medicamento' => 'required',
@@ -25,12 +24,23 @@ class MedicamentoController extends Controller
             'fecha_vencimiento' => 'required|date',
         ]);
 
-        // 2. Determinamos el estado automáticamente
         $status = $request->cantidad_stock > 0 ? 'Disponible' : 'Agotado';
 
-        // 3. Insertamos en PostgreSQL
         Medicamento::create($request->all() + ['status_disponibilidad' => $status]);
 
         return redirect('/')->with('success', 'Registrado correctamente');
+    }
+    public function destroy($id)
+    {
+    $medicamento = Medicamento::findOrFail($id);
+    $medicamento->delete();
+    return redirect()->back()->with('success', 'Medicamento eliminado correctamente');
+    }
+
+    public function update(Request $request, $id)
+    {
+    $medicamento = Medicamento::findOrFail($id);
+    $medicamento->update($request->all());
+    return redirect()->back()->with('success', 'Medicamento actualizado');
     }
 }

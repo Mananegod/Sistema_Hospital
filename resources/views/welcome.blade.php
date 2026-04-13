@@ -5,143 +5,218 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventario de Medicamentos - Dr. Tiburcio Garrido</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #F7F9FB; }
-            
-        .color-primary-text { color: #1E293B; } /* Gris muy oscuro */
-        .color-secondary-text { color: #64748B; } /* Gris medio */
-        .color-area-urgencias { color: #F44336; } /* Rojo */
-        .color-area-pediatria { color: #FF9800; } /* Naranja */
-        .color-area-uci { color: #2196F3; } /* Azul */
-        
+        .color-primary-text { color: #1E293B; }
+        .color-secondary-text { color: #64748B; }
+        .color-area-urgencias { color: #F44336; }
+        .color-area-pediatria { color: #FF9800; }
+        .color-area-uci { color: #2196F3; }
+        .color-area-quirofano { color: #9C27B0; }
         .modern-rounded { border-radius: 1rem; }
         .input-shadow { box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.05); }
-        .bg-card { background-color: #FFFFFF; }
-        .bg-main { background-color: #F7F9FB; }
-        
-        input:focus, select:focus {
-            border-color: #B2C3D3; /* Un gris-azul suave */
-            box-shadow: 0 0 0 2px rgba(178, 195, 211, 0.2);
-        }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-main antialiased color-primary-text">
+<body class="antialiased text-slate-800 flex min-h-screen" x-data="{ openEdit: false, openView: false, currentMed: {} }">
 
-    <header class="bg-card px-8 py-5 border-b border-gray-100 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-            <button class="text-gray-400 hover:color-primary-text">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-            </button>
-            <h1 class="text-2xl font-bold">Inventario de Medicamentos</h1>
+    <aside class="w-72 bg-slate-900 text-white flex-shrink-0 sticky top-0 h-screen flex flex-col shadow-2xl">
+        <div class="p-8">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <span class="text-xl font-bold tracking-tight">HOSPITAL <span class="text-blue-500">TG</span></span>
+            </div>
+            <nav class="space-y-3">
+                <a href="{{ url('/') }}" class="flex items-center gap-4 px-4 py-3.5 rounded-2xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="font-semibold">Inicio</span>
+                </a>
+                <a href="{{ route('medicamentos.index') }}" class="flex items-center gap-4 px-4 py-3.5 rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-900/40 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    <span class="font-semibold">Inventario</span>
+                </a>
+            </nav>
         </div>
-        <div class="color-secondary-text text-sm flex items-center gap-2">
-            <span>Responsable:</span>
-            <span class="color-primary-text font-semibold">Farm. Guardia</span>
+        <div class="mt-auto p-8 border-t border-slate-800 bg-slate-900/50">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold">DC</div>
+                <div>
+                    <p class="text-sm font-bold text-white">David Camacho</p>
+                    <p class="text-xs text-slate-500">Administrador</p>
+                </div>
+            </div>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <span class="font-semibold">Cerrar Sesión</span>
+            </a>
         </div>
-    </header>
+    </aside>
 
-    <main class="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+    <main class="flex-1 overflow-y-auto p-10">
+        <div class="max-w-6xl mx-auto">
+            <div class="mb-10">
+                <h1 class="text-3xl font-extrabold color-primary-text tracking-tight">Gestión de Medicamentos</h1>
+                <p class="color-secondary-text mt-2 font-medium">Panel de control - Hospital Dr. Tiburcio Garrido</p>
+            </div>
 
-        <div class="md:col-span-1">
-            <div class="bg-card p-8 border border-gray-100 modern-rounded shadow-sm">
-                
-                <div class="flex items-center gap-4 mb-8">
-                    <span class="flex items-center justify-center h-8 w-8 bg-blue-50 text-blue-600 rounded-full font-bold text-lg">1</span>
-                    <h2 class="text-xl font-semibold">Registrar Nuevo Lote</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div class="lg:col-span-4">
+                    <div class="bg-white p-8 modern-rounded border border-slate-100 shadow-sm sticky top-10">
+                        <h2 class="text-lg font-bold color-primary-text mb-6 flex items-center gap-2">
+                            <span class="w-2 h-6 bg-blue-600 rounded-full"></span> Nuevo Registro
+                        </h2>
+                        <form action="{{ route('medicamentos.store') }}" method="POST" class="space-y-5">
+                            @csrf
+                            <input type="text" name="codigo_lote" required class="w-full bg-slate-50 border-none modern-rounded px-4 py-3.5 input-shadow" placeholder="Código de Lote">
+                            <input type="text" name="nombre_medicamento" required class="w-full bg-slate-50 border-none modern-rounded px-4 py-3.5 input-shadow" placeholder="Nombre Medicamento">
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="number" name="cantidad_stock" required class="w-full bg-slate-50 border-none modern-rounded px-4 py-3.5 input-shadow" placeholder="Stock">
+                                <select name="area_destino" class="w-full bg-slate-50 border-none modern-rounded px-4 py-3.5 input-shadow">
+                                    <option value="Urgencias">Urgencias</option>
+                                    <option value="Pediatría">Pediatría</option>
+                                    <option value="UCI">UCI</option>
+                                    <option value="Quirófano">Quirófano</option>
+                                </select>
+                            </div>
+                            <input type="date" name="fecha_vencimiento" required class="w-full bg-slate-50 border-none modern-rounded px-4 py-3.5 input-shadow">
+                            <button type="submit" class="w-full bg-slate-900 text-white font-bold py-4 modern-rounded shadow-lg hover:bg-slate-800 transition-all">Guardar Registro</button>
+                        </form>
+                    </div>
                 </div>
 
-<form action="{{ route('medicamentos.store') }}" method="POST" class="space-y-4">
-    @csrf <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Código de Lote</label>
-        <input type="text" name="codigo_lote" class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Ej: LOT-2026-001" required>
-    </div>
+                <div class="lg:col-span-8">
+                    <div class="bg-white modern-rounded border border-slate-100 shadow-sm overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-xs font-bold text-slate-400 uppercase border-b border-slate-50">
+                                    <th class="px-8 py-5">Medicamento</th>
+                                    <th class="px-6 py-5 text-center">Stock</th>
+                                    <th class="px-6 py-5 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                @foreach($medicamentos as $med)
+                                <tr>
+                                    <td class="px-8 py-6">
+                                        <p class="font-bold color-primary-text">{{ $med->nombre_medicamento }}</p>
+                                        <p class="text-xs color-secondary-text">{{ $med->codigo_lote }}</p>
+                                    </td>
+                                    <td class="px-6 py-6 text-center">
+                                        <span class="inline-flex items-center justify-center h-10 w-10 rounded-xl font-bold {{ $med->cantidad_stock < 10 ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-700' }}">
+                                            {{ $med->cantidad_stock }}
+                                        </span>
+                                    </td>
+                                    <td class="px-8 py-6 text-right flex justify-end gap-2">
+                                        <button @click="openView = true; currentMed = {{ json_encode($med) }};" class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Ver detalles">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                        </button>
 
-    <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nombre del Medicamento</label>
-        <input type="text" name="nombre_medicamento" class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Ej: Amoxicilina 500mg" required>
-    </div>
+                                        <button @click="openEdit = true; currentMed = {{ json_encode($med) }};" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        </button>
 
-    <div class="grid grid-cols-2 gap-4">
-        <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Cantidad</label>
-            <input type="number" name="cantidad_stock" class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 transition-all" value="0" required>
-        </div>
-        <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Área Destino</label>
-            <select name="area_destino" class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 transition-all">
-                <option value="Emergencia">Emergencia</option>
-                <option value="Pediatría">Pediatría</option>
-                <option value="UCI">UCI</option>
-                <option value="Quirófano">Quirófano</option>
-            </select>
-        </div>
-    </div>
-
-    <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fecha Vencimiento</label>
-        <input type="date" name="fecha_vencimiento" class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 transition-all" required>
-    </div>
-
-    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-        Confirmar Registro
-    </button>
-</form>
+                                        <form action="{{ route('medicamentos.destroy', $med->id) }}" method="POST" onsubmit="return confirm('¿Eliminar registro?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Borrar">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="md:col-span-2">
-            <div class="bg-card p-8 border border-gray-100 modern-rounded shadow-sm h-full">
-                
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-xl font-semibold">Inventario de Medicamentos</h2>
-                    <a href="{{ route('medicamentos.index') }}" class="text-sm font-semibold text-blue-600 hover:text-blue-800">Ver todo</a>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="border-b border-gray-100">
-                            <tr>
-                                <th class="pb-4 color-secondary-text text-sm font-semibold">LOTE</th>
-                                <th class="pb-4 color-secondary-text text-sm font-semibold">MEDICAMENTO</th>
-                                <th class="pb-4 color-secondary-text text-sm font-semibold">CANT.</th>
-                                <th class="pb-4 color-secondary-text text-sm font-semibold">ÁREA</th>
-                                <th class="pb-4 color-secondary-text text-sm font-semibold">STATUS</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50 text-sm">
-                            @foreach($medicamentos as $med)
-                            <tr class="hover:bg-gray-50/50">
-                                <td class="py-5 color-secondary-text font-mono">{{ $med->codigo_lote }}</td>
-                                <td class="py-5 font-semibold text-gray-900">{{ $med->nombre_medicamento }}</td>
-                                
-                                <td class="py-5 modern-rounded flex items-center justify-center h-10 w-10 text-center font-semibold border {{ $med->cantidad_stock < 10 ? 'border-red-100 bg-red-50 text-red-600' : 'border-gray-100 bg-gray-50 text-gray-900' }}">
-                                    {{ $med->cantidad_stock }}
-                                </td>
-
-                                <td class="py-5 font-semibold {{ $med->area_destino == 'Urgencias' ? 'color-area-urgencias' : ($med->area_destino == 'Pediatría' ? 'color-area-pediatria' : 'color-area-uci') }}">
-                                    {{ $med->area_destino }}
-                                </td>
-
-                                <td class="py-5 font-semibold text-success flex items-center gap-2">
-                                    <span class="flex-shrink-0 h-2 w-2 rounded-full {{ $med->cantidad_stock > 0 ? 'bg-emerald-500' : 'bg-gray-400' }}"></span>
-                                    <span class="{{ $med->cantidad_stock > 0 ? 'text-emerald-700' : 'text-gray-500' }}">
-                                        {{ $med->cantidad_stock > 0 ? 'Disponible' : 'Agotado' }}
-                                    </span>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
-        </div>
-
     </main>
+
+    <div x-show="openView" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="openView = false"></div>
+            <div class="relative w-full max-w-lg p-8 bg-white shadow-2xl modern-rounded text-left">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold color-primary-text">Detalles del Medicamento</h3>
+                    <button @click="openView = false" class="text-slate-400 hover:text-slate-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-xl">
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Código Lote</p>
+                            <p class="font-semibold color-primary-text" x-text="currentMed.codigo_lote"></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl">
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Área Destino</p>
+                            <p class="font-semibold text-blue-600" x-text="currentMed.area_destino"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-4 rounded-xl">
+                        <p class="text-xs font-bold text-slate-400 uppercase mb-1">Nombre del Medicamento</p>
+                        <p class="font-semibold color-primary-text text-lg" x-text="currentMed.nombre_medicamento"></p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-xl">
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Stock Actual</p>
+                            <p class="font-bold text-2xl" :class="currentMed.cantidad_stock < 10 ? 'text-red-600' : 'text-slate-700'" x-text="currentMed.cantidad_stock"></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl">
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Estado</p>
+                            <p class="font-bold" :class="currentMed.cantidad_stock > 0 ? 'text-emerald-600' : 'text-slate-400'" x-text="currentMed.cantidad_stock > 0 ? 'Disponible' : 'Agotado'"></p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-xl">
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Vencimiento</p>
+                            <p class="font-semibold color-primary-text" x-text="currentMed.fecha_vencimiento"></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl">
+                            <p class="text-xs font-bold text-slate-400 uppercase mb-1">Fecha Registro</p>
+                            <p class="font-semibold text-slate-500 text-sm" x-text="new Date(currentMed.created_at).toLocaleDateString()"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="openView = false" class="w-full mt-8 py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all">
+                    Cerrar Detalle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="openEdit" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="openEdit = false"></div>
+            <div class="relative w-full max-w-md p-8 bg-white shadow-2xl modern-rounded text-left">
+                <h3 class="text-xl font-bold color-primary-text mb-6">Editar Medicamento</h3>
+                <form :action="'/inventario/' + currentMed.id" method="POST" class="space-y-4">
+                    @csrf @method('PUT')
+                    <input type="text" name="nombre_medicamento" x-model="currentMed.nombre_medicamento" class="w-full bg-slate-50 border-none modern-rounded px-4 py-3.5 input-shadow font-semibold">
+                    <input type="number" name="cantidad_stock" x-model="currentMed.cantidad_stock" class="w-full bg-slate-50 border-none modern-rounded px-4 py-3.5 input-shadow">
+                    <select name="area_destino" x-model="currentMed.area_destino" class="w-full bg-slate-50 border-none modern-rounded px-4 py-3.5 input-shadow">
+                        <option value="Urgencias">Urgencias</option>
+                        <option value="Pediatría">Pediatría</option>
+                        <option value="UCI">UCI</option>
+                        <option value="Quirófano">Quirófano</option>
+                    </select>
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" @click="openEdit = false" class="flex-1 px-4 py-3 font-bold text-slate-500 bg-slate-100 rounded-xl">Cancelar</button>
+                        <button type="submit" class="flex-1 px-4 py-3 font-bold text-white bg-blue-600 rounded-xl shadow-lg">Actualizar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

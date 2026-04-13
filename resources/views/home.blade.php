@@ -108,7 +108,7 @@
     </main>
 
     <footer class="max-w-7xl mx-auto px-8 py-8 border-t border-slate-100 flex justify-between items-center text-slate-400 text-sm">
-        <p>&copy; 2026 Hospital Dr. Tiburcio Garrido. Desarrollado por David Camacho.</p>
+        <p>&copy; 2026 Hospital Dr. Tiburcio Garrido.</p>
         <div class="flex gap-6">
             <a href="#" class="hover:text-slate-600 transition-colors">Soporte Técnico</a>
             <a href="#" class="hover:text-slate-600 transition-colors">UPTYAB</a>
