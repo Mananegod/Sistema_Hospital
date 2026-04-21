@@ -8,11 +8,13 @@ use Illuminate\Http\Request;
 class MedicamentoController extends Controller
 {
     public function index()
-    {
-        // Traemos los datos ordenados por los más recientes
-        $medicamentos = Medicamento::latest()->get();
-        return view('welcome', compact('medicamentos'));
-    }
+{
+    // Buscamos todos los registros en la base de datos
+    $medicamentos = Medicamento::all();
+
+    // Los pasamos a la vista 'welcome'
+    return view('welcome', compact('medicamentos'));
+}
 
     public function store(Request $request)
     {
