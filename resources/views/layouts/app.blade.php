@@ -38,7 +38,7 @@
 
     <script>
     document.addEventListener('alpine:init', () => {
-        // Store para modales normales
+        
         Alpine.store('modal', {
             active: null,
             data: {},
@@ -81,8 +81,27 @@
         });
 
         
+        Alpine.store('toast', {
+            messages: [],
+            add(message, type = 'success') {
+                if (!message || message.trim() === '') return;
+                const id = Date.now();
+                this.messages.push({
+                    id,
+                    message,
+                    type
+                });
+                setTimeout(() => {
+                    this.remove(id);
+                }, 3000);
+            },
+            remove(id) {
+                this.messages = this.messages.filter(m => m.id !== id);
+            }
+        });
+
+       
         window.confirmAction = (title, message, formIdOrCallback) => {
-        
             let callback;
             if (typeof formIdOrCallback === 'string') {
                 callback = () => document.getElementById(formIdOrCallback).submit();
@@ -93,6 +112,23 @@
             }
             Alpine.store('confirm').open(message, callback);
         };
+
+        
+        @if(session('success'))
+        Alpine.store('toast').add(@json(session('success')), 'success');
+        @endif
+
+        
+        @if($errors->any())
+        @foreach($errors->all() as $error)
+        Alpine.store('toast').add(@json($error), 'error');
+        @endforeach
+        @endif
+
+        
+        @if(session('info'))
+        Alpine.store('toast').add(@json(session('info')), 'info');
+        @endif
     });
     </script>
 
@@ -116,6 +152,7 @@
 
     @stack('modals')
     @stack('scripts')
+    <x-mensajes-notificaciones />
 </body>
 
 </html>

@@ -17,15 +17,22 @@ class PersonalController extends Controller
     }
 
     public function store(Request $request) {
-        // Validamos los datos estrictamente
         $request->validate([
-            'cedula' => 'required|unique:personal,cedula',
-            'nombres' => 'required|string|max:255',
-            'apellidos' => 'required|string|max:255',
-            'cargo' => 'required',
-            'turno' => 'required',
-            'telefono' => 'required',
-        ]);
+        'cedula' => 'required|unique:personal,cedula',
+        'nombres' => 'required|string|max:255',
+        'apellidos' => 'required|string|max:255',
+        'cargo' => 'required',
+        'turno' => 'required',
+        'telefono' => 'required',
+    ], [
+        'cedula.required' => 'La cédula es obligatoria.',
+        'cedula.unique' => 'Ya existe un registro con esta cédula.',
+        'nombres.required' => 'El nombre es obligatorio.',
+        'apellidos.required' => 'Los apellidos son obligatorios.',
+        'cargo.required' => 'Debe seleccionar un cargo.',
+        'turno.required' => 'Debe seleccionar un turno.',
+        'telefono.required' => 'El teléfono es obligatorio.',
+    ]);
 
         try {
             DB::beginTransaction();
@@ -35,7 +42,7 @@ class PersonalController extends Controller
             $p->nombres = $request->nombres;
             $p->apellidos = $request->apellidos;
             $p->cargo = $request->cargo;
-            $p->especialidad = $request->especialidad ?? 'General'; // Evita errores si la columna no admite nulls
+            $p->especialidad = $request->especialidad ?? 'General';
             $p->turno = $request->turno;
             $p->telefono = $request->telefono;
             $p->activo = true; 
@@ -49,7 +56,7 @@ class PersonalController extends Controller
             ]);
 
             DB::commit();
-            return redirect()->route('personal.index')->with('success', 'Personal registrado correctamente.');
+            return redirect()->route('personal.index')->with('success', '👤 Personal registrado correctamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -68,7 +75,8 @@ class PersonalController extends Controller
             'descripcion' => "Se cambió el estado de: {$empleado->nombres} {$empleado->apellidos}",
         ]);
 
-        return back()->with('success', 'Estado actualizado.');
+        $mensaje = $empleado->activo ? '🟢 Personal activado correctamente.' : '🔴 Personal desactivado correctamente.';
+        return back()->with('success', $mensaje);
     }
 
     public function update(Request $request, $id) {
@@ -105,6 +113,6 @@ class PersonalController extends Controller
         ]);
 
         $empleado->delete();
-        return back()->with('success', 'Registro eliminado.');
+        return back()->with('success', 'Registro eliminado correctamente.');
     }
 }

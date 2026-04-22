@@ -9,12 +9,7 @@
         <p class="text-slate-500 mt-1">Médicos, enfermeros y equipo técnico del hospital.</p>
     </div>
 
-    @if(session('success'))
-    <div class="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 rounded-xl shadow-sm">
-        {{ session('success') }}
-    </div>
-    @endif
-
+    {{-- Mostrar errores de validación (cerca del formulario) --}}
     @if($errors->any())
     <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl shadow-sm">
         <ul class="list-disc pl-5 text-sm">
@@ -60,8 +55,9 @@
                     <input type="text" name="telefono" value="{{ old('telefono') }}" placeholder="Teléfono" required
                         class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 input-shadow">
                     <button type="submit"
-                        class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-slate-800 transition">Registrar
-                        Personal</button>
+                        class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-slate-800 transition">
+                        Registrar Personal
+                    </button>
                 </form>
             </div>
         </div>
@@ -86,7 +82,8 @@
                                 </td>
                                 <td class="px-6 py-5 text-center">
                                     <span
-                                        class="px-3 py-1 rounded-lg text-xs font-bold {{ $p->activo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">
+                                        class="px-3 py-1 rounded-lg text-xs font-bold 
+                                        {{ $p->activo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">
                                         {{ $p->activo ? 'Activo' : 'Inactivo' }}
                                     </span>
                                 </td>
@@ -110,6 +107,7 @@
                                             </svg>
                                         </button>
                                         @endif
+
                                         {{-- Formulario oculto para cambiar estado --}}
                                         <form :id="'status-form-{{ $p->id }}'"
                                             action="{{ route('personal.status', $p->id) }}" method="POST"
@@ -117,10 +115,10 @@
                                             @csrf @method('PATCH')
                                         </form>
                                         <button type="button" @click="confirmAction(
-                                                    '{{ $p->activo ? 'Desactivar' : 'Reactivar' }} personal',
-                                                    '¿Seguro que quieres {{ $p->activo ? 'desactivar' : 'reactivar' }} a {{ $p->nombres }} {{ $p->apellidos }}?',
-                                                    'status-form-{{ $p->id }}'
-                                                )"
+                                                '{{ $p->activo ? 'Desactivar' : 'Reactivar' }} personal',
+                                                '¿Seguro que quieres {{ $p->activo ? 'desactivar' : 'reactivar' }} a {{ $p->nombres }} {{ $p->apellidos }}?',
+                                                'status-form-{{ $p->id }}'
+                                            )"
                                             class="p-2 {{ $p->activo ? 'text-red-500 hover:bg-red-50' : 'text-emerald-600 hover:bg-emerald-50' }} rounded-lg transition">
                                             @if($p->activo)
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

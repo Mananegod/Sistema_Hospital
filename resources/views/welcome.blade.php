@@ -9,12 +9,7 @@
         <p class="text-slate-500 mt-1">Hospital Dr. Tiburcio Garrido</p>
     </div>
 
-    @if(session('success'))
-    <div class="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 rounded-xl shadow-sm">
-        {{ session('success') }}
-    </div>
-    @endif
-
+    {{-- Mostrar errores de validación (cerca del formulario) --}}
     @if($errors->any())
     <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl shadow-sm">
         <ul class="list-disc pl-5 text-sm">
@@ -54,8 +49,9 @@
                     <input type="date" name="fecha_vencimiento" value="{{ old('fecha_vencimiento') }}" required
                         class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 input-shadow">
                     <button type="submit"
-                        class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-slate-800 transition">Guardar
-                        Medicamento</button>
+                        class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-slate-800 transition">
+                        Guardar Medicamento
+                    </button>
                 </form>
             </div>
         </div>
@@ -80,7 +76,8 @@
                                 </td>
                                 <td class="px-6 py-5 text-center">
                                     <span
-                                        class="inline-flex items-center justify-center h-10 w-10 rounded-xl font-bold {{ $med->cantidad_stock < 10 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700' }}">
+                                        class="inline-flex items-center justify-center h-10 w-10 rounded-xl font-bold 
+                                        {{ $med->cantidad_stock < 10 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700' }}">
                                         {{ $med->cantidad_stock }}
                                     </span>
                                 </td>
@@ -102,6 +99,7 @@
                                                 </path>
                                             </svg>
                                         </button>
+
                                         {{-- Formulario oculto para eliminar --}}
                                         <form :id="'delete-form-{{ $med->id }}'"
                                             action="{{ route('medicamentos.destroy', $med->id) }}" method="POST"
