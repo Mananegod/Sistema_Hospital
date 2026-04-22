@@ -9,7 +9,6 @@
         <p class="text-slate-500 mt-1">Hospital Dr. Tiburcio Garrido</p>
     </div>
 
-    {{-- Mostrar errores de validación (cerca del formulario) --}}
     @if($errors->any())
     <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl shadow-sm">
         <ul class="list-disc pl-5 text-sm">
@@ -26,7 +25,9 @@
                 <h2 class="text-lg font-bold mb-5 flex items-center gap-2">
                     <span class="w-2 h-6 bg-blue-600 rounded-full"></span> Nuevo Registro
                 </h2>
-                <form action="{{ route('medicamentos.store') }}" method="POST" class="space-y-4">
+                <!-- FORMULARIO PRINCIPAL CON PROTECCIÓN DE CARGA -->
+                <form action="{{ route('medicamentos.store') }}" method="POST" class="space-y-4"
+                    x-on:submit.prevent="$store.loading.submitForm($event.target)">
                     @csrf
                     <input type="text" name="codigo_lote" value="{{ old('codigo_lote') }}" placeholder="Código de Lote"
                         required
@@ -100,7 +101,6 @@
                                             </svg>
                                         </button>
 
-                                        {{-- Formulario oculto para eliminar --}}
                                         <form :id="'delete-form-{{ $med->id }}'"
                                             action="{{ route('medicamentos.destroy', $med->id) }}" method="POST"
                                             style="display: none;">
@@ -166,9 +166,10 @@
     </div>
 </x-modal>
 
-{{-- Modal Editar --}}
+{{-- Modal Editar (con protección de carga) --}}
 <x-modal id="editMed" title="Editar Medicamento" maxWidth="max-w-md">
-    <form :action="'/inventario/' + $store.modal.data.id" method="POST">
+    <form :action="'/inventario/' + $store.modal.data.id" method="POST"
+        x-on:submit.prevent="$store.loading.submitForm($event.target)">
         @csrf
         @method('PUT')
         <input type="text" name="nombre_medicamento" x-model="$store.modal.data.nombre_medicamento"

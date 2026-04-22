@@ -9,7 +9,6 @@
         <p class="text-slate-500 mt-1">Médicos, enfermeros y equipo técnico del hospital.</p>
     </div>
 
-    {{-- Mostrar errores de validación (cerca del formulario) --}}
     @if($errors->any())
     <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl shadow-sm">
         <ul class="list-disc pl-5 text-sm">
@@ -26,7 +25,9 @@
                 <h2 class="text-lg font-bold mb-5 flex items-center gap-2">
                     <span class="w-2 h-6 bg-blue-600 rounded-full"></span> Nuevo Registro
                 </h2>
-                <form action="{{ route('personal.store') }}" method="POST" class="space-y-4">
+                <!-- FORMULARIO PRINCIPAL CON PROTECCIÓN -->
+                <form action="{{ route('personal.store') }}" method="POST" class="space-y-4"
+                    x-on:submit.prevent="$store.loading.submitForm($event.target)">
                     @csrf
                     <input type="text" name="cedula" value="{{ old('cedula') }}" placeholder="Cédula" required
                         class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 input-shadow">
@@ -108,7 +109,6 @@
                                         </button>
                                         @endif
 
-                                        {{-- Formulario oculto para cambiar estado --}}
                                         <form :id="'status-form-{{ $p->id }}'"
                                             action="{{ route('personal.status', $p->id) }}" method="POST"
                                             style="display: none;">
@@ -167,9 +167,10 @@
     </div>
 </x-modal>
 
-{{-- Modal Editar Personal --}}
+{{-- Modal Editar Personal (con protección) --}}
 <x-modal id="editPerson" title="Editar Información" maxWidth="max-w-md">
-    <form :action="'/personal/' + $store.modal.data.id" method="POST">
+    <form :action="'/personal/' + $store.modal.data.id" method="POST"
+        x-on:submit.prevent="$store.loading.submitForm($event.target)">
         @csrf
         @method('PUT')
         <input type="text" name="nombres" x-model="$store.modal.data.nombres"
