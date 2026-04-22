@@ -11,10 +11,10 @@
             Panel de Administración
         </span>
         <h1 class="text-3xl md:text-5xl font-extrabold text-white mb-4">
-            Sistema Integral de Gestión <br>
-            <span class="text-blue-500">Hospital Dr. Tiburcio Garrido</span>
+            Sistema Integral de Gestión
         </h1>
-        <p class="text-slate-400 max-w-2xl mx-auto text-base md:text-lg">
+        <h2 class="text-3xl md:text-4xl font-extrabold text-blue-400 mb-4">Hospital Dr. Tiburcio Garrido</h2>
+        <p class="text-slate-400 max-w-2xl mx-auto  text-base md:text-lg">
             Bienvenido al panel central. Seleccione el módulo correspondiente para gestionar los recursos, personal y estadísticas de la institución.
         </p>
     </div>
