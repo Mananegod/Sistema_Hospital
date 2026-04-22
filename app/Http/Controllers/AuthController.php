@@ -19,7 +19,7 @@ class AuthController extends Controller
         'password' => 'required',
     ]);
 
-    if ($request->nombre == 'David Camacho' && $request->password == '1234') {
+    if ($request->nombre == 'Admin' && $request->password == '1234') {
         // CAMBIO AQUÍ: Ahora te lleva a la página HOME
         return redirect()->route('home');
     }
