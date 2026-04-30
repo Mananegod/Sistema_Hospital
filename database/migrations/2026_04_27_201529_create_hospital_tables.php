@@ -18,6 +18,12 @@ return new class extends Migration
         $table->string('presentacion')->nullable();
         $table->string('categoria')->nullable();
         $table->integer('stock_minimo')->default(10);
+        $table->string('codigo_lote');
+        $table->string('nombre_medicamento');
+        $table->integer('cantidad_stock');
+        $table->string('area_destino');
+        $table->date('fecha_vencimiento');
+        $table->string('status_disponibilidad');
         $table->timestamps();
     });
 

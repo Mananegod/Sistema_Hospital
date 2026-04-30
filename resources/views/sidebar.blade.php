@@ -38,9 +38,10 @@
         </button>
     </div>
 
-    {{-- Body del Sidebar (Scrollable Automático Tipo Twitter) --}}
+    {{-- Body del Sidebar --}}
     <nav class="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-2 custom-scrollbar">
         
+        {{-- Módulo Inicio --}}
         <a href="{{ route('home') }}"
            class="flex items-center h-12 rounded-2xl transition-all {{ request()->routeIs('home') ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}"
            :class="{'px-4 gap-4 justify-start': $store.sidebar.isExpanded, 'px-0 justify-center': !$store.sidebar.isExpanded}"
@@ -49,14 +50,47 @@
             <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Inicio</span>
         </a>
 
+        {{-- Módulo Pacientes --}}
+        <a href="{{ route('pacientes.index') }}"
+           class="flex items-center h-12 rounded-2xl transition-all {{ request()->routeIs('pacientes.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}"
+           :class="{'px-4 gap-4 justify-start': $store.sidebar.isExpanded, 'px-0 justify-center': !$store.sidebar.isExpanded}"
+           title="Pacientes">
+            <div class="w-6 flex justify-center shrink-0"><i class="fa-solid fa-hospital-user text-lg"></i></div>
+            <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Pacientes</span>
+        </a>
+
+        <div class="my-4 border-t border-slate-800/50"></div>
+
+        {{-- Módulo Gestión de Almacén --}}
+        <a href="{{ route('almacen.index') }}"
+           class="flex items-center h-12 rounded-2xl transition-all {{ request()->routeIs('almacen.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}"
+           :class="{'px-4 gap-4 justify-start': $store.sidebar.isExpanded, 'px-0 justify-center': !$store.sidebar.isExpanded}"
+           title="Gestión de Almacén">
+            <div class="w-6 flex justify-center shrink-0"><i class="fa-solid fa-boxes-stacked text-lg"></i></div>
+            <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Almacén</span>
+        </a>
+
+        {{-- Módulo Retiros --}}
+        <a href="{{ route('retiros.index') }}"
+           class="flex items-center h-12 rounded-2xl transition-all {{ request()->routeIs('retiros.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}"
+           :class="{'px-4 gap-4 justify-start': $store.sidebar.isExpanded, 'px-0 justify-center': !$store.sidebar.isExpanded}"
+           title="Retiros de Insumos">
+            <div class="w-6 flex justify-center shrink-0"><i class="fa-solid fa-hand-holding-medical text-lg"></i></div>
+            <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Retiros</span>
+        </a>
+
+        {{-- Módulo Inventario Maestro --}}
         <a href="{{ route('medicamentos.index') }}"
            class="flex items-center h-12 rounded-2xl transition-all {{ request()->routeIs('medicamentos.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}"
            :class="{'px-4 gap-4 justify-start': $store.sidebar.isExpanded, 'px-0 justify-center': !$store.sidebar.isExpanded}"
-           title="Inventario">
+           title="Inventario Maestro">
             <div class="w-6 flex justify-center shrink-0"><i class="fa-solid fa-warehouse text-lg"></i></div>
-            <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Inventario</span>
+            <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Medicamentos</span>
         </a>
 
+        <div class="my-4 border-t border-slate-800/50"></div>
+
+        {{-- Módulo Personal --}}
         <a href="{{ route('personal.index') }}"
            class="flex items-center h-12 rounded-2xl transition-all {{ request()->routeIs('personal.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}"
            :class="{'px-4 gap-4 justify-start': $store.sidebar.isExpanded, 'px-0 justify-center': !$store.sidebar.isExpanded}"
@@ -65,10 +99,11 @@
             <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Personal</span>
         </a>
 
+        {{-- Módulo Bitácora --}}
         <a href="{{ route('personal.bitacora') }}"
            class="flex items-center h-12 rounded-2xl transition-all {{ request()->routeIs('personal.bitacora') ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}"
            :class="{'px-4 gap-4 justify-start': $store.sidebar.isExpanded, 'px-0 justify-center': !$store.sidebar.isExpanded}"
-           title="Bitácora">
+           title="Bitácora de Auditoría">
             <div class="w-6 flex justify-center shrink-0"><i class="fa-solid fa-clipboard-list text-lg"></i></div>
             <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Bitácora</span>
         </a>

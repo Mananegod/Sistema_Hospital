@@ -6,73 +6,67 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\MedicamentosImport;
+use Illuminate\Support\Facades\Schema;
 
 class AlmacenController extends Controller
 {
     public function index(Request $request)
     {
         $areas = DB::table('areas')->get();
+        $todosLosMedicamentos = DB::table('medicamentos')->orderBy('nombre_medicamento', 'asc')->get();
 
-        // Necesario para el select del formulario lateral
-        $todosLosMedicamentos = DB::table('medicamentos')->orderBy('nombre', 'asc')->get();
-
-        $inventario = DB::table('inventarios')
-            ->join('medicamentos', 'inventarios.medicamento_id', '=', 'medicamentos.id')
-            ->join('areas', 'inventarios.area_id', '=', 'areas.id')
+        $inventario = DB::table('medicamentos')
             ->select(
-                'medicamentos.id as medicamento_id',
-                'medicamentos.nombre as medicamento',
-                'medicamentos.presentacion',
-                'areas.nombre_area as area',
-                'inventarios.stock_actual',
-                'medicamentos.stock_minimo'
+                'id as medicamento_id',
+                'nombre_medicamento as medicamento',
+                'presentacion',
+                'cantidad_stock as stock_actual',
+                'stock_minimo',
+                'area_destino'
             )
             ->when($request->area_id, function ($query, $area_id) {
-                return $query->where('inventarios.area_id', $area_id);
+                return $query->where('area_destino', $area_id);
             })
             ->get();
 
         return view('almacen.index', compact('inventario', 'areas', 'todosLosMedicamentos'));
     }
 
+    /**
+     * Método para sumar stock manualmente (Entrada Rápida)
+     */
     public function entradaRapida(Request $request)
     {
         $request->validate([
-            'medicamento_id' => 'required|exists:medicamentos,id',
-            'cantidad' => 'required|integer|min:1',
-            'area_id' => 'required|exists:areas,id'
+            'medicamento_id' => 'required',
+            'area_id' => 'required',
+            'cantidad' => 'required|integer|min:1'
         ]);
 
-        try {
-            DB::transaction(function () use ($request) {
-                DB::table('inventarios')->updateOrInsert(
-                    ['medicamento_id' => $request->medicamento_id, 'area_id' => $request->area_id],
-                    [
-                        'stock_actual' => DB::raw("stock_actual + " . (int)$request->cantidad), 
-                        'updated_at' => now()
-                    ]
-                );
+        // Buscamos el medicamento que coincida con el ID y el Área seleccionada
+        $medicamento = DB::table('medicamentos')
+            ->where('id', $request->medicamento_id)
+            ->where('area_destino', $request->area_id)
+            ->first();
 
-                DB::table('movimientos')->insert([
-                    'medicamento_id' => $request->medicamento_id,
-                    'area_id'        => $request->area_id,
-                    'cantidad'       => $request->cantidad,
-                    'created_at'     => now(),
-                    'updated_at'     => now()
-                ]);
-            });
-
-            return back()->with('success', 'Stock actualizado correctamente.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error: ' . $e->getMessage());
+        // Si no existe el medicamento en esa área, lanzamos error
+        if (!$medicamento) {
+            return back()->with('error', 'El medicamento seleccionado no pertenece al área destino indicada.');
         }
+
+        // Si existe, sumamos el stock
+        DB::table('medicamentos')
+            ->where('id', $request->medicamento_id)
+            ->increment('cantidad_stock', $request->cantidad);
+
+        return back()->with('success', "Se han sumado {$request->cantidad} unidades a {$medicamento->nombre_medicamento}.");
     }
 
     public function importarExcel(Request $request)
     {
         $request->validate([
-            'archivo' => 'required|mimes:xlsx,xls,csv',
-            'area_id' => 'required|exists:areas,id'
+            'area_id' => 'required',
+            'archivo' => 'required|mimes:xlsx,xls,csv'
         ]);
 
         try {
@@ -83,31 +77,27 @@ class AlmacenController extends Controller
         }
     }
 
-    /**
-     * Muestra la vista principal de retiros con el historial del día.
-     */
     public function indexRetiros()
     {
-        // 1. Obtenemos las áreas para el select
         $areas = DB::table('areas')->get();
+        $todosLosMedicamentos = DB::table('medicamentos')->orderBy('nombre_medicamento', 'asc')->get();
 
-        // 2. Obtenemos todos los medicamentos para el select
-        $todosLosMedicamentos = DB::table('medicamentos')->orderBy('nombre', 'asc')->get();
-
-        // 3. Obtenemos los retiros realizados hoy para la tabla
-        $ultimosRetiros = DB::table('movimientos')
-            ->join('medicamentos', 'movimientos.medicamento_id', '=', 'medicamentos.id')
-            ->join('areas', 'movimientos.area_id', '=', 'areas.id')
-            ->select(
-                'medicamentos.nombre',
-                'areas.nombre_area',
-                'movimientos.cantidad',
-                'movimientos.created_at'
-            )
-            ->where('movimientos.tipo_movimiento', 'SALIDA')
-            ->whereDate('movimientos.created_at', now()->toDateString())
-            ->orderBy('movimientos.created_at', 'desc')
-            ->get();
+        $ultimosRetiros = [];
+        if (Schema::hasTable('movimientos')) {
+            $ultimosRetiros = DB::table('movimientos')
+                ->join('medicamentos', 'movimientos.medicamento_id', '=', 'medicamentos.id')
+                ->join('areas', 'movimientos.area_id', '=', 'areas.id')
+                ->select(
+                    'medicamentos.nombre_medicamento as nombre',
+                    'areas.nombre_area',
+                    'movimientos.cantidad',
+                    'movimientos.created_at'
+                )
+                ->where('movimientos.tipo_movimiento', 'SALIDA')
+                ->whereDate('movimientos.created_at', now()->toDateString())
+                ->orderBy('movimientos.created_at', 'desc')
+                ->get();
+        }
 
         return view('almacen.retiros', compact('areas', 'todosLosMedicamentos', 'ultimosRetiros'));
     }

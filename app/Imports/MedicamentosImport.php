@@ -19,28 +19,21 @@ class MedicamentosImport implements ToCollection, WithHeadingRow
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
-            if (!isset($row['descripcion']) || empty($row['descripcion'])) continue;
+            // Validamos que la fila tenga una descripción (nombre del medicamento)
+            if (!isset($row['descripcion']) || empty($row['descripcion'])) {
+                continue;
+            }
 
-            // 1. Asegurar que el medicamento existe en el catálogo
+            // Mapeo directo: lo que viene del Excel -> lo que va a la Base de Datos
             DB::table('medicamentos')->updateOrInsert(
-                ['nombre' => $row['descripcion']],
+                ['nombre_medicamento' => trim($row['descripcion'])],
                 [
-                    'presentacion' => null,
-                    'updated_at' => now(),
-                    'created_at' => now(),
-                ]
-            );
-
-            $medicamento = DB::table('medicamentos')->where('nombre', $row['descripcion'])->first();
-
-            // 2. Actualizar o insertar el stock para el área específica
-            DB::table('inventarios')->updateOrInsert(
-                [
-                    'medicamento_id' => $medicamento->id,
-                    'area_id' => $this->areaId
-                ],
-                [
-                    'stock_actual' => (int)($row['actual'] ?? 0),
+                    'nombre' => trim($row['descripcion']), 
+                    'cantidad_stock' => (int)($row['actual'] ?? 0),
+                    'area_destino' => $this->areaId,
+                    'codigo_lote' => $row['lote'] ?? 'S/L', 
+                    'fecha_vencimiento' => now()->addMonths(6), // Fecha tentativa para evitar errores
+                    'status_disponibilidad' => ((int)($row['actual'] ?? 0) > 0) ? 'Disponible' : 'Agotado',
                     'updated_at' => now(),
                     'created_at' => now(),
                 ]
@@ -50,6 +43,7 @@ class MedicamentosImport implements ToCollection, WithHeadingRow
 
     public function headingRow(): int
     {
-        return 9; // El encabezado está en la fila 9
+        // Tu archivo F15 tiene los encabezados en la fila 9
+        return 9;
     }
 }

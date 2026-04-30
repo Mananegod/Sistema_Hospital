@@ -1,10 +1,21 @@
-
 @extends('layouts.app')
 
 @section('title', 'Inicio - Hospital TG')
 
 @section('content')
 <div class="max-w-7xl mx-auto">
+    
+    {{-- Header con Botón de Notificaciones --}}
+    <div class="flex justify-end mb-6">
+        <a href="{{ route('notificaciones.index') }}" 
+           class="relative w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 transition-all shadow-sm group"
+           title="Alertas de Inventario">
+            <i class="fa-solid fa-bell text-xl"></i>
+            {{-- Indicador de Alerta Crítica (Punto rojo animado) --}}
+            <span class="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-4 h-4 bg-red-600 border-2 border-white rounded-full animate-pulse shadow-sm"></span>
+        </a>
+    </div>
+
     {{-- Header hero --}}
     <div class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl p-8 md:p-12 mb-12 text-center shadow-xl">
         <span class="inline-block px-4 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-blue-300 text-xs font-bold uppercase tracking-wider mb-4">
@@ -14,7 +25,7 @@
             Sistema Integral de Gestión
         </h1>
         <h2 class="text-3xl md:text-4xl font-extrabold text-blue-400 mb-4">Hospital Dr. Tiburcio Garrido</h2>
-        <p class="text-slate-400 max-w-2xl mx-auto  text-base md:text-lg">
+        <p class="text-slate-400 max-w-2xl mx-auto text-base md:text-lg">
             Bienvenido al panel central. Seleccione el módulo correspondiente para gestionar los recursos, personal y estadísticas de la institución.
         </p>
     </div>
@@ -22,51 +33,73 @@
     {{-- Tarjetas de módulos --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {{-- Inventario --}}
-        <div class="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-            <div class="bg-blue-50 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                </svg>
+        <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+            <div class="bg-blue-50 text-blue-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-inner">
+                <i class="fa-solid fa-boxes-stacked text-2xl"></i>
             </div>
-            <h3 class="text-xl font-bold mb-2">Gestión de Inventario</h3>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Gestión de Almacén</h3>
             <p class="text-slate-500 text-sm leading-relaxed mb-6">
-                Control total de medicamentos, insumos médicos y stock por áreas (Urgencias, UCI, Pediatría).
+                Control de stock, entradas de insumos médicos y monitoreo de niveles críticos por departamentos.
             </p>
-            <a href="{{ route('medicamentos.index') }}" class="inline-flex items-center text-blue-600 font-semibold gap-2 group">
-                Entrar al módulo
-                <svg class="w-4 h-4 group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
+            <a href="{{ route('almacen.index') }}" class="inline-flex items-center text-blue-600 font-bold text-sm hover:gap-2 transition-all uppercase tracking-wider">
+                Acceder módulo <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
             </a>
         </div>
 
-        {{-- Pacientes (bloqueado) --}}
-        <div class="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 opacity-60 relative overflow-hidden">
-            <div class="bg-emerald-50 text-emerald-600 w-12 h-12 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
+        {{-- Retiros --}}
+        <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+            <div class="bg-indigo-50 text-indigo-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-colors shadow-inner">
+                <i class="fa-solid fa-hand-holding-medical text-2xl"></i>
             </div>
-            <h3 class="text-xl font-bold mb-2">Registro de Pacientes</h3>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Retiros de Insumos</h3>
+            <p class="text-slate-500 text-sm leading-relaxed mb-6">
+                Registro de egresos de medicamentos y material médico-quirúrgico asignados a pacientes o áreas.
+            </p>
+            <a href="{{ route('retiros.index') }}" class="inline-flex items-center text-indigo-600 font-bold text-sm hover:gap-2 transition-all uppercase tracking-wider">
+                Acceder módulo <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+            </a>
+        </div>
+
+        {{-- Personal --}}
+        <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+            <div class="bg-purple-50 text-purple-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-600 group-hover:text-white transition-colors shadow-inner">
+                <i class="fa-solid fa-user-doctor text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Control de Personal</h3>
+            <p class="text-slate-500 text-sm leading-relaxed mb-6">
+                Administración de cuentas de usuario, roles y registro de actividad dentro del sistema hospitalario.
+            </p>
+            <a href="{{ route('personal.index') }}" class="inline-flex items-center text-purple-600 font-bold text-sm hover:gap-2 transition-all uppercase tracking-wider">
+                Acceder módulo <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+            </a>
+        </div>
+
+        {{-- Pacientes --}}
+        <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+            <div class="bg-emerald-50 text-emerald-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-inner">
+                <i class="fa-solid fa-hospital-user text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Registro de Pacientes</h3>
             <p class="text-slate-500 text-sm leading-relaxed mb-6">
                 Historiales clínicos digitales, ingresos y gestión de camas por departamento médico.
             </p>
-            <span class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-xs font-bold uppercase">Próximamente</span>
+            <a href="{{ route('pacientes.index') }}" class="inline-flex items-center text-emerald-600 font-bold text-sm hover:gap-2 transition-all uppercase tracking-wider">
+                Acceder módulo <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+            </a>
         </div>
 
-        {{-- Reportes (bloqueado) --}}
-        <div class="bg-white p-6 md:p-8 rounded-2xl border border-slate-100 opacity-60 relative overflow-hidden">
-            <div class="bg-amber-50 text-amber-600 w-12 h-12 rounded-xl flex items-center justify-center mb-5">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
+        {{-- Reportes (bloqueado por ahora) --}}
+        <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 opacity-60 relative overflow-hidden">
+            <div class="bg-amber-50 text-amber-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+                <i class="fa-solid fa-chart-line text-2xl"></i>
             </div>
-            <h3 class="text-xl font-bold mb-2">Reportes Estadísticos</h3>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Estadísticas y Reportes</h3>
             <p class="text-slate-500 text-sm leading-relaxed mb-6">
-                Generación de informes mensuales de consumo y necesidades críticas del hospital.
+                Generación de informes detallados sobre consumo mensual y proyecciones de necesidades.
             </p>
-            <span class="bg-amber-100 text-amber-600 px-3 py-1 rounded-lg text-xs font-bold uppercase">Próximamente</span>
+            <span class="bg-amber-100 text-amber-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-200">Próximamente</span>
         </div>
+
     </div>
 </div>
 @endsection

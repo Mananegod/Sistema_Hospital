@@ -5,6 +5,7 @@ use App\Http\Controllers\MedicamentoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PersonalController;
 use App\Http\Controllers\AlmacenController;
+use App\Http\Controllers\PacienteController;
 
 // Autenticación
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -37,8 +38,19 @@ Route::post('/almacen/movimiento', [AlmacenController::class, 'registrarMovimien
 Route::post('/almacen/medicamento', [AlmacenController::class, 'storeMedicamento'])->name('almacen.store');
 Route::post('/inventario/importar', [AlmacenController::class, 'importarExcel'])->name('inventario.import');
 Route::post('/almacen/entrada-rapida', [AlmacenController::class, 'entradaRapida'])->name('stock.entrada');
+Route::post('/inventario/importar', [App\Http\Controllers\AlmacenController::class, 'importarExcel'])->name('inventario.import');
 
 // Módulo de Retiros
 Route::get('/retiros', [AlmacenController::class, 'indexRetiros'])->name('retiros.index');
 Route::post('/retiros/procesar', [AlmacenController::class, 'procesarRetiro'])->name('retiros.procesar');
 Route::post('/almacen/movimiento', [AlmacenController::class, 'registrarMovimiento'])->name('almacen.movimiento');
+
+// modulo de pacientes xd
+Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
+Route::post('/pacientes', [PacienteController::class, 'store'])->name('pacientes.store');
+Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('pacientes.update');
+
+//notificaciones 
+Route::get('/notificaciones', function () {
+    return view('notificaciones');
+})->name('notificaciones.index');
