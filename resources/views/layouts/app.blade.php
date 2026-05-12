@@ -140,6 +140,10 @@
                         this.handleTimeout();
                     }, this.timeoutDuration);
                 },
+
+                activate(message) {
+    this.start(null, { message: message });
+},
                 
                 // Finaliza la carga correctamente
                 stop() {

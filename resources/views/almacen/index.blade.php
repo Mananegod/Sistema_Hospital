@@ -65,9 +65,13 @@
                class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 transition-all">
     </div>
 
-    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition shadow-lg">
-        Actualizar Stock
-    </button>
+  <button type="submit" 
+        :disabled="$store.loading.active"
+        :class="$store.loading.active ? 'opacity-50 cursor-not-allowed' : ''"
+        class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-slate-800 transition shadow-lg">
+    <span x-show="!$store.loading.active">Actualizar Stock</span>
+    <span x-show="$store.loading.active">Procesando...</span>
+</button>
 </form>
             </div>
 
