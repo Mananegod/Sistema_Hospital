@@ -59,3 +59,24 @@ Eliminar
 
 ahora, el modal de confirmación aparecerá con tu mensaje. Si el usuario confirma, se enviará el formulario.
 
+
+
+# Este codigo te elimina los duplicados de medicamentosd
+
+-- Eliminar duplicados manteniendo solo el registro con el id más alto (más reciente)
+
+DELETE FROM medicamentos a
+USING medicamentos b
+WHERE a.id < b.id
+  AND a.nombre_medicamento = b.nombre_medicamento
+  AND a.area_destino = b.area_destino;
+
+  # o si quieres hacerlo desde el mismo laravel
+  
+  DB::statement("
+    DELETE FROM medicamentos a
+    USING medicamentos b
+    WHERE a.id < b.id
+      AND a.nombre_medicamento = b.nombre_medicamento
+      AND a.area_destino = b.area_destino
+");

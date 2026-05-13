@@ -3,11 +3,17 @@
 namespace App\Imports;
 
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithReadFilter;
+use Maatwebsite\Excel\Concerns\WithValidation;
+use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 
-class MedicamentosImport implements ToCollection, WithHeadingRow
+class MedicamentosImport implements SkipsEmptyRows, ToCollection, WithBatchInserts, WithChunkReading, WithHeadingRow, WithReadFilter, WithValidation
 {
     protected $areaId;
     protected $nombreArea;
@@ -15,38 +21,53 @@ class MedicamentosImport implements ToCollection, WithHeadingRow
     public function __construct($areaId)
     {
         $this->areaId = $areaId;
-        
-        // CORRECCIÓN: Buscamos el nombre real del área una sola vez al iniciar la importación
         $area = DB::table('areas')->where('id', $areaId)->first();
         $this->nombreArea = $area ? $area->nombre_area : 'ALMACEN';
     }
 
     public function collection(Collection $rows)
     {
+        $upsertData = [];
+        $now = now()->toDateTimeString();
+        $fechaVencimiento = now()->addMonths(6)->toDateString();
+
         foreach ($rows as $row) {
-            // Validamos que la fila tenga una descripción (nombre del medicamento)
-            // Usamos array_key_exists o isset con el nombre exacto que tenga el encabezado del Excel
             $nombreMedicamento = trim($row['descripcion'] ?? '');
 
             if (empty($nombreMedicamento)) {
                 continue;
             }
 
-            // Mapeo directo: lo que viene del Excel -> lo que va a la Base de Datos
-            DB::table('medicamentos')->updateOrInsert(
-                ['nombre_medicamento' => $nombreMedicamento],
+            $cantidad = (int) ($row['actual'] ?? 0);
+
+            // Clave compuesta: nombre_medicamento + area_destino
+            $key = $nombreMedicamento . '||' . $this->nombreArea;
+            
+            $upsertData[$key] = [
+                'nombre_medicamento'    => $nombreMedicamento,
+                'nombre'                => $nombreMedicamento,
+                'cantidad_stock'        => $cantidad,
+                'area_destino'          => $this->nombreArea,
+                'codigo_lote'           => $row['lote'] ?? 'S/L',
+                'fecha_vencimiento'     => $fechaVencimiento,
+                'status_disponibilidad' => $cantidad > 0 ? 'Disponible' : 'Agotado',
+                'created_at'            => $now,
+                'updated_at'            => $now,
+            ];
+        }
+
+        if (! empty($upsertData)) {
+            // Upsert masivo usando la clave única compuesta
+            DB::table('medicamentos')->upsert(
+                array_values($upsertData),
+                ['nombre_medicamento', 'area_destino'], // ← AMBAS columnas
                 [
-                    'nombre' => $nombreMedicamento, 
-                    'cantidad_stock' => (int)($row['actual'] ?? 0),
-                    
-                    // CORRECCIÓN: Aquí usamos el nombre del área que buscamos en el constructor
-                    'area_destino' => $this->nombreArea, 
-                    
-                    'codigo_lote' => $row['lote'] ?? 'S/L', 
-                    'fecha_vencimiento' => now()->addMonths(6), 
-                    'status_disponibilidad' => ((int)($row['actual'] ?? 0) > 0) ? 'Disponible' : 'Agotado',
-                    'updated_at' => now(),
-                    'created_at' => now(),
+                    'nombre',
+                    'cantidad_stock',
+                    'codigo_lote',
+                    'fecha_vencimiento',
+                    'status_disponibilidad',
+                    'updated_at',
                 ]
             );
         }
@@ -54,7 +75,45 @@ class MedicamentosImport implements ToCollection, WithHeadingRow
 
     public function headingRow(): int
     {
-        // Tu archivo F15 tiene los encabezados en la fila 9
-        return 9;
+        return 9; // ← Ajusta a 1 si los encabezados están en la primera fila
+    }
+
+    public function chunkSize(): int
+    {
+        return 1000;
+    }
+
+    public function batchSize(): int
+    {
+        return 1000;
+    }
+
+    public function readFilter(): IReadFilter
+    {
+        return new class implements IReadFilter {
+            private $columns = ['A', 'B', 'C'];
+
+            public function readCell($columnAddress, $row, $worksheetName = '')
+            {
+                $column = preg_replace('/\d/', '', $columnAddress);
+                return in_array($column, $this->columns);
+            }
+        };
+    }
+
+    public function rules(): array
+    {
+        return [
+            'descripcion' => 'nullable|string',
+            'actual'      => 'nullable|integer|min:0',
+        ];
+    }
+
+    public function customValidationMessages(): array
+    {
+        return [
+            'actual.integer' => 'El campo "actual" debe ser un número entero.',
+            'actual.min'     => 'El campo "actual" no puede ser negativo.',
+        ];
     }
 }
