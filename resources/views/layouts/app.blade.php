@@ -120,7 +120,7 @@
                 timedOut: false,      // si se alcanzó el timeout
                 retryCallback: null,  // función a ejecutar al reintentar
                 timeoutId: null,
-                timeoutDuration: 30000, // 30 segundos
+                timeoutDuration: 60000, // 60 segundos
                 message: 'Procesando solicitud...',
                 
                 // Inicia la carga y muestra el modal
@@ -289,19 +289,26 @@
                 Alpine.store('confirm').open(message, callback);
             };
 
-            @if(session('success'))
-                Alpine.store('toast').add(@json(session('success')), 'success');
-            @endif
+             {{-- Captura automática de mensajes de sesión --}}
+        @if(session('success'))
+            Alpine.store('toast').add(@json(session('success')), 'success');
+        @endif
 
-            @if($errors->any())
-                @foreach($errors->all() as $error)
-                    Alpine.store('toast').add(@json($error), 'error');
-                @endforeach
-            @endif
+        @if(session('error'))
+            Alpine.store('toast').add(@json(session('error')), 'error');
+        @endif
 
-            @if(session('info'))
-                Alpine.store('toast').add(@json(session('info')), 'info');
-            @endif
+        @if($errors->any())
+            @foreach($errors->all() as $error)
+                Alpine.store('toast').add(@json($error), 'error');
+            @endforeach
+        @endif
+
+        @if(session('info'))
+            Alpine.store('toast').add(@json(session('info')), 'info');
+        @endif
+
+            
         });
     </script>
 
