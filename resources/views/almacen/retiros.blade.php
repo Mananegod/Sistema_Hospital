@@ -7,23 +7,31 @@
 @include('components.loading-overlay')
 
 <div class="max-w-7xl mx-auto" x-data="{
-    // Datos simulados para la tabla
+    // Inyección de retiros reales de la base de datos ocurridos hoy
     retiros: [
-        { id: 1, nombre: 'Paracetamol 500mg', nombre_area: 'Emergencias', cantidad: 5, created_at: '28/04/2026 21:00' },
-        { id: 2, nombre: 'Ibuprofeno 400mg', nombre_area: 'Pediatría', cantidad: 2, created_at: '28/04/2026 20:30' }
+        @foreach($ultimosRetiros as $retiro)
+            { 
+                id: {{ $retiro->id }}, 
+                nombre: '{{ $retiro->nombre }}', 
+                nombre_area: '{{ $retiro->nombre_area }}', 
+                cantidad: {{ $retiro->cantidad }}, 
+                created_at: '{{ \Carbon\Carbon::parse($retiro->created_at)->format('d/m/Y H:i') }}' 
+            },
+        @endforeach
     ],
     
-    // Datos para llenar los selects del formulario
+    // Inyección de todos los medicamentos disponibles en la base de datos
     medicamentos: [
-        { id: 1, nombre: 'Paracetamol 500mg' },
-        { id: 2, nombre: 'Ibuprofeno 400mg' },
-        { id: 3, nombre: 'Amoxicilina 500mg' },
-        { id: 4, nombre: 'Omeprazol 20mg' }
+        @foreach($todosLosMedicamentos as $med)
+            { id: {{ $med->id }}, nombre: '{{ $med->nombre_medicamento }}' },
+        @endforeach
     ],
+    
+    // Inyección de las áreas oficiales del hospital desde tu seeder
     areas: [
-        { id: 1, nombre_area: 'Emergencias' },
-        { id: 2, nombre_area: 'Pediatría' },
-        { id: 3, nombre_area: 'Consulta Externa' }
+        @foreach($areas as $area)
+            { id: {{ $area->id }}, nombre_area: '{{ $area->nombre_area }}' },
+        @endforeach
     ],
     
     // Estado del formulario
@@ -33,49 +41,46 @@
         cantidad: ''
     },
     
-    // Función para simular el comportamiento de guardado
+    // Función adaptada para procesar el envío real hacia Laravel
     registrarRetiro() {
         if (!this.form.medicamento_id || !this.form.area_id || !this.form.cantidad) {
             if (this.$store.toast) this.$store.toast.add('Por favor llena todos los campos.', 'error');
             return;
         }
         
-        let med = this.medicamentos.find(m => m.id == this.form.medicamento_id);
-        let area = this.areas.find(a => a.id == this.form.area_id);
-        
-        let nuevoRetiro = {
-            id: Date.now(),
-            nombre: med.nombre,
-            nombre_area: area.nombre_area,
-            cantidad: parseInt(this.form.cantidad),
-            created_at: new Date().toLocaleString('es-VE', { hour12: false }).slice(0, 16)
-        };
-        
-        // Simulación de carga visual usando tus componentes globales
+        // Activación del componente loading global
         if (this.$store.loading) {
             this.$store.loading.activate('Procesando retiro...');
-            
-            setTimeout(() => {
-                this.$store.loading.active = false;
-                
-                // Agrega el registro arriba de la tabla
-                this.retiros.unshift(nuevoRetiro);
-                
-                if (this.$store.toast) {
-                    this.$store.toast.add('Retiro registrado correctamente en la sesión.', 'success');
-                }
-                
-                // Reinicia los campos
-                this.form.medicamento_id = '';
-                this.form.area_id = '';
-                this.form.cantidad = '';
-            }, 1000);
         }
+
+        // Construcción dinámica de un formulario HTML nativo para POST
+        let formSubmit = document.createElement('form');
+        formSubmit.method = 'POST';
+        formSubmit.action = '{{ route('almacen.retiros.store') }}';
+
+        // Token de seguridad de Laravel (CSRF)
+        let csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        formSubmit.appendChild(csrfInput);
+
+        // Adjuntar campos reactivos de Alpine al formulario final
+        for (let key in this.form) {
+            let input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = this.form[key];
+            formSubmit.appendChild(input);
+        }
+
+        document.body.appendChild(formSubmit);
+        formSubmit.submit();
     }
 }">
     <div class="mb-8">
         <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Retiro de Insumos</h1>
-        <p class="text-slate-500 mt-1">Registre la salida de medicamentos de las áreas correspondientes (Simulación frontend).</p>
+        <p class="text-slate-500 mt-1">Registre la salida de medicamentos de las áreas correspondientes</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -87,7 +92,7 @@
                     <i class="fas fa-minus-circle text-red-500"></i> Registrar Salida
                 </h2>
                 
-                {{-- Escuchamos el submit y prevenimos la recarga de página --}}
+                {{-- Escuchamos el submit --}}
                 <form @submit.prevent="registrarRetiro()">
                     <div class="space-y-4">
                         <div>
@@ -125,7 +130,6 @@
             </div>
         </div>
 
-        {{-- Tabla de Retiros --}}
         <div class="lg:col-span-8">
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-slate-100">
@@ -142,20 +146,18 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        {{-- Bucle renderizado por Alpine --}}
                         <template x-for="retiro in retiros" :key="retiro.id">
                             <tr class="hover:bg-slate-50/50 transition">
                                 <td class="px-6 py-5 font-bold text-slate-800" x-text="retiro.nombre"></td>
                                 <td class="px-6 py-5 text-slate-600 text-sm" x-text="retiro.nombre_area"></td>
                                 <td class="px-6 py-5 text-center">
-                                    <span class="bg-red-50 text-red-600 px-2 py-1 rounded-lg font-bold" x-text="'-' + retiro.cantidad">
+                                    <span class="bg-gray-50 text-black-600 px-2 py-1 rounded-lg font-bold" x-text="retiro.cantidad">
                                     </span>
                                 </td>
                                 <td class="px-6 py-5 text-center text-xs text-slate-400" x-text="retiro.created_at"></td>
                             </tr>
                         </template>
                         
-                        {{-- Mensaje si se vacían los datos --}}
                         <template x-if="retiros.length === 0">
                             <tr>
                                 <td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">No se han registrado retiros hoy.</td>

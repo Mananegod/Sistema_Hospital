@@ -53,3 +53,10 @@ Route::put('/pacientes/{id}', [PacienteController::class, 'update'])->name('paci
 Route::get('/notificaciones', function () {
     return view('notificaciones');
 })->name('notificaciones.index');
+
+Route::get('/almacen/retiros', [AlmacenController::class, 'indexRetiros'])->name('almacen.retiros');
+Route::post('/almacen/retiros', [AlmacenController::class, 'guardarRetiro'])->name('almacen.retiros.store');
+
+Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
+Route::post('/pacientes', [PacienteController::class, 'store'])->name('pacientes.store');
+Route::get('/pacientes/{id}/pdf', [PacienteController::class, 'generarPdf'])->name('pacientes.pdf');

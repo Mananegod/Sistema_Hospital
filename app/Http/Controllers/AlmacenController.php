@@ -57,9 +57,15 @@ class AlmacenController extends Controller
             'cantidad' => 'required|integer|min:1',
         ]);
 
+        $areaDestino = DB::table('areas')->where('id', $request->area_id)->value('nombre_area');
+
+        if (! $areaDestino) {
+            return back()->with('error', 'El área destino seleccionada no es válida.');
+        }
+
         $medicamento = DB::table('medicamentos')
             ->where('id', $request->medicamento_id)
-            ->where('area_destino', $request->area_id)
+            ->where('area_destino', $areaDestino) 
             ->first();
 
         if (! $medicamento) {
@@ -119,28 +125,69 @@ class AlmacenController extends Controller
         }
     }
 
+    // Única y corregida función para cargar la vista de retiros reales
     public function indexRetiros()
     {
+        // 1. Obtener áreas y todos los medicamentos reales ordenados de la Base de Datos
         $areas = DB::table('areas')->get();
         $todosLosMedicamentos = DB::table('medicamentos')->orderBy('nombre_medicamento', 'asc')->get();
 
-        $ultimosRetiros = [];
-        if (Schema::hasTable('movimientos')) {
-            $ultimosRetiros = DB::table('movimientos')
-                ->join('medicamentos', 'movimientos.medicamento_id', '=', 'medicamentos.id')
-                ->join('areas', 'movimientos.area_id', '=', 'areas.id')
-                ->select(
-                    'medicamentos.nombre_medicamento as nombre',
-                    'areas.nombre_area',
-                    'movimientos.cantidad',
-                    'movimientos.created_at'
-                )
-                ->where('movimientos.tipo_movimiento', 'SALIDA')
-                ->whereDate('movimientos.created_at', now()->toDateString())
-                ->orderBy('movimientos.created_at', 'desc')
-                ->get();
-        }
+        // 2. Obtener los retiros reales ocurridos el día de hoy, uniendo con medicamentos y áreas
+        $ultimosRetiros = DB::table('retiros')
+            ->join('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
+            ->join('areas', 'retiros.area_id', '=', 'areas.id')
+            ->select(
+                'retiros.id',
+                'medicamentos.nombre_medicamento as nombre',
+                'areas.nombre_area',
+                'retiros.cantidad',
+                'retiros.created_at'
+            )
+            ->whereDate('retiros.created_at', now()->toDateString())
+            ->orderBy('retiros.created_at', 'desc')
+            ->get();
 
         return view('almacen.retiros', compact('areas', 'todosLosMedicamentos', 'ultimosRetiros'));
+    }
+
+    public function guardarRetiro(Request $request)
+    {
+        // Validar que los datos ingresados cumplan con los requisitos básicos
+        $request->validate([
+            'medicamento_id' => 'required',
+            'area_id' => 'required',
+            'cantidad' => 'required|integer|min:1',
+        ]);
+
+        // Verificar que el medicamento exista en la base de datos
+        $medicamento = DB::table('medicamentos')->where('id', $request->medicamento_id)->first();
+
+        if (!$medicamento) {
+            return back()->with('error', 'El medicamento seleccionado no existe.');
+        }
+
+        // Verificar que haya suficiente stock disponible para retirar
+        if ($medicamento->cantidad_stock < $request->cantidad) {
+            return back()->with('error', "Stock insuficiente. Solo quedan {$medicamento->cantidad_stock} unidades disponibles de {$medicamento->nombre_medicamento}.");
+        }
+
+        // Usar una transacción de Base de Datos para asegurar que ambas operaciones ocurran con éxito
+        DB::transaction(function () use ($request) {
+            // 1. Restar la cantidad retirada del inventario actual
+            DB::table('medicamentos')
+                ->where('id', $request->medicamento_id)
+                ->decrement('cantidad_stock', $request->cantidad);
+
+            // 2. Registrar el movimiento en la nueva tabla de retiros
+            DB::table('retiros')->insert([
+                'medicamento_id' => $request->medicamento_id,
+                'area_id' => $request->area_id,
+                'cantidad' => $request->cantidad,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        return back()->with('success', 'El retiro ha sido registrado y el stock actualizado con éxito.');
     }
 }
