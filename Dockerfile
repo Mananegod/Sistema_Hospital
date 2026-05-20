@@ -1,6 +1,5 @@
 FROM php:8.3-apache
 
-
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     libpng-dev \
@@ -19,12 +18,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+
 COPY . /var/www/html
+
+COPY entrypoint.sh /var/www/html/entrypoint.sh
+RUN chmod +x /var/www/html/entrypoint.sh
 
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 USER root
+
 
 RUN COMPOSER_MEMORY_LIMIT=-1 composer install --no-dev --optimize-autoloader --no-interaction --no-scripts --ignore-platform-reqs
 
@@ -33,4 +37,5 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 EXPOSE 80
-CMD ["apache2-foreground"]
+
+CMD ["/var/www/html/entrypoint.sh"]
