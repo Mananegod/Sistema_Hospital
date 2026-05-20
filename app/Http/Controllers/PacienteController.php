@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf; // Asegúrate de tener instalado dompdf (composer require barryvdh/laravel-dompdf)
+use Illuminate\Support\Facades\Validator;
 
 class PacienteController extends Controller
 {
@@ -54,6 +55,92 @@ class PacienteController extends Controller
         return back()->with('success', 'Paciente internado y registrado en el sistema correctamente.');
     }
 
+    /**
+ * Actualizar los datos del paciente internado.
+ */
+public function update(Request $request, $id)
+{
+    // 1. Validar los datos con las reglas específicas solicitadas
+    $validator = Validator::make($request->all(), [
+        'cedula'           => 'required|regex:/^[0-9]+$/', // Solo números
+        'nombre_apellido'  => 'required|string|regex:/^[^0-9]+$/|max:255', // No permite números
+        'edad'             => 'required|integer|min:0|max:125', // Solo números enteros válidos
+        'area_id'          => 'required|exists:areas,id',
+        'diagnostico'      => 'required|string|max:500',
+        'tratamiento'      => 'nullable|string',
+        'fecha_ingreso'    => 'required|date|before_or_equal:2036-12-31', // No puede pasar de 2036
+    ], [
+        // Mensajes de error personalizados en español
+        'cedula.regex'            => 'La cédula de identidad debe contener únicamente números.',
+        'nombre_apellido.regex'   => 'El nombre y apellido no puede contener números.',
+        'edad.integer'            => 'La edad del paciente debe ser un número entero.',
+        'fecha_ingreso.before_or_equal' => 'La fecha de ingreso no puede ser posterior al año 2036.',
+        'area_id.exists'          => 'El servicio o área seleccionada no es válida.',
+    ]);
+
+    // Si la validación falla, regresar con los errores
+    if ($validator->fails()) {
+        return back()->withErrors($validator)->withInput()->with('error', 'Error en el formulario. Por favor revisa los campos.');
+    }
+
+    try {
+        // 2. Ejecutar la actualización en la base de datos
+        DB::table('pacientes_internados')
+            ->where('id', $id)
+            ->update([
+                'cedula'          => $request->cedula,
+                'nombre_apellido' => $request->nombre_apellido,
+                'edad'            => $request->edad,
+                'area_id'         => $request->area_id,
+                'diagnostico'     => $request->diagnostico,
+                'tratamiento'     => $request->tratamiento,
+                'fecha_ingreso'   => $request->fecha_ingreso,
+                'updated_at'      => now(),
+            ]);
+
+        return back()->with('success', 'El expediente del paciente ha sido actualizado con éxito.');
+
+    } catch (\Exception $e) {
+        return back()->with('error', 'Error al actualizar el paciente: ' . $e->getMessage());
+    }
+}
+
+public function imprimirPdf($id)
+{
+    // Buscar al paciente con su servicio/área
+    $paciente = DB::table('pacientes_internados')
+        ->join('areas', 'pacientes_internados.area_id', '=', 'areas.id')
+        ->select('pacientes_internados.*', 'areas.nombre_area as servicio')
+        ->where('pacientes_internados.id', $id)
+        ->first();
+
+    if (!$paciente) {
+        return back()->with('error', 'El registro del paciente no existe.');
+    }
+
+    return view('pacientes.reporte-f15', compact('paciente'));
+}
+
+public function delete($id)
+{
+    try {
+        // Buscar que exista antes de borrar
+        $existe = DB::table('pacientes_internados')->where('id', $id)->exists();
+
+        if (!$existe) {
+            return back()->with('error', 'El registro del paciente que intenta eliminar no existe.');
+        }
+
+        // Borrado físico del registro
+        DB::table('pacientes_internados')->where('id', $id)->delete();
+
+        return back()->with('success', 'El registro del paciente ha sido eliminado correctamente del sistema.');
+
+    } catch (\Exception $e) {
+        return back()->with('error', 'No se pudo eliminar el registro: ' . $e->getMessage());
+    }
+}
+    
     public function generarPdf($id)
     {
         $paciente = DB::table('pacientes_internados')

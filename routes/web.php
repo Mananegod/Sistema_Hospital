@@ -60,3 +60,6 @@ Route::post('/almacen/retiros', [AlmacenController::class, 'guardarRetiro'])->na
 Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
 Route::post('/pacientes', [PacienteController::class, 'store'])->name('pacientes.store');
 Route::get('/pacientes/{id}/pdf', [PacienteController::class, 'generarPdf'])->name('pacientes.pdf');
+Route::post('/pacientes/{id}/update', [PacienteController::class, 'update'])->name('pacientes.update');
+Route::post('/pacientes/{id}/delete', [PacienteController::class, 'delete'])->name('pacientes.delete');
+Route::get('/pacientes/{id}/pdf', [PacienteController::class, 'imprimirPdf'])->name('pacientes.pdf');
