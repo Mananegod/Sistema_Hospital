@@ -38,7 +38,7 @@
 <body class="bg-slate-100 antialiased p-4 fuente-reporte">
 
     <div class="max-w-3xl mx-auto mb-4 flex justify-end no-print">
-        <button onclick="window.print()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition shadow-md">
+        <button onclick="window.print()" class="bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition shadow-md">
             <i class="fas fa-print mr-2"></i> Imprimir / Guardar PDF
         </button>
     </div>
