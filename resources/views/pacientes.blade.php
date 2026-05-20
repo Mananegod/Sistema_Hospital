@@ -316,55 +316,90 @@
         </div>
     </div>
 
-    {{-- MODAL 2: EDITAR REGISTRO --}}
-    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" x-show="modalEditar" x-cloak x-transition>
-        <div class="bg-white rounded-3xl max-w-2xl w-full border border-slate-100 overflow-hidden shadow-2xl" @click.away="modalEditar = false">
-            <div class="p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700">Modificar Ficha de Ingreso</h3>
-                <button @click="modalEditar = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
-            </div>
-            <form @submit.prevent="actualizarPaciente()" class="p-8 space-y-6">
-                <div class="grid grid-cols-2 gap-6">
+   {{-- MODAL 2: EDITAR REGISTRO (RESPONSIVE MEJORADO) --}}
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4"
+     x-show="modalEditar"
+     x-cloak
+     x-transition>
+     
+    {{-- Contenedor del modal con altura máxima y flex-column para que header/footer queden fijos --}}
+    <div class="bg-white rounded-3xl max-w-2xl w-full border border-slate-100 shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden"
+         @click.away="modalEditar = false">
+        
+        {{-- Cabecera fija (no se desplaza) --}}
+        <div class="flex-shrink-0 p-4 sm:p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700">Modificar Ficha de Ingreso</h3>
+            <button @click="modalEditar = false" class="text-slate-400 hover:text-slate-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        {{-- Cuerpo del formulario con scroll si el contenido es alto --}}
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6">
+            <form @submit.prevent="actualizarPaciente()" class="space-y-6">
+                {{-- Grid adaptable: 1 columna en móviles, 2 en sm+ --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cédula</label>
-                        <input type="text" x-model="form.cedula" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                        <input type="text" x-model="form.cedula"
+                               class="w-full bg-slate-50 p-3 sm:p-4 rounded-2xl border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Edad</label>
-                        <input type="number" x-model="form.edad" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                        <input type="number" x-model="form.edad"
+                               class="w-full bg-slate-50 p-3 sm:p-4 rounded-2xl border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
                 </div>
+
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nombre y Apellido</label>
-                    <input type="text" x-model="form.nombre_apellido" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                    <input type="text" x-model="form.nombre_apellido"
+                           class="w-full bg-slate-50 p-3 sm:p-4 rounded-2xl border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                 </div>
+
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Servicio / Área</label>
-                    <select x-model="form.area_id" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                    <select x-model="form.area_id"
+                            class="w-full bg-slate-50 p-3 sm:p-4 rounded-2xl border-none text-xs sm:text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                         @foreach($areas as $area)
                             <option value="{{ $area->id }}">{{ $area->nombre_area }}</option>
                         @endforeach
                     </select>
                 </div>
+
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Diagnóstico</label>
-                    <input type="text" x-model="form.diagnostico" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                    <input type="text" x-model="form.diagnostico"
+                           class="w-full bg-slate-50 p-3 sm:p-4 rounded-2xl border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                 </div>
+
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tratamiento / Insumos</label>
-                    <textarea x-model="form.tratamiento" rows="3" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 resize-none mt-2"></textarea>
+                    <textarea x-model="form.tratamiento" rows="3"
+                              class="w-full bg-slate-50 p-3 sm:p-4 rounded-2xl border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 resize-none mt-2"></textarea>
                 </div>
+
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fecha Ingreso</label>
-                    <input type="date" x-model="form.fecha_ingreso" class="w-full bg-slate-50 p-4 rounded-2xl border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
-                </div>
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" @click="modalEditar = false" class="px-6 py-4 rounded-xl font-bold text-xs bg-slate-100 text-slate-600 uppercase tracking-wider hover:bg-slate-200 transition">Cancelar</button>
-                    <button type="submit" class="px-8 py-4 rounded-xl font-bold text-xs bg-slate-900 text-white uppercase tracking-wider hover:bg-blue-600 transition shadow-lg">Guardar Cambios</button>
+                    <input type="date" x-model="form.fecha_ingreso"
+                           class="w-full bg-slate-50 p-3 sm:p-4 rounded-2xl border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                 </div>
             </form>
         </div>
+
+      
+        <div class="flex-shrink-0 p-4 sm:p-6 border-t border-slate-100 bg-white flex flex-col sm:flex-row justify-end gap-3">
+            <button type="button" @click="modalEditar = false"
+                    class="w-full sm:w-auto px-5 py-3 sm:px-6 sm:py-4 rounded-xl font-bold text-xs bg-slate-100 text-slate-600 uppercase tracking-wider hover:bg-slate-200 transition">
+                Cancelar
+            </button>
+            <button type="submit"
+                    class="w-full sm:w-auto px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-bold text-xs bg-slate-900 text-white uppercase tracking-wider hover:bg-blue-600 transition shadow-lg">
+                Guardar Cambios
+            </button>
+        </div>
     </div>
+</div>
 
     {{-- MODAL 3: CONFIRMAR ELIMINACIÓN --}}
     <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4" x-show="modalEliminar" x-cloak x-transition>
