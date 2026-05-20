@@ -10,7 +10,7 @@ para usar dicha plantilla en una nueva vista, hacemos lo siguiente:
 
 ejemplo: Digamos que estamos creando la vista de perfil. Nosotros, para que se traiga la informacion de la plantilla debemos colocar la regla @extends.
 
-@extends ('layouts.app') = esta regla la colocamos al principio de nuestra view, @eextends llama al componente o plantilla que creamos y queramos usar, el layouts.app es como decir, busca en la carpeta layouts el archivo llamado app.blade.php
+#@extends ('layouts.app') = esta regla la colocamos al principio de nuestra view, @eextends llama al componente o plantilla que creamos y queramos usar, el layouts.app es como decir, busca en la carpeta layouts el archivo llamado app.blade.php
 
 @section('title', 'Mi Perfil') = esta regla se pone despues de extends, para decirle a la pagina que, cuando el usuario ingrese a dicha view, el titulo de la pagina cambie a Mi Perfil.
 
