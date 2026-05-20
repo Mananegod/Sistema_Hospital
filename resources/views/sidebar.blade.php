@@ -79,6 +79,14 @@
             <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Retiros</span>
         </a>
 
+                <a href="{{ route('estadisticas.index') }}"
+           class="flex items-center h-12 rounded-2xl transition-all {{ request()->routeIs('estadisticas.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}"
+           :class="{'px-4 gap-4 justify-start': $store.sidebar.isExpanded, 'px-0 justify-center': !$store.sidebar.isExpanded}"
+           title="Estadísticas">
+            <div class="w-6 flex justify-center shrink-0"><i class="fa-solid fa-hand-holding-medical text-lg"></i></div>
+            <span class="font-semibold tracking-wide whitespace-nowrap" x-show="$store.sidebar.isExpanded" x-transition.opacity>Estadísticas</span>
+        </a>
+
         {{-- Módulo Inventario Maestro --}}
         <a href="{{ route('medicamentos.index') }}"
            class="flex items-center h-12 rounded-2xl transition-all {{ request()->routeIs('medicamentos.index') ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}"

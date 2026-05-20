@@ -63,3 +63,7 @@ Route::get('/pacientes/{id}/pdf', [PacienteController::class, 'generarPdf'])->na
 Route::post('/pacientes/{id}/update', [PacienteController::class, 'update'])->name('pacientes.update');
 Route::post('/pacientes/{id}/delete', [PacienteController::class, 'delete'])->name('pacientes.delete');
 Route::get('/pacientes/{id}/pdf', [PacienteController::class, 'imprimirPdf'])->name('pacientes.pdf');
+
+use App\Http\Controllers\EstadisticaController;
+
+Route::get('/estadisticas', [EstadisticaController::class, 'index'])->name('estadisticas.index');
