@@ -120,7 +120,8 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         
-        const ctxPacientes = document.getElementById('chartPacientes').getContext('2array');
+        // 1. Corrección del contexto a '2d' para habilitar el motor de renderizado gráfico de Chart.js
+        const ctxPacientes = document.getElementById('chartPacientes').getContext('2d');
         const datosPacientes = @json($pacientesPorArea);
         
         new Chart(ctxPacientes, {
@@ -147,7 +148,8 @@
             }
         });
 
-        const ctxAreas = document.getElementById('chartAreas').getContext('2array');
+        // 2. Corrección del contexto a '2d' para el gráfico circular tipo Doughnut
+        const ctxAreas = document.getElementById('chartAreas').getContext('2d');
         const datosRetirosArea = @json($retirosPorArea);
 
         new Chart(ctxAreas, {
@@ -170,12 +172,12 @@
             }
         });
 
-        const ctxTop = document.getElementById('chartTopMedicamentos').getContext('2array');
+        // 3. Corrección del contexto a '2d' y remoción de tokens residuales de sintaxis inválida en los ticks del eje Y
+        const ctxTop = document.getElementById('chartTopMedicamentos').getContext('2d');
         const datosTop = @json($topMedicamentos);
 
         new Chart(ctxTop, {
             type: 'bar',
-            position: 'left',
             data: {
                 labels: datosTop.map(item => item.nombre),
                 datasets: [{
@@ -193,7 +195,7 @@
                 plugins: { legend: { display: false } },
                 scales: {
                     x: { beginAtZero: true, grid: { color: '#F1F5F9' }, ticks: { color: '#94A3B8' } },
-                    y: { grid: { display: false }, ticks: { color: '#0F172A', font: { weight: 'bold', size: 11 direct } } }
+                    y: { grid: { display: false }, ticks: { color: '#0F172A', font: { weight: 'bold', size: 11 } } }
                 }
             }
         });

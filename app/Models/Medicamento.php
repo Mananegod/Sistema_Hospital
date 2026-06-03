@@ -14,6 +14,7 @@ class Medicamento extends Model
     'cantidad_stock', 
     'area_destino', 
     'fecha_vencimiento', 
+    'codigo_lote',
     'status_disponibilidad'
     ];
 }
