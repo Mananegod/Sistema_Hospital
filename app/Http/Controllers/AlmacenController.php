@@ -35,19 +35,23 @@ class AlmacenController extends Controller
         return view('almacen.index', compact('inventario', 'areas'));
     }
 
-    public function buscarMedicamentos(Request $request)
-    {
-        $q = trim($request->get('q', ''));
+public function buscarMedicamentos(Request $request)
+{
+    $q = trim($request->get('q', ''));
 
-        $medicamentos = DB::table('medicamentos')
-            ->select('id', 'nombre_medicamento as text')
-            ->where('nombre_medicamento', 'ilike', "%{$q}%")
-            ->orderBy('nombre_medicamento')
-            ->limit(20)
-            ->get();
-
-        return response()->json($medicamentos);
+    if (empty($q)) {
+        return response()->json([]);
     }
+
+    $medicamentos = DB::table('medicamentos')
+        ->select('id', 'nombre_medicamento as text')
+        ->where('nombre_medicamento', 'ilike', "%{$q}%")
+        ->orderBy('nombre_medicamento')
+        ->limit(10)
+        ->get();
+
+    return response()->json($medicamentos);
+}
 
     public function entradaRapida(Request $request)
     {
@@ -125,14 +129,11 @@ class AlmacenController extends Controller
         }
     }
 
-    // Única y corregida función para cargar la vista de retiros reales
     public function indexRetiros()
     {
-        // 1. Obtener áreas y todos los medicamentos reales ordenados de la Base de Datos
         $areas = DB::table('areas')->get();
         $todosLosMedicamentos = DB::table('medicamentos')->orderBy('nombre_medicamento', 'asc')->get();
 
-        // 2. Obtener los retiros reales ocurridos el día de hoy, uniendo con medicamentos y áreas
         $ultimosRetiros = DB::table('retiros')
             ->join('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
             ->join('areas', 'retiros.area_id', '=', 'areas.id')
@@ -152,33 +153,27 @@ class AlmacenController extends Controller
 
     public function guardarRetiro(Request $request)
     {
-        // Validar que los datos ingresados cumplan con los requisitos básicos
         $request->validate([
             'medicamento_id' => 'required',
             'area_id' => 'required',
             'cantidad' => 'required|integer|min:1',
         ]);
 
-        // Verificar que el medicamento exista en la base de datos
         $medicamento = DB::table('medicamentos')->where('id', $request->medicamento_id)->first();
 
         if (!$medicamento) {
             return back()->with('error', 'El medicamento seleccionado no existe.');
         }
 
-        // Verificar que haya suficiente stock disponible para retirar
         if ($medicamento->cantidad_stock < $request->cantidad) {
             return back()->with('error', "Stock insuficiente. Solo quedan {$medicamento->cantidad_stock} unidades disponibles de {$medicamento->nombre_medicamento}.");
         }
 
-        // Usar una transacción de Base de Datos para asegurar que ambas operaciones ocurran con éxito
         DB::transaction(function () use ($request) {
-            // 1. Restar la cantidad retirada del inventario actual
             DB::table('medicamentos')
                 ->where('id', $request->medicamento_id)
                 ->decrement('cantidad_stock', $request->cantidad);
 
-            // 2. Registrar el movimiento en la nueva tabla de retiros
             DB::table('retiros')->insert([
                 'medicamento_id' => $request->medicamento_id,
                 'area_id' => $request->area_id,
@@ -190,4 +185,31 @@ class AlmacenController extends Controller
 
         return back()->with('success', 'El retiro ha sido registrado y el stock actualizado con éxito.');
     }
+    
+    public function actualizarVencimientoMasivo(Request $request)
+{
+    $request->validate([
+        'area_id' => 'required',
+        'fecha_vencimiento' => 'required|date',
+    ]);
+
+    $areaDestino = DB::table('areas')->where('id', $request->area_id)->value('nombre_area');
+
+    if (!$areaDestino) {
+        return back()->with('error', 'El área seleccionada no es válida.');
+    }
+
+    $afectados = DB::table('medicamentos')
+        ->where('area_destino', $areaDestino)
+        ->update([
+            'fecha_vencimiento' => $request->fecha_vencimiento,
+            'updated_at' => now()
+        ]);
+
+    if ($afectados === 0) {
+        return back()->with('info', "No se encontraron medicamentos registrados en el área '{$areaDestino}' para actualizar.");
+    }
+
+    return back()->with('success', "¡Éxito! Se ha actualizado la fecha de vencimiento de {$afectados} medicamentos en el área '{$areaDestino}'.");
+}
 }

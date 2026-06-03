@@ -5,6 +5,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MedicamentoController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\PersonalController;
+use App\Http\Controllers\EstadisticaController;
+use App\Http\Controllers\AlertasController;
+use App\Http\Controllers\EpidemiologiaController;
 use Illuminate\Support\Facades\Route;
 
 // Autenticación
@@ -64,6 +67,15 @@ Route::post('/pacientes/{id}/update', [PacienteController::class, 'update'])->na
 Route::post('/pacientes/{id}/delete', [PacienteController::class, 'delete'])->name('pacientes.delete');
 Route::get('/pacientes/{id}/pdf', [PacienteController::class, 'imprimirPdf'])->name('pacientes.pdf');
 
-use App\Http\Controllers\EstadisticaController;
+
 
 Route::get('/estadisticas', [EstadisticaController::class, 'index'])->name('estadisticas.index');
+
+Route::get('/alertas', [AlertasController::class, 'index'])->name('alertas.index');
+
+
+Route::post('/almacen/vencimiento-masivo', [AlmacenController::class, 'actualizarVencimientoMasivo'])->name('almacen.vencimientoMasivo');
+
+Route::get('/epidemiologia', [EpidemiologiaController::class, 'index'])->name('epidemiologia.index');
+Route::post('/epidemiologia', [EpidemiologiaController::class, 'store'])->name('epidemiologia.store');
+Route::delete('/epidemiologia/{id}', [EpidemiologiaController::class, 'destroy'])->name('epidemiologia.destroy');

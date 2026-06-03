@@ -21,7 +21,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left min-w-[500px]">
-                <thead class="bg-slate-900 text-slate-400 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">
+                <thead class="bg-slate-900 text-white text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">
                     <tr>
                         <th class="px-3 sm:px-6 py-3 sm:py-4">Módulo</th>
                         <th class="px-3 sm:px-6 py-3 sm:py-4">Acción</th>

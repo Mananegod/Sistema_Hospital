@@ -7,7 +7,7 @@
     
     {{-- Header con Botón de Notificaciones --}}
     <div class="flex justify-end mb-6">
-        <a href="{{ route('notificaciones.index') }}" 
+        <a href="{{ route('alertas.index') }}" 
            class="relative w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50 transition-all shadow-sm group"
            title="Alertas de Inventario">
             <i class="fa-solid fa-bell text-xl"></i>
