@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content=\"width=device-width, initial-scale=1.0, viewport-fit=cover\">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>@yield('title', 'Hospital TG')</title>
     
     {{-- CSS Locales e Inmunes a fallos de red --}}
@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="{{ asset('css/font-awesome/all.min.css') }}" />
 
     <style>
-        /* Usamos fuentes del sistema para garantizar el funcionamiento 100% offline sin demoras */
         * {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
@@ -33,25 +32,42 @@
             display: none !important;
         }
 
+        /* Ancho base usando la variable CSS (previene parpadeo) */
         aside {
+            width: var(--sidebar-width, 18rem);
             min-width: 5rem !important;
-        }
-        aside.w-64 {
-            min-width: 16rem !important;
         }
     </style>
 
-    {{-- Alpine.js cargado localmente con DEFER para mantener el comportamiento exacto del archivo Online --}}
+    {{-- 🟢 Script inline para lectura inmediata de preferencia de sidebar (evita FOUC) --}}
+    <script>
+        (function() {
+            var stored = window.localStorage.getItem('sidebar_open');
+            // Si no hay valor o es 'true', ancho abierto (18rem); si es 'false', contraído (5rem)
+            var width = (stored !== 'false') ? '18rem' : '5rem';
+            document.documentElement.style.setProperty('--sidebar-width', width);
+        })();
+    </script>
+
+    {{-- Alpine.js local con defer --}}
     <script defer src="{{ asset('js/alpine.min.js') }}"></script>
 
     <script>
-        // Inicialización de las tiendas globales de Alpine (Igual a tu versión online exitosa)
+        // Inicialización de las tiendas globales de Alpine
         document.addEventListener('alpine:init', () => {
             Alpine.store('sidebar', {
-                open: true,
-                mobileOpen: false,
-                toggle() { this.open = !this.open },
-                toggleMobile() { this.mobileOpen = !this.mobileOpen }
+                // Abierto por defecto, pero respeta preferencia guardada
+                open: window.localStorage.getItem('sidebar_open') !== 'false',
+                mobileOpen: false,        // móvil inicia cerrado
+
+                toggle() { 
+                    this.open = !this.open;
+                    // Guarda estado en localStorage
+                    window.localStorage.setItem('sidebar_open', this.open);
+                },
+                toggleMobile() { 
+                    this.mobileOpen = !this.mobileOpen;
+                }
             });
 
             Alpine.store('modal', {
@@ -110,7 +126,7 @@
             <header class="lg:hidden flex items-center justify-between p-4 bg-slate-900 text-white shadow-md z-30 shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20 shrink-0">
-                        <i class=\"fa-solid fa-hospital text-white\"></i>
+                        <i class="fa-solid fa-hospital text-white"></i>
                     </div>
                     <span class="text-xl font-bold tracking-tight">HOSPITAL <span class="text-blue-500">TG</span></span>
                 </div>
