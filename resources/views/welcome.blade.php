@@ -19,7 +19,7 @@
     </div>
     @endif
 
-    {{-- 🟢 ENVOLVEMOS TODA LA SECCIÓN DE LA TABLA Y EL MODAL EN UN COMPONENTE ALPINE LOCAL PARA MODO OFFLINE --}}
+    
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8" 
          x-data="{ 
             editOpen: false, 
@@ -30,7 +30,7 @@
             }
          }">
          
-        {{-- Panel Izquierdo: Formulario (Mantenido intacto) --}}
+      
         <div class="lg:col-span-4">
             <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm sticky top-6">
                 <h2 class="text-lg font-bold mb-5 flex items-center gap-2">
@@ -87,7 +87,7 @@
             </div>
         </div>
 
-        {{-- Panel Derecho: Tabla con el botón de edición offline corregido --}}
+        
         <div class="lg:col-span-8">
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <table class="w-full text-left border-collapse">
@@ -115,15 +115,9 @@
                             <td class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">{{ $med->area_destino }}</td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end gap-2">
-                                    {{-- 🟢 BOTÓN EDITAR EN MODO OFFLINE --}}
+                                    {{-- 🟢 BOTÓN EDITAR CORREGIDO (JSON encode evita errores de sintaxis) --}}
                                     <button type="button" 
-                                            @click="abrirEditar({
-                                                id: '{{ $med->id }}',
-                                                nombre_medicamento: '{{ $med->nombre_medicamento }}',
-                                                cantidad_stock: '{{ $med->cantidad_stock }}',
-                                                area_destino: '{{ $med->area_destino }}',
-                                                fecha_vencimiento: '{{ $med->fecha_vencimiento }}'
-                                            })" 
+                                            @click='abrirEditar({{ json_encode($med->only(['id','nombre_medicamento','cantidad_stock','area_destino','fecha_vencimiento'])) }})' 
                                             class="p-2 text-slate-400 hover:text-blue-600 transition"
                                             title="Editar Registro">
                                         <i class="fa-solid fa-pen-to-square"></i>
@@ -144,7 +138,7 @@
             </div>
         </div>
 
-        {{-- 🟢 MODAL DE EDICIÓN LOCAL OFFLINE (Inmune a fallas de internet y global stores) --}}
+        
         <div x-show="editOpen" 
              x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
