@@ -87,54 +87,58 @@
             </div>
         </div>
 
-        
+        {{-- Panel Derecho: Tabla con scroll horizontal optimizado para móviles --}}
         <div class="lg:col-span-8">
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-100">
-                            <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Medicamento</th>
-                            <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Stock</th>
-                            <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Área</th>
-                            <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        @foreach($medicamentos as $med)
-                        <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td class="px-6 py-4">
-                                <span class="font-bold text-slate-700 block text-sm">{{ $med->nombre_medicamento }}</span>
-                                <span class="text-[10px] text-slate-400 font-medium uppercase italic block">Vence: {{ \Carbon\Carbon::parse($med->fecha_vencimiento)->format('d/m/Y') }}</span>
-                                <span class="text-[9px] font-mono text-slate-400">Lote: {{ $med->codigo_lote ?? 'S/L' }}</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="px-3 py-1 rounded-lg text-xs font-black {{ $med->cantidad_stock <= 5 ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600' }}">
-                                    {{ $med->cantidad_stock }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">{{ $med->area_destino }}</td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex justify-end gap-2">
-                                    {{-- 🟢 BOTÓN EDITAR CORREGIDO (JSON encode evita errores de sintaxis) --}}
-                                    <button type="button" 
-                                            @click='abrirEditar({{ json_encode($med->only(['id','nombre_medicamento','cantidad_stock','area_destino','fecha_vencimiento'])) }})' 
-                                            class="p-2 text-slate-400 hover:text-blue-600 transition"
-                                            title="Editar Registro">
-                                        <i class="fa-solid fa-pen-to-square"></i>
-                                    </button>
-                                    
-                                    <form action="{{ route('medicamentos.destroy', $med->id) }}" method="POST" class="inline">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="p-2 text-slate-400 hover:text-red-600 transition" onclick="return confirm('¿Eliminar registro?')">
-                                            <i class="fa-solid fa-trash"></i>
+                
+                {{-- NUEVO CONTENEDOR CON DESPLAZAMIENTO HORIZONTAL --}}
+                <div class="w-full overflow-x-auto">
+                    <table class="w-full min-w-[600px] text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100">
+                                <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Medicamento</th>
+                                <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Stock</th>
+                                <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Área</th>
+                                <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            @foreach($medicamentos as $med)
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <span class="font-bold text-slate-700 block text-sm whitespace-nowrap">{{ $med->nombre_medicamento }}</span>
+                                    <span class="text-[10px] text-slate-400 font-medium uppercase italic block whitespace-nowrap">Vence: {{ \Carbon\Carbon::parse($med->fecha_vencimiento)->format('d/m/Y') }}</span>
+                                    <span class="text-[9px] font-mono text-slate-400 block whitespace-nowrap">Lote: {{ $med->codigo_lote ?? 'S/L' }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1 rounded-lg text-xs font-black inline-block whitespace-nowrap {{ $med->cantidad_stock <= 5 ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600' }}">
+                                        {{ $med->cantidad_stock }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">{{ $med->area_destino }}</td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex justify-end gap-2 whitespace-nowrap">
+                                        <button type="button" 
+                                                @click='abrirEditar({{ json_encode($med->only(['id','nombre_medicamento','cantidad_stock','area_destino','fecha_vencimiento'])) }})' 
+                                                class="p-2 text-slate-400 hover:text-blue-600 transition"
+                                                title="Editar Registro">
+                                            <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                                        
+                                        <form action="{{ route('medicamentos.destroy', $med->id) }}" method="POST" class="inline">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="p-2 text-slate-400 hover:text-red-600 transition" onclick="return confirm('¿Eliminar registro?')">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
 
@@ -156,7 +160,6 @@
                     </button>
                 </div>
 
-                {{-- El action se genera dinámicamente apuntando a la ruta index base con barra final --}}
                 <form :action="'{{ route('medicamentos.index') }}/' + medicamento.id" method="POST" class="space-y-4">
                     @csrf
                     @method('PUT')

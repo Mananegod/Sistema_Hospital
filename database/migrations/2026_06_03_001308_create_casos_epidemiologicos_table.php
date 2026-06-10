@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('patologia_cie10');
             $table->string('sector_procedencia');
             $table->date('fecha_sintomas');
-            $table->enum('estado_caso', ['SOSPECHOSO', 'PROBABLE', 'CONFIRMADO'])->default('SOSPECHOSO');
+            $table->enum('estado_caso', ['SOSPECHOSO', 'EN ESPERA', 'CONFIRMADO'])->default('SOSPECHOSO');
             $table->text('observaciones')->nullable();
             $table->timestamps();
         });

@@ -130,41 +130,46 @@
             </div>
         </div>
 
+        {{-- Panel Derecho: Tabla con scroll horizontal optimizado para móviles --}}
         <div class="lg:col-span-8">
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-slate-100">
                     <h2 class="text-lg font-bold text-slate-800">Retiros de Hoy</h2>
                 </div>
                 
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                        <tr>
-                            <th class="px-6 py-4">Medicamento</th>
-                            <th class="px-6 py-4">Área</th>
-                            <th class="px-6 py-4 text-center">Cant.</th>
-                            <th class="px-6 py-4 text-center">Fecha</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <template x-for="retiro in retiros" :key="retiro.id">
-                            <tr class="hover:bg-slate-50/50 transition">
-                                <td class="px-6 py-5 font-bold text-slate-800" x-text="retiro.nombre"></td>
-                                <td class="px-6 py-5 text-slate-600 text-sm" x-text="retiro.nombre_area"></td>
-                                <td class="px-6 py-5 text-center">
-                                    <span class="bg-gray-50 text-black-600 px-2 py-1 rounded-lg font-bold" x-text="retiro.cantidad">
-                                    </span>
-                                </td>
-                                <td class="px-6 py-5 text-center text-xs text-slate-400" x-text="retiro.created_at"></td>
+                {{-- NUEVO CONTENEDOR CON DESPLAZAMIENTO HORIZONTAL ASIGNADO --}}
+                <div class="w-full overflow-x-auto">
+                    <table class="w-full min-w-[600px] text-left border-collapse">
+                        <thead class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                            <tr class="border-b border-slate-100">
+                                <th class="px-6 py-4 whitespace-nowrap">Medicamento</th>
+                                <th class="px-6 py-4 whitespace-nowrap">Área</th>
+                                <th class="px-6 py-4 text-center whitespace-nowrap">Cant.</th>
+                                <th class="px-6 py-4 text-center whitespace-nowrap">Fecha</th>
                             </tr>
-                        </template>
-                        
-                        <template x-if="retiros.length === 0">
-                            <tr>
-                                <td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">No se han registrado retiros hoy.</td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <template x-for="retiro in retiros" :key="retiro.id">
+                                <tr class="hover:bg-slate-50/50 transition">
+                                    <td class="px-6 py-5 font-bold text-slate-800 whitespace-nowrap" x-text="retiro.nombre"></td>
+                                    <td class="px-6 py-5 text-slate-600 text-sm whitespace-nowrap" x-text="retiro.nombre_area"></td>
+                                    <td class="px-6 py-5 text-center whitespace-nowrap">
+                                        <span class="bg-gray-50 text-black-600 px-2 py-1 rounded-lg font-bold" x-text="retiro.cantidad">
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-5 text-center text-xs text-slate-400 whitespace-nowrap" x-text="retiro.created_at"></td>
+                                </tr>
+                            </template>
+                            
+                            <template x-if=\"retiros.length === 0\">
+                                <tr>
+                                    <td colspan="4" class="px-6 py-12 text-center text-slate-400 italic whitespace-nowrap">No se han registrado retiros hoy.</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
     </div>
