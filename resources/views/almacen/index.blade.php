@@ -1,10 +1,3 @@
-{{--
-   Vista optimizada de gestión de almacén:
-   - Tabla con paginación
-   - Select de medicamento con búsqueda asíncrona
-   - Formulario de Entrada Rápida vinculado a 'stock.entrada'
-   - Modal de Importación F15 con lógica local aislada (Estilo Pacientes)
---}}
 @extends('layouts.app')
 
 @section('title', 'Gestión de Almacén')
@@ -13,7 +6,6 @@
     @include('components.mensajes-notificaciones')
     @include('components.loading-overlay')
 
-    {{-- Inicializamos 'modalImportar: false' en el x-data local para blindarlo offline --}}
     <div class="max-w-7xl mx-auto" x-data="{
         buscando: false,
         resultados: [],
@@ -44,7 +36,6 @@
             </div>
             
             <div class="flex gap-3">
-                {{-- Botón con acción local para abrir el modal --}}
                 <button @click="modalImportar = true" 
                         class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition shadow-sm">
                     <i class="fas fa-file-excel text-green-600"></i> Importar Excel
@@ -52,7 +43,7 @@
             </div>
         </div>
 
-        {{-- Formulario de Entrada Rápida (Acoplado de forma exacta a tu ruta) --}}
+        {{-- Formulario de Entrada Rápida --}}
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
             <h2 class="text-xs font-bold uppercase tracking-widest text-slate-700 mb-5 flex items-center gap-2">
                 <span class="w-2 h-6 bg-slate-900 rounded-full"></span> Registrar Entrada Rápida de Stock
@@ -60,13 +51,11 @@
 
             <form action="{{ route('stock.entrada') }}" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end" x-on:submit="$store.loading.activate('Procesando entrada...')">
                 @csrf
-                {{-- Input buscador asíncrono --}}
                 <div class="relative">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide">Medicamento</label>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide">Insumos medicos</label>
                     <input type="text" x-model="q" @input.debounce.300ms="buscar()" placeholder="Escriba para buscar..."
                            class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition font-semibold text-slate-700">
                     
-                    {{-- Resultados de la búsqueda --}}
                     <div class="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-xl shadow-xl max-h-60 overflow-y-auto"
                          x-show="resultados.length > 0" x-cloak>
                         <template x-for="item in resultados" :key="item.id">
@@ -77,7 +66,6 @@
                     </div>
                 </div>
 
-                {{-- Input ID oculto que se llena al seleccionar --}}
                 <input type="hidden" name="medicamento_id" id="medicamento_id_real" required>
 
                 <div>
@@ -102,7 +90,38 @@
             </form>
         </div>
 
-        {{-- Tabla de Inventario Actual --}}
+        {{-- 🟢 BARRA DE FILTROS: Área y Tipo de Insumo combinados --}}
+        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-4">
+            <form action="{{ route('almacen.index') }}" method="GET" class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-3 flex-1">
+                    <div class="w-full sm:w-64">
+                        <select name="area_id" onchange="this.form.submit()" class="w-full bg-slate-50 border-0 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                            <option value="">Todas las Áreas</option>
+                            @foreach($areas as $area)
+                                <option value="{{ $area->id }}" {{ request('area_id') == $area->id ? 'selected' : '' }}>{{ $area->nombre_area }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="w-full sm:w-64">
+                        <select name="tipo_insumo" onchange="this.form.submit()" class="w-full bg-slate-50 border-0 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                            <option value="">Todos los Tipos de Insumo</option>
+                            @foreach($tiposInsumo as $tipo)
+                                <option value="{{ $tipo }}" {{ request('tipo_insumo') == $tipo ? 'selected' : '' }}>{{ $tipo }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                @if(request('area_id') || request('tipo_insumo'))
+                    <a href="{{ route('almacen.index') }}" class="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fas fa-times-circle"></i> Limpiar Filtros
+                    </a>
+                @endif
+            </form>
+        </div>
+
+        {{-- Tabla de Inventario --}}
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest">Existencias en Almacén</h3>
@@ -112,8 +131,8 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/30">
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Medicamento</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Presentación</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Insumos medicos</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo de Insumo</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Mínimo</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Actual</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Área de Ubicación</th>
@@ -123,7 +142,13 @@
                         @forelse($inventario as $item)
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-6 py-4 text-slate-900 font-bold tracking-tight">{{ $item->medicamento }}</td>
-                                <td class="px-6 py-4 text-slate-500 text-xs font-semibold">{{ $item->presentacion ?? 'N/C' }}</td>
+                                {{-- 🟢 Badge dinámico de tipo de insumo determinado --}}
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded-lg text-[11px] font-bold tracking-wide
+                                        {{ $item->tipo_insumo === 'Por Determinar' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-purple-50 text-purple-700 border border-purple-100' }}">
+                                        {{ $item->tipo_insumo ?? 'Por Determinar' }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $item->stock_minimo ?? '0' }}</td>
                                 <td class="px-6 py-4 text-center">
                                     <span class="px-3 py-1.5 rounded-xl text-xs font-bold font-mono {{ $item->stock_actual <= ($item->stock_minimo ?? 0) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600' }}">
@@ -138,8 +163,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-12 text-center text-sm text-slate-400 italic">
-                                    <i class="fas fa-box-open text-2xl block mb-2 text-slate-300 not-italic"></i> No se encontraron registros en el almacén central.
+                                <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-400 italic">
+                                    <i class="fas fa-box-open text-2xl block mb-2 text-slate-300 not-italic"></i> No se encontraron registros con los filtros seleccionados.
                                 </td>
                             </tr>
                         @endforelse
@@ -147,7 +172,6 @@
                 </table>
             </div>
 
-            {{-- Paginación --}}
             @if($inventario->hasPages())
                 <div class="px-6 py-4 border-t border-slate-50 bg-slate-50/30">
                     {{ $inventario->links() }}
@@ -155,7 +179,7 @@
             @endif
         </div>
 
-        {{-- MODAL DE IMPORTACIÓN INTERNO (Estilo Seguro Offline de Pacientes) --}}
+        {{-- MODAL DE IMPORTACIÓN --}}
         <div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
              x-show="modalImportar" 
              x-cloak 
@@ -164,19 +188,17 @@
             <div class="bg-white rounded-3xl max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
                  @click.away="modalImportar = false">
                  
-                {{-- Encabezado --}}
                 <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                        <i class="fas fa-file-excel text-green-600"></i> Importar Inventario
+                        <i class="fas fa-file-excel text-green-600"></i> Importar Inventario Masivo
                     </h3>
                     <button @click="modalImportar = false" class="text-slate-400 hover:text-slate-600 transition">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
 
-                {{-- Formulario Interno --}}
                 <form action="{{ route('inventario.import') }}" method="POST" enctype="multipart/form-data"
-                      x-on:submit="$store.loading.activate('Importando datos...')">
+                      x-on:submit="$store.loading.activate('Importando y clasificando datos...')">
                     @csrf
                     <div class="p-6 space-y-4">
                         <div>
@@ -196,7 +218,6 @@
                         </div>
                     </div>
 
-                    {{-- Acciones del Modal --}}
                     <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
                         <button type="button" @click="modalImportar = false"
                             class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-100 transition text-xs uppercase tracking-wider">

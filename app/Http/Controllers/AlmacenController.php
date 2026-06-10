@@ -15,6 +15,11 @@ class AlmacenController extends Controller
     {
         $areas = DB::table('areas')->get();
 
+        $tiposInsumo = DB::table('medicamentos')
+            ->whereNotNull('tipo_insumo')
+            ->distinct()
+            ->pluck('tipo_insumo');
+
         $inventario = DB::table('medicamentos')
             ->select(
                 'id as medicamento_id',
@@ -22,36 +27,40 @@ class AlmacenController extends Controller
                 'presentacion',
                 'cantidad_stock as stock_actual',
                 'stock_minimo',
-                'area_destino'
+                'area_destino',
+                'tipo_insumo'
             )
             ->when($request->area_id, function ($query, $area_id) {
                 $areaDestino = DB::table('areas')->where('id', $area_id)->value('nombre_area');
                 return $areaDestino ? $query->where('area_destino', $areaDestino) : $query;
             })
+            ->when($request->tipo_insumo, function ($query, $tipo_insumo) {
+                return $query->where('tipo_insumo', $tipo_insumo);
+            })
             ->orderBy('nombre_medicamento')
             ->paginate(50)
             ->appends($request->query());
 
-        return view('almacen.index', compact('inventario', 'areas'));
+        return view('almacen.index', compact('inventario', 'areas', 'tiposInsumo'));
     }
 
-public function buscarMedicamentos(Request $request)
-{
-    $q = trim($request->get('q', ''));
+    public function buscarMedicamentos(Request $request)
+    {
+        $q = trim($request->get('q', ''));
 
-    if (empty($q)) {
-        return response()->json([]);
+        if (empty($q)) {
+            return response()->json([]);
+        }
+
+        $medicamentos = DB::table('medicamentos')
+            ->select('id', 'nombre_medicamento as text')
+            ->where('nombre_medicamento', 'ilike', "%{$q}%")
+            ->orderBy('nombre_medicamento')
+            ->limit(10)
+            ->get();
+
+        return response()->json($medicamentos);
     }
-
-    $medicamentos = DB::table('medicamentos')
-        ->select('id', 'nombre_medicamento as text')
-        ->where('nombre_medicamento', 'ilike', "%{$q}%")
-        ->orderBy('nombre_medicamento')
-        ->limit(10)
-        ->get();
-
-    return response()->json($medicamentos);
-}
 
     public function entradaRapida(Request $request)
     {
@@ -63,24 +72,31 @@ public function buscarMedicamentos(Request $request)
 
         $areaDestino = DB::table('areas')->where('id', $request->area_id)->value('nombre_area');
 
-        if (! $areaDestino) {
-            return back()->with('error', 'El área destino seleccionada no es válida.');
+        if (!$areaDestino) {
+            return back()->with('error', 'El área seleccionada no es válida.');
         }
 
-        $medicamento = DB::table('medicamentos')
-            ->where('id', $request->medicamento_id)
-            ->where('area_destino', $areaDestino) 
-            ->first();
+        $medicamento = DB::table('medicamentos')->where('id', $request->medicamento_id)->first();
 
-        if (! $medicamento) {
-            return back()->with('error', 'El medicamento seleccionado no pertenece al área destino indicada.');
+        if (!$medicamento) {
+            return back()->with('error', 'El insumo seleccionado no existe.');
+        }
+
+        $tipoInsumo = $medicamento->tipo_insumo;
+        if (empty($tipoInsumo) || $tipoInsumo == 'Por Determinar') {
+            $tipoInsumo = $this->deducirTipoInsumo($medicamento->nombre_medicamento);
         }
 
         DB::table('medicamentos')
             ->where('id', $request->medicamento_id)
-            ->increment('cantidad_stock', $request->cantidad);
+            ->update([
+                'cantidad_stock' => DB::raw('cantidad_stock + ' . $request->cantidad),
+                'area_destino' => $areaDestino,
+                'tipo_insumo' => $tipoInsumo,
+                'updated_at' => now(),
+            ]);
 
-        return back()->with('success', "Se han sumado {$request->cantidad} unidades a {$medicamento->nombre_medicamento}.");
+        return back()->with('success', 'Stock actualizado correctamente en la ubicación seleccionada.');
     }
 
     public function importarExcel(Request $request)
@@ -99,14 +115,11 @@ public function buscarMedicamentos(Request $request)
         try {
             session_write_close();
 
-            $import = new MedicamentosImport($request->area_id);
+            Excel::import(new MedicamentosImport($request->area_id), $request->file('archivo'));
 
-            Excel::import(
-                $import,
-                $request->file('archivo')
-            );
+            $this->clasificarInsumosNuevos();
 
-            return redirect()->route('almacen.index')->with('success', '¡Inventario actualizado con éxito!');
+            return redirect()->route('almacen.index')->with('success', '¡El archivo F15 fue importado y clasificado con éxito!');
         } catch (ValidationException $e) {
             $failures = $e->failures();
             $errores = [];
@@ -127,6 +140,66 @@ public function buscarMedicamentos(Request $request)
         } catch (\Exception $e) {
             return back()->with('error', 'Error inesperado: ' . $e->getMessage());
         }
+    }
+
+    private function clasificarInsumosNuevos()
+    {
+        $diccionario = [
+            'Jeringa' => ['jeringa', 'inyectadora', 'scalp', 'obturador', 'aguja'],
+            'Solución / Suero' => ['solucion', '0.9%', 'riger', 'ringer', 'dextrosa', 'fisiologica', 'suero', '0,9%'],
+            'Electrólitos de Alto Riesgo' => ['potasio', 'magnesio', 'gluconato', 'calcio', 'bicarbonato', 'hipertona', '14.9%', '20%'],
+            'Antibiótico' => ['cilina', 'oxacina', 'penicilina', 'ceftriaxona', 'meropenem', 'amikacina', 'ciprofloxacina'],
+            'Analgésico / Antiinflamatorio' => ['profeno', 'fenaco', 'paracetamol', 'acetaminofen', 'ketoprofeno', 'diclofenac', 'meloxicam'],
+            'Material Médico Quirúrgico' => ['gasa', 'compresa', 'guantes', 'venda', 'adhesivo', 'bisturi', 'sutura', 'hilo', 'cateter', 'yelco'],
+            'Protección / Bioseguridad' => ['tapaboca', 'mascarilla', 'bata', 'gorro', 'careta', 'alcohol'],
+            'Esteroides / Antialérgicos' => ['metasona', 'cortisona', 'prednisona', 'loratadina', 'hidrocortisona'],
+            'Protector Gástrico' => ['prazol', 'omeprazol', 'pantoprazol', 'ranitidina']
+        ];
+
+        foreach ($diccionario as $tipo => $palabras) {
+            DB::table('medicamentos')
+                ->where(function ($query) {
+                    $query->whereNull('tipo_insumo')
+                          ->orWhere('tipo_insumo', 'Por Determinar');
+                })
+                ->where(function ($query) use ($palabras) {
+                    foreach ($palabras as $palabra) {
+                        $query->orWhere('nombre_medicamento', 'ilike', "%{$palabra}%");
+                    }
+                })
+                ->update(['tipo_insumo' => $tipo]);
+        }
+
+        DB::table('medicamentos')
+            ->whereNull('tipo_insumo')
+            ->update(['tipo_insumo' => 'Por Determinar']);
+    }
+
+    private function deducirTipoInsumo($nombreMedicamento)
+    {
+        $desc = mb_strtolower($nombreMedicamento, 'UTF-8');
+
+        $diccionario = [
+            'Jeringa' => ['jeringa', 'inyectadora', 'scalp', 'obturador', 'aguja'],
+            'Electrólitos de Alto Riesgo' => ['potasio', 'magnesio', 'gluconato', 'calcio', 'bicarbonato', 'hipertona', '14.9%', '20%'],
+            'Solución / Suero' => ['solucion', '0.9%', 'riger', 'ringer', 'dextrosa', 'fisiologica', 'suero', '0,9%'], //viva dios, abajo satanas
+            'Antibiótico' => ['cilina', 'oxacina', 'penicilina', 'ceftriaxona', 'meropenem', 'amikacina', 'ciprofloxacina'],
+            'Analgésico / Antiinflamatorio' => ['profeno', 'fenaco', 'paracetamol', 'acetaminofen', 'ketoprofeno', 'diclofenac', 'meloxicam'],
+            'Material Médico Quirúrgico' => ['gasa', 'compresa', 'guantes', 'venda', 'adhesivo', 'bisturi', 'sutura', 'hilo', 'cateter', 'yelco'],
+            'Protección / Bioseguridad' => ['tapaboca', 'mascarilla', 'bata', 'gorro', 'careta', 'alcohol'],
+            'Esteroides / Antialérgicos' => ['metasona', 'cortisona', 'prednisona', 'loratadina', 'hidrocortisona'],
+            'Protector Gástrico' => ['prazol', 'omeprazol', 'pantoprazol', 'ranitidina']
+        ];
+
+        foreach ($diccionario as $tipo => $palabras) {
+            foreach ($palabras as $palabra) {
+                if (str_contains($desc, $palabra)) {
+                    return $tipo;
+                }
+            }
+        }
+
+        return 'Por Determinar';
     }
 
     public function indexRetiros()
@@ -185,31 +258,54 @@ public function buscarMedicamentos(Request $request)
 
         return back()->with('success', 'El retiro ha sido registrado y el stock actualizado con éxito.');
     }
-    
-    public function actualizarVencimientoMasivo(Request $request)
-{
-    $request->validate([
-        'area_id' => 'required',
-        'fecha_vencimiento' => 'required|date',
-    ]);
 
-    $areaDestino = DB::table('areas')->where('id', $request->area_id)->value('nombre_area');
+    private function deducirAreaDestino($nombreMedicamento)
+    {
+        $desc = mb_strtolower($nombreMedicamento, 'UTF-8');
 
-    if (!$areaDestino) {
-        return back()->with('error', 'El área seleccionada no es válida.');
+        if (str_contains($desc, 'kit') || str_contains($desc, 'cirugia') || str_contains($desc, 'caina')) {
+            return 'QUIRÓFANO';
+        }
+
+        $patronesMedicamentos = [
+            'acetaminofen', 'paracetamol', 'insulina', 'rinsulin', 'ergometrina', 'mg', 'ml',
+            'ampolla', 'amp', 'tableta', 'capsula', 'suspension', 'jarabe', 'gotas',
+            'cilina', 'oxacina', 'profeno', 'fenaco', 'prazol', 'sartan'
+        ];
+
+        foreach ($patronesMedicamentos as $patron) {
+            if (str_contains($desc, $patron)) {
+                return 'EMERGENCIA';
+            }
+        }
+
+        return null;
     }
 
-    $afectados = DB::table('medicamentos')
-        ->where('area_destino', $areaDestino)
-        ->update([
-            'fecha_vencimiento' => $request->fecha_vencimiento,
-            'updated_at' => now()
+    public function actualizarVencimientoMasivo(Request $request)
+    {
+        $request->validate([
+            'area_id' => 'required',
+            'fecha_vencimiento' => 'required|date',
         ]);
 
-    if ($afectados === 0) {
-        return back()->with('info', "No se encontraron medicamentos registrados en el área '{$areaDestino}' para actualizar.");
-    }
+        $areaDestino = DB::table('areas')->where('id', $request->area_id)->value('nombre_area');
 
-    return back()->with('success', "¡Éxito! Se ha actualizado la fecha de vencimiento de {$afectados} medicamentos en el área '{$areaDestino}'.");
-}
+        if (!$areaDestino) {
+            return back()->with('error', 'El área seleccionada no es válida.');
+        }
+
+        $afectados = DB::table('medicamentos')
+            ->where('area_destino', $areaDestino)
+            ->update([
+                'fecha_vencimiento' => $request->fecha_vencimiento,
+                'updated_at' => now()
+            ]);
+
+        if ($afectados === 0) {
+            return back()->with('info', "No se encontraron medicamentos registrados en el área '{$areaDestino}' para actualizar.");
+        }
+
+        return back()->with('success', "¡Éxito! Se han actualizado las fechas de vencimiento.");
+    }
 }

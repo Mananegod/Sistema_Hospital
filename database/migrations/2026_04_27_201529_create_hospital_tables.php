@@ -24,10 +24,11 @@ return new class extends Migration
         $table->string('area_destino');
         $table->date('fecha_vencimiento');
         $table->string('status_disponibilidad');
+        $table->string('tipo_insumo')->default('Por Determinar')->nullable();
         $table->timestamps();
     });
 
-    // Áreas del Hospital (Emergencia, Quirófano, etc.)
+    // areas del Hospital
     Schema::create('areas', function (Blueprint $table) {
         $table->id();
         $table->string('nombre_area');
