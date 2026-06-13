@@ -28,7 +28,8 @@ class AlmacenController extends Controller
                 'cantidad_stock as stock_actual',
                 'stock_minimo',
                 'area_destino',
-                'tipo_insumo'
+                'tipo_insumo',
+                'codigo_lote'
             )
             ->when($request->area_id, function ($query, $area_id) {
                 $areaDestino = DB::table('areas')->where('id', $area_id)->value('nombre_area');
@@ -39,7 +40,15 @@ class AlmacenController extends Controller
             })
             ->orderBy('nombre_medicamento')
             ->paginate(50)
-            ->appends($request->query());
+            ->appends($request->query())
+            ->through(function ($item) {
+                // Saneamiento estricto del código de lote para evitar URLs rotas
+                $item->codigo_lote = !empty($item->codigo_lote) ? trim($item->codigo_lote) : null;
+                if ($item->codigo_lote === '') {
+                    $item->codigo_lote = null;
+                }
+                return $item;
+            });
 
         return view('almacen.index', compact('inventario', 'areas', 'tiposInsumo'));
     }
@@ -182,7 +191,7 @@ class AlmacenController extends Controller
         $diccionario = [
             'Jeringa' => ['jeringa', 'inyectadora', 'scalp', 'obturador', 'aguja'],
             'Electrólitos de Alto Riesgo' => ['potasio', 'magnesio', 'gluconato', 'calcio', 'bicarbonato', 'hipertona', '14.9%', '20%'],
-            'Solución / Suero' => ['solucion', '0.9%', 'riger', 'ringer', 'dextrosa', 'fisiologica', 'suero', '0,9%'], //viva dios, abajo satanas
+            'Solución / Suero' => ['solucion', '0.9%', 'riger', 'ringer', 'dextrosa', 'fisiologica', 'suero', '0,9%'],
             'Antibiótico' => ['cilina', 'oxacina', 'penicilina', 'ceftriaxona', 'meropenem', 'amikacina', 'ciprofloxacina'],
             'Analgésico / Antiinflamatorio' => ['profeno', 'fenaco', 'paracetamol', 'acetaminofen', 'ketoprofeno', 'diclofenac', 'meloxicam'],
             'Material Médico Quirúrgico' => ['gasa', 'compresa', 'guantes', 'venda', 'adhesivo', 'bisturi', 'sutura', 'hilo', 'cateter', 'yelco'],
@@ -243,6 +252,7 @@ class AlmacenController extends Controller
         }
 
         DB::transaction(function () use ($request) {
+            // CORRECCIÓN CRÍTICA: Cambiado de ->decrement('..., $request->decrement) a usar $request->cantidad
             DB::table('medicamentos')
                 ->where('id', $request->medicamento_id)
                 ->decrement('cantidad_stock', $request->cantidad);
@@ -307,5 +317,79 @@ class AlmacenController extends Controller
         }
 
         return back()->with('success', "¡Éxito! Se han actualizado las fechas de vencimiento.");
+    }
+
+public function verPorLote(Request $request, $codigo_lote = null)
+    {
+        if (!$codigo_lote) {
+            $queryString = $request->server('QUERY_STRING');
+            
+            if (str_contains($queryString, '=')) {
+                $partes = explode('=', $queryString);
+                $codigo_lote = end($partes);
+            } else {
+                $codigo_lote = $queryString;
+            }
+        }
+
+        $codigo_lote = trim($codigo_lote);
+
+        if (empty($codigo_lote)) {
+            return redirect()->route('almacen.index')
+                ->with('error', "No se especificó ningún código de lote válido.");
+        }
+
+        $medicamentos = DB::table('medicamentos')
+            ->where('codigo_lote', 'ilike', $codigo_lote)
+            ->orderBy('nombre_medicamento')
+            ->get();
+
+        if ($medicamentos->isEmpty()) {
+            return redirect()->route('almacen.index')
+                ->with('error', "No se encontraron medicamentos registrados con el lote: {$codigo_lote}");
+        }
+
+        return view('almacen.ver_lote', compact('medicamentos', 'codigo_lote'));
+    }
+
+    public function editarMasivo(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required', // Recibe el string JSON enviado por Alpine.js
+        ]);
+
+        // Decodificamos el JSON para convertirlo en un array común de PHP
+        $ids = json_decode($request->ids, true);
+
+        if (empty($ids)) {
+            return back()->with('error', 'No se seleccionó ningún insumo médico válido.');
+        }
+
+        // Estructuramos qué columnas se van a actualizar realmente
+        $updateData = [];
+
+        if (!empty($request->codigo_lote)) {
+            $updateData['codigo_lote'] = trim($request->codigo_lote);
+        }
+
+        if ($request->filled('cantidad_stock')) {
+            $updateData['cantidad_stock'] = (int)$request->cantidad_stock;
+        }
+
+        // Si el usuario abrió el modal pero le dio a guardar vacío, no hacemos nada
+        if (empty($updateData)) {
+            return back()->with('info', 'No se realizó ninguna modificación porque los campos estaban vacíos.');
+        }
+
+        $updateData['updated_at'] = now();
+
+        // Ejecutamos una sola consulta masiva en PostgreSQL de forma segura usando transacciones
+        DB::transaction(function () use ($ids, $updateData) {
+            DB::table('medicamentos')
+                ->whereIn('id', $ids)
+                ->update($updateData);
+        });
+
+        return back()->with('success', '¡Se han actualizado con éxito los ' . count($ids) . ' insumos seleccionados!');
     }
 }

@@ -79,3 +79,9 @@ Route::post('/almacen/vencimiento-masivo', [AlmacenController::class, 'actualiza
 Route::get('/epidemiologia', [EpidemiologiaController::class, 'index'])->name('epidemiologia.index');
 Route::post('/epidemiologia', [EpidemiologiaController::class, 'store'])->name('epidemiologia.store');
 Route::delete('/epidemiologia/{id}', [EpidemiologiaController::class, 'destroy'])->name('epidemiologia.destroy');
+
+Route::get('/almacen/lote/{codigo_lote}', [AlmacenController::class, 'verPorLote'])->name('almacen.lote');
+Route::get('/almacen/lote', [AlmacenController::class, 'verPorLote'])->name('almacen.lote');
+Route::get('/almacen/lote/{codigo_lote}', [AlmacenController::class, 'verPorLote']);
+
+Route::post('/almacen/editar-masivo', [AlmacenController::class, 'editarMasivo'])->name('almacen.editar-masivo');

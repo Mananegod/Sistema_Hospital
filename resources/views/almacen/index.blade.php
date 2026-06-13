@@ -6,12 +6,15 @@
     @include('components.mensajes-notificaciones')
     @include('components.loading-overlay')
 
+    {{-- Inicializamos modalMasivo y el arreglo de seleccionados en el x-data principal --}}
     <div class="max-w-7xl mx-auto" x-data="{
         buscando: false,
         resultados: [],
         q: '',
         seleccionado: null,
         modalImportar: false, 
+        modalMasivo: false,
+        seleccionados: [],
         async buscar() {
             if (this.q.length < 2) { this.resultados = []; return; }
             this.buscando = true;
@@ -90,7 +93,32 @@
             </form>
         </div>
 
-        {{-- 🟢 BARRA DE FILTROS: Área y Tipo de Insumo combinados --}}
+        {{-- BARRA ESTILO WHATSAPP: Aparece dinámicamente si hay insumos seleccionados --}}
+        <div x-show="seleccionados.length > 0" 
+             x-transition 
+             x-cloak
+             class="mb-4 p-4 bg-blue-600 border border-blue-700 rounded-2xl flex items-center justify-between shadow-md shadow-blue-500/10">
+            <div class="flex items-center gap-3">
+                <div class="w-7 h-7 bg-white/20 rounded-xl flex items-center justify-center text-white">
+                    <i class="fas fa-check-double text-xs"></i>
+                </div>
+                <span class="text-xs font-bold text-white uppercase tracking-wider">
+                    Has seleccionado <span class="bg-white text-blue-700 px-2 py-0.5 rounded-lg font-mono font-black" x-text="seleccionados.length"></span> insumos médicos
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" @click="seleccionados = []" 
+                        class="text-xs font-bold text-blue-200 hover:text-white uppercase tracking-wider px-3 py-2 transition">
+                    Desmarcar todos
+                </button>
+                <button type="button" @click="modalMasivo = true" 
+                        class="bg-white hover:bg-slate-50 text-blue-700 text-xs font-extrabold px-4 py-2.5 rounded-xl uppercase tracking-wider transition shadow-sm">
+                    <i class="fas fa-edit mr-1"></i> Editar Selección
+                </button>
+            </div>
+        </div>
+
+        {{-- BARRA DE FILTROS: Área y Tipo de Insumo combinados --}}
         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-4">
             <form action="{{ route('almacen.index') }}" method="GET" class="flex flex-wrap items-center justify-between gap-4">
                 <div class="flex flex-wrap items-center gap-3 flex-1">
@@ -131,8 +159,15 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/30">
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Insumos medicos</th>
+                            {{-- Checkbox Maestro corregido usando los items explícitos de la página --}}
+                            <th class="px-6 py-4 text-center w-12">
+                                <input type="checkbox" 
+                                       @change="$el.checked ? seleccionados = [ @foreach($inventario->items() as $item) '{{ $item->medicamento_id }}', @endforeach ] : seleccionados = []"
+                                       class="rounded text-blue-600 focus:ring-blue-500/20 border-slate-300 w-4 h-4 cursor-pointer">
+                            </th>
+                            <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Insumos medicos</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo de Insumo</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Lote / QR</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Mínimo</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Actual</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Área de Ubicación</th>
@@ -140,15 +175,41 @@
                     </thead>
                     <tbody class="divide-y divide-slate-50 text-sm font-medium text-slate-600">
                         @forelse($inventario as $item)
-                            <tr class="hover:bg-slate-50/50 transition-colors">
-                                <td class="px-6 py-4 text-slate-900 font-bold tracking-tight">{{ $item->medicamento }}</td>
-                                {{-- 🟢 Badge dinámico de tipo de insumo determinado --}}
+                            <tr class="hover:bg-slate-50/50 transition-colors" :class="seleccionados.includes('{{ $item->medicamento_id }}') ? 'bg-blue-50/40 hover:bg-blue-50/50' : ''">
+                                {{-- Checkbox de Fila --}}
+                                <td class="px-6 py-4 text-center">
+                                    <input type="checkbox" 
+                                           value="{{ $item->medicamento_id }}" 
+                                           x-model="seleccionados"
+                                           class="rounded text-blue-600 focus:ring-blue-500/20 border-slate-300 w-4 h-4 cursor-pointer">
+                                </td>
+                                <td class="px-2 py-4 text-slate-900 font-bold tracking-tight">{{ $item->medicamento }}</td>
                                 <td class="px-6 py-4">
                                     <span class="px-2 py-1 rounded-lg text-[11px] font-bold tracking-wide
                                         {{ $item->tipo_insumo === 'Por Determinar' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-purple-50 text-purple-700 border border-purple-100' }}">
                                         {{ $item->tipo_insumo ?? 'Por Determinar' }}
                                     </span>
                                 </td>
+                                
+                                {{-- Celda del QR --}}
+                                <td class="px-6 py-2 text-center">
+                                    @if(isset($item->codigo_lote) && $item->codigo_lote !== null && strlen(trim($item->codigo_lote)) > 0)
+                                        @php
+                                            $loteFormateado = trim($item->codigo_lote);
+                                        @endphp
+                                        <div class="inline-flex flex-col items-center justify-center p-1.5 bg-white border border-slate-100 rounded-xl shadow-xs">
+                                            <div class="p-1 bg-slate-50 rounded-lg border border-slate-100">
+                                                {!! QrCode::size(55)->margin(1)->generate(route('almacen.lote', ['codigo_lote' => $loteFormateado])) !!}
+                                            </div>
+                                            <a href="{{ route('almacen.lote', ['codigo_lote' => $loteFormateado]) }}" class="text-[10px] font-mono font-bold text-blue-600 hover:underline mt-1">
+                                                {{ $loteFormateado }}
+                                            </a>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-slate-400 italic font-semibold">S/L</span>
+                                    @endif
+                                </td>
+
                                 <td class="px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $item->stock_minimo ?? '0' }}</td>
                                 <td class="px-6 py-4 text-center">
                                     <span class="px-3 py-1.5 rounded-xl text-xs font-bold font-mono {{ $item->stock_actual <= ($item->stock_minimo ?? 0) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600' }}">
@@ -163,7 +224,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-400 italic">
+                                <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-400 italic">
                                     <i class="fas fa-box-open text-2xl block mb-2 text-slate-300 not-italic"></i> No se encontraron registros con los filtros seleccionados.
                                 </td>
                             </tr>
@@ -179,6 +240,66 @@
             @endif
         </div>
 
+        {{-- MODAL DE EDICIÓN MASIVA (ACCIONES EN LOTE) --}}
+        <div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
+             x-show="modalMasivo" 
+             x-cloak 
+             x-transition>
+             
+            <div class="bg-white rounded-3xl max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
+                 @click.away="modalMasivo = false">
+                 
+                <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
+                        <i class="fas fa-edit text-blue-600"></i> Edición Masiva de Insumos
+                    </h3>
+                    <button type="button" @click="modalMasivo = false" class="text-slate-400 hover:text-slate-600 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form action="{{ route('almacen.editar-masivo') }}" method="POST"
+                      x-on:submit="$store.loading.activate('Applying mass changes...')">
+                    @csrf
+                    {{-- Input oculto que convierte los IDs de Alpine.js en texto plano JSON --}}
+                    <input type="hidden" name="ids" :value="JSON.stringify(seleccionados)">
+
+                    <div class="p-6 space-y-4">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <p class="text-[11px] text-slate-500 uppercase font-semibold">
+                                Los cambios ingresados afectarán a los <span class="text-blue-600 font-bold" x-text="seleccionados.length"></span> insumos médicos que marcaste.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Nuevo Código de Lote</label>
+                            <input type="text" name="codigo_lote" placeholder="Ej: LOTE-2026"
+                                   class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
+                            <p class="text-[9px] text-slate-400 mt-1 uppercase">Dejar vacío si no deseas cambiar el lote</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Nuevo Stock Disponible</label>
+                            <input type="number" name="cantidad_stock" min="0" placeholder="Ej: 150"
+                                   class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
+                            <p class="text-[9px] text-slate-400 mt-1 uppercase">Dejar vacío si no deseas cambiar las cantidades actuales</p>
+                        </div>
+                    </div>
+
+                    <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+                        <button type="button" @click="modalMasivo = false"
+                            class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-100 transition text-xs uppercase tracking-wider">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition text-xs uppercase tracking-wider">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         {{-- MODAL DE IMPORTACIÓN --}}
         <div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
              x-show="modalImportar" 
@@ -192,7 +313,7 @@
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
                         <i class="fas fa-file-excel text-green-600"></i> Importar Inventario Masivo
                     </h3>
-                    <button @click="modalImportar = false" class="text-slate-400 hover:text-slate-600 transition">
+                    <button type="button" @click="modalImportar = false" class="text-slate-400 hover:text-slate-600 transition">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
