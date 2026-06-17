@@ -11,6 +11,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(SectorSeeder::class);
         $this->call(AreaSeeder::class);
-       /*manaze agrega aqui los seeders que vayas creando para que siempre se lean en el host */
+        $this->call(UsuarioAdminSeeder::class);
     }
 }

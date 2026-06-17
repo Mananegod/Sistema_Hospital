@@ -10,10 +10,12 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        // Esto le dice a Laravel que confíe en el balanceador de carga de Render
-        $middleware->trustProxies(at: '*');
+    ->withMiddleware(function (Middleware $middleware) {
+        // Registramos el alias para usarlo cómodamente en web.php
+        $middleware->alias([
+            'auth.hospital' => \App\Http\Middleware\AuthHospital::class,
+        ]);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
+    ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

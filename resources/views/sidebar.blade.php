@@ -256,18 +256,22 @@
             </div>
 
             {{-- Botón Cerrar Sesión --}}
-            <a href="{{ url('/') }}"
-               class="flex items-center h-10 group text-red-400 hover:bg-red-500/10 hover:text-red-300 bg-red-400/5"
-               :class="{
-                   'px-4 gap-3 justify-start mx-2 rounded-xl mt-1': $store.sidebar.open,
-                   'w-10 mx-auto justify-center rounded-xl px-0 mt-2': !$store.sidebar.open,
-                   'transition-all duration-200': ready
-               }" title="Cerrar Sesión">
-                <div class="w-6 flex justify-center shrink-0">
-                    <i class="fa-solid fa-arrow-right-from-bracket text-base group-hover:-translate-x-0.5 group-hover:scale-110 transition-transform"></i>
-                </div>
-                <span class="font-semibold text-xs whitespace-nowrap" x-show="$store.sidebar.open">Cerrar Sesión</span>
-            </a>
+            {{-- Botón Cerrar Sesión (Convertido a Formulario POST) --}}
+<form action="{{ route('logout') }}" method="POST" class="w-full">
+    @csrf
+    <button type="submit"
+            class="flex items-center h-10 group text-red-400 hover:bg-red-500/10 hover:text-red-300 bg-red-400/5 w-full text-left"
+            :class="{
+                'px-4 gap-3 justify-start mx-2 rounded-xl mt-1 w-[calc(100%-16px)]': $store.sidebar.open,
+                'w-10 mx-auto justify-center rounded-xl px-0 mt-2': !$store.sidebar.open,
+                'transition-all duration-200': ready
+            }" title="Cerrar Sesión">
+        <div class="w-6 flex justify-center shrink-0">
+            <i class="fa-solid fa-arrow-right-from-bracket text-base group-hover:-translate-x-0.5 group-hover:scale-110 transition-transform"></i>
+        </div>
+        <span class="font-semibold text-xs whitespace-nowrap" x-show=\"$store.sidebar.open\">Cerrar Sesión</span>
+    </button>
+</form>
         </div>
     </aside>
 </div>
