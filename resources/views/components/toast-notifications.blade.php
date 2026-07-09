@@ -12,7 +12,7 @@
                 'bg-red-600 text-white': msg.type === 'error',
                 'bg-blue-600 text-white': msg.type === 'info'
              }"
-             class="p-4 rounded-xl shadow-xl font-bold text-sm flex items-center justify-between gap-3 transform transition-all">
+             class="p-4 rounded-sm shadow-xl font-bold text-sm flex items-center justify-between gap-3 transform transition-all">
             
             <div class="flex items-center gap-2">
                 <i :class="{

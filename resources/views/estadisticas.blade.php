@@ -20,8 +20,8 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
         
         {{-- Tarjeta 1: Pacientes de Hoy --}}
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex items-center gap-5">
-            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
+        <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-xs flex items-center gap-5">
+            <div class="w-12 h-12 rounded-sm bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
                 <i class="fas fa-user-injured"></i>
             </div>
             <div>
@@ -31,8 +31,8 @@
         </div>
 
         {{-- Tarjeta 2: Total Medicamentos --}}
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex items-center gap-5">
-            <div class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-lg">
+        <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-xs flex items-center gap-5">
+            <div class="w-12 h-12 rounded-sm bg-slate-900 text-white flex items-center justify-center text-lg">
                 <i class="fas fa-pills"></i>
             </div>
             <div>
@@ -42,8 +42,8 @@
         </div>
 
         {{-- Tarjeta 3: Alertas de Stock Crítico --}}
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex items-center gap-5">
-            <div class="w-12 h-12 rounded-2xl {{ $alertasStock > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600' }} flex items-center justify-center text-lg">
+        <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-xs flex items-center gap-5">
+            <div class="w-12 h-12 rounded-sm {{ $alertasStock > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600' }} flex items-center justify-center text-lg">
                 <i class="fas fa-exclamation-circle"></i>
             </div>
             <div>
@@ -53,8 +53,8 @@
         </div>
 
         {{-- Tarjeta 4: Unidades Retiradas Hoy --}}
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs flex items-center gap-5">
-            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+        <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-xs flex items-center gap-5">
+            <div class="w-12 h-12 rounded-sm bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
                 <i class="fas fa-dolly-flatbed"></i>
             </div>
             <div>
@@ -69,9 +69,9 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
         
         {{-- Gráfico: Pacientes por Servicio (Ocupación) --}}
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs md:col-span-2">
+        <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-xs md:col-span-2">
             <div class="flex items-center gap-3 mb-6 border-b border-slate-50 pb-4">
-                <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs">
+                <div class="w-7 h-7 rounded-sm bg-blue-600 text-white flex items-center justify-center text-xs">
                     <i class="fas fa-hospital-user"></i>
                 </div>
                 <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700">Pacientes Internados por Servicio</h3>
@@ -82,9 +82,9 @@
         </div>
 
         {{-- Gráfico Circular: Consumo Total por Áreas Despachadas --}}
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs">
+        <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-xs">
             <div class="flex items-center gap-3 mb-6 border-b border-slate-50 pb-4">
-                <div class="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center text-xs">
+                <div class="w-7 h-7 rounded-sm bg-slate-900 text-white flex items-center justify-center text-xs">
                     <i class="fas fa-chart-pie"></i>
                 </div>
                 <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700">Distribución de Consumo</h3>
@@ -100,9 +100,9 @@
     <div class="grid grid-cols-1 gap-8">
         
         {{-- Gráfico de Líneas u Horizontal: Top Medicamentos Más Demandados --}}
-        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs">
+        <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-xs">
             <div class="flex items-center gap-3 mb-6 border-b border-slate-50 pb-4">
-                <div class="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs">
+                <div class="w-7 h-7 rounded-sm bg-amber-500 text-white flex items-center justify-center text-xs">
                     <i class="fas fa-star"></i>
                 </div>
                 <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700">Top 5 Medicamentos de Mayor Rotación (Unidades Retiradas)</h3>

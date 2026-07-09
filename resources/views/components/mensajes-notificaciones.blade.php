@@ -6,7 +6,7 @@
             x-transition:leave="transition ease-in duration-200 transform"
             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
             x-transition:leave-end="opacity-0 translate-y-[-20px] scale-95"
-            class="w-full bg-white border-l-4 rounded-xl shadow-xl overflow-hidden" :class="{
+            class="w-full bg-white border-l-4 rounded-sm shadow-xl overflow-hidden" :class="{
                 'border-emerald-500': toast.type === 'success',
                 'border-red-500': toast.type === 'error',
                 'border-blue-500': toast.type === 'info'

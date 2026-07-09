@@ -1,3 +1,10 @@
+{{-- 
+    Sidebar Moderno Estilo Windows 11
+    - Colores claros, bordes discretos, sin animaciones en iconos.
+    - Fondos y colores de botones fácilmente personalizables mediante variables CSS.
+    - Sombra minimalista (shadow-sm).
+    - Animación de clic natural en todos los botones.
+--}}
 <div class="relative" x-data="{ ready: false }" x-init="setTimeout(() => ready = true, 50)">
 
     {{-- Overlay oscuro para pantallas móviles --}}
@@ -253,7 +260,7 @@
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
                 <button type="submit"
-                        class="flex items-center h-10 group text-red-600 hover:bg-red-100 hover:text-red-700 bg-red-100 font-semibold"
+                        class="flex items-center h-10 group logout-btn text-red-600 hover:bg-red-100 hover:text-red-700 bg-red-100 font-semibold"
                         :class="{
                             'px-4 gap-3 justify-start mx-2 rounded-sm mt-1 w-[calc(100%-16px)]': $store.sidebar.open,
                             'w-10 mx-auto justify-center rounded-sm px-0 mt-2': !$store.sidebar.open,
@@ -279,19 +286,16 @@
        ============================================== */
     :root {
         /* ---Fondo de los botones inactivos--- */
-        --sidebar-link-bg: #edeff1ec;  /*el bg de los botone*/  
-
-        --sidebar-link-border: none;    /* el borde */
-
-        --sidebar-link-text: #3a3e44;      /*el texto, osea, el color del texto*/
-        
-        --sidebar-link-hover-bg: #f3f4f6;   /* el hover del texto*/ 
+        --sidebar-link-bg: #edeff1ec;
+        --sidebar-link-border: none;
+        --sidebar-link-text: #3a3e44;
+        --sidebar-link-hover-bg: #f3f4f6;
 
         /* ---Colores para el botón activo--- */
-        --sidebar-link-active-bg: #2564ebe7;   
-        --sidebar-link-active-text: #ffffff; 
+        --sidebar-link-active-bg: #2564ebe7;
+        --sidebar-link-active-text: #ffffff;
         --sidebar-link-active-border: #2563eb;
-        --sidebar-link-active-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); 
+        --sidebar-link-active-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }
 
     /* Estilo base de los enlaces */
@@ -299,6 +303,7 @@
         background-color: var(--sidebar-link-bg);
         border: 1px solid var(--sidebar-link-border);
         color: var(--sidebar-link-text);
+        user-select: none; /* evita selección de texto al hacer clic rápido */
     }
     .sidebar-link:hover {
         background-color: var(--sidebar-link-hover-bg);
@@ -311,6 +316,14 @@
         border-color: var(--sidebar-link-active-border);
         font-weight: 600;
         box-shadow: var(--sidebar-link-active-shadow);
+    }
+
+    /* Animación de clic natural para todos los botones y enlaces del sidebar */
+    .sidebar-link:active,
+    .sidebar-link-active:active,
+    .logout-btn:active {
+        transform: scale(0.96);
+        transition: transform 0.1s ease;
     }
 
     /* Ajustes del scrollbar */
