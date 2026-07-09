@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User; 
 
 class AuthController extends Controller
 {
@@ -20,8 +21,11 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Intentamos autenticar con tus columnas de la BD
-        if (Auth::attempt(['nombre' => $credentials['nombre'], 'password' => $credentials['password']])) {
+       /* por que carajo con esto sim e sirvio?*/
+        $user = User::whereRaw('LOWER(nombre) = ?', [strtolower($credentials['nombre'])])->first();
+
+        
+        if ($user && Auth::attempt(['nombre' => $user->nombre, 'password' => $credentials['password']])) {
             $request->session()->regenerate();
             return redirect()->intended(route('home'));
         }
