@@ -11,11 +11,13 @@ use App\Http\Controllers\EpidemiologiaController;
 use App\Http\Middleware\AuthHospital; // Tu middleware
 use App\Models\User;                  // <-- IMPORTANTE: Importamos el Modelo User
 use Illuminate\Support\Facades\Hash;  // <-- IMPORTANTE: Importamos Hash para encriptar
+use App\Http\Controllers\TraficoController; /*epa aqui kevin, esta es la """""cronjob"""" */
 use Illuminate\Support\Facades\Route;
 
 // ==========================================
 // RUTAS PÚBLICAS
 // ==========================================
+Route::get('/ping-sistema', [TraficoController::class, 'mantenerActivo']);
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 

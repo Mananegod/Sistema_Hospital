@@ -14,7 +14,7 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
-
+    'simulador_trafico' => env('SIMULAR_TRAFICO_ACTIVO', false),
     /*
     |--------------------------------------------------------------------------
     | Application Environment
