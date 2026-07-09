@@ -40,16 +40,16 @@
             
             <div class="flex gap-3">
                 <button @click="modalImportar = true" 
-                        class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition shadow-sm">
+                        class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm hover:bg-slate-50 transition shadow-sm">
                     <i class="fas fa-file-excel text-green-600"></i> Importar Excel
                 </button>
             </div>
         </div>
 
         {{-- Formulario de Entrada Rápida --}}
-        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
+        <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-sm mb-8">
             <h2 class="text-xs font-bold uppercase tracking-widest text-slate-700 mb-5 flex items-center gap-2">
-                <span class="w-2 h-6 bg-slate-900 rounded-full"></span> Registrar Entrada Rápida de Stock
+                <span class="w-2 h-6 bg-slate-900 rounded-sm"></span> Registrar Entrada Rápida de Stock
             </h2>
 
             <form action="{{ route('stock.entrada') }}" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end" x-on:submit="$store.loading.activate('Procesando entrada...')">
@@ -57,9 +57,9 @@
                 <div class="relative">
                     <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide">Insumos medicos</label>
                     <input type="text" x-model="q" @input.debounce.300ms="buscar()" placeholder="Escriba para buscar..."
-                           class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition font-semibold text-slate-700">
+                           class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition font-semibold text-slate-700">
                     
-                    <div class="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-xl shadow-xl max-h-60 overflow-y-auto"
+                    <div class="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-sm shadow-xl max-h-60 overflow-y-auto"
                          x-show="resultados.length > 0" x-cloak>
                         <template x-for="item in resultados" :key="item.id">
                             <button type="button" @click="seleccionar(item)"
@@ -73,7 +73,7 @@
 
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide">Área de Ubicación</label>
-                    <select name="area_id" required class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm text-slate-600 font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                    <select name="area_id" required class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 text-sm text-slate-600 font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 transition">
                         <option value="" disabled selected>Seleccione el área...</option>
                         @foreach($areas as $area)
                             <option value="{{ $area->id }}">{{ $area->nombre_area }}</option>
@@ -84,10 +84,10 @@
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide">Cantidad a Sumar</label>
                     <input type="number" name="cantidad" required min="1" placeholder="Ej. 10"
-                           class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition font-semibold text-slate-700">
+                           class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition font-semibold text-slate-700">
                 </div>
 
-                <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3 px-4 rounded-xl hover:bg-slate-800 transition shadow-md flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+                <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3 px-4 rounded-sm hover:bg-slate-800 transition shadow-md flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
                     <i class="fas fa-plus-circle"></i> Sumar Stock
                 </button>
             </form>
@@ -97,13 +97,13 @@
         <div x-show="seleccionados.length > 0" 
              x-transition 
              x-cloak
-             class="mb-4 p-4 bg-blue-600 border border-blue-700 rounded-2xl flex items-center justify-between shadow-md shadow-blue-500/10">
+             class="mb-4 p-4 bg-blue-600 border border-blue-700 rounded-sm flex items-center justify-between shadow-md shadow-blue-500/10">
             <div class="flex items-center gap-3">
-                <div class="w-7 h-7 bg-white/20 rounded-xl flex items-center justify-center text-white">
+                <div class="w-7 h-7 bg-white/20 rounded-sm flex items-center justify-center text-white">
                     <i class="fas fa-check-double text-xs"></i>
                 </div>
                 <span class="text-xs font-bold text-white uppercase tracking-wider">
-                    Has seleccionado <span class="bg-white text-blue-700 px-2 py-0.5 rounded-lg font-mono font-black" x-text="seleccionados.length"></span> insumos médicos
+                    Has seleccionado <span class="bg-white text-blue-700 px-2 py-0.5 rounded-sm font-mono font-black" x-text="seleccionados.length"></span> insumos médicos
                 </span>
             </div>
             <div class="flex items-center gap-2">
@@ -112,18 +112,18 @@
                     Desmarcar todos
                 </button>
                 <button type="button" @click="modalMasivo = true" 
-                        class="bg-white hover:bg-slate-50 text-blue-700 text-xs font-extrabold px-4 py-2.5 rounded-xl uppercase tracking-wider transition shadow-sm">
+                        class="bg-white hover:bg-slate-50 text-blue-700 text-xs font-extrabold px-4 py-2.5 rounded-sm uppercase tracking-wider transition shadow-sm">
                     <i class="fas fa-edit mr-1"></i> Editar Selección
                 </button>
             </div>
         </div>
 
         {{-- BARRA DE FILTROS: Área y Tipo de Insumo combinados --}}
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-4">
+        <div class="bg-white p-4 rounded-sm border border-slate-100 shadow-sm mb-4">
             <form action="{{ route('almacen.index') }}" method="GET" class="flex flex-wrap items-center justify-between gap-4">
                 <div class="flex flex-wrap items-center gap-3 flex-1">
                     <div class="w-full sm:w-64">
-                        <select name="area_id" onchange="this.form.submit()" class="w-full bg-slate-50 border-0 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                        <select name="area_id" onchange="this.form.submit()" class="w-full bg-slate-50 border-0 rounded-sm px-4 py-2.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition">
                             <option value="">Todas las Áreas</option>
                             @foreach($areas as $area)
                                 <option value="{{ $area->id }}" {{ request('area_id') == $area->id ? 'selected' : '' }}>{{ $area->nombre_area }}</option>
@@ -132,7 +132,7 @@
                     </div>
 
                     <div class="w-full sm:w-64">
-                        <select name="tipo_insumo" onchange="this.form.submit()" class="w-full bg-slate-50 border-0 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                        <select name="tipo_insumo" onchange="this.form.submit()" class="w-full bg-slate-50 border-0 rounded-sm px-4 py-2.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition">
                             <option value="">Todos los Tipos de Insumo</option>
                             @foreach($tiposInsumo as $tipo)
                                 <option value="{{ $tipo }}" {{ request('tipo_insumo') == $tipo ? 'selected' : '' }}>{{ $tipo }}</option>
@@ -150,7 +150,7 @@
         </div>
 
         {{-- Tabla de Inventario --}}
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest">Existencias en Almacén</h3>
             </div>
@@ -185,7 +185,7 @@
                                 </td>
                                 <td class="px-2 py-4 text-slate-900 font-bold tracking-tight">{{ $item->medicamento }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 py-1 rounded-lg text-[11px] font-bold tracking-wide
+                                    <span class="px-2 py-1 rounded-sm text-[11px] font-bold tracking-wide
                                         {{ $item->tipo_insumo === 'Por Determinar' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-purple-50 text-purple-700 border border-purple-100' }}">
                                         {{ $item->tipo_insumo ?? 'Por Determinar' }}
                                     </span>
@@ -197,8 +197,8 @@
                                         @php
                                             $loteFormateado = trim($item->codigo_lote);
                                         @endphp
-                                        <div class="inline-flex flex-col items-center justify-center p-1.5 bg-white border border-slate-100 rounded-xl shadow-xs">
-                                            <div class="p-1 bg-slate-50 rounded-lg border border-slate-100">
+                                        <div class="inline-flex flex-col items-center justify-center p-1.5 bg-white border border-slate-100 rounded-sm shadow-xs">
+                                            <div class="p-1 bg-slate-50 rounded-sm border border-slate-100">
                                                 {!! QrCode::size(55)->margin(1)->generate(route('almacen.lote', ['codigo_lote' => $loteFormateado])) !!}
                                             </div>
                                             <a href="{{ route('almacen.lote', ['codigo_lote' => $loteFormateado]) }}" class="text-[10px] font-mono font-bold text-blue-600 hover:underline mt-1">
@@ -212,12 +212,12 @@
 
                                 <td class="px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $item->stock_minimo ?? '0' }}</td>
                                 <td class="px-6 py-4 text-center">
-                                    <span class="px-3 py-1.5 rounded-xl text-xs font-bold font-mono {{ $item->stock_actual <= ($item->stock_minimo ?? 0) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600' }}">
+                                    <span class="px-3 py-1.5 rounded-sm text-xs font-bold font-mono {{ $item->stock_actual <= ($item->stock_minimo ?? 0) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600' }}">
                                         {{ $item->stock_actual }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide bg-slate-100 text-slate-600">
+                                    <span class="px-2.5 py-1 rounded-sm text-xs font-bold uppercase tracking-wide bg-slate-100 text-slate-600">
                                         {{ $item->area_destino }}
                                     </span>
                                 </td>
@@ -246,7 +246,7 @@
              x-cloak 
              x-transition>
              
-            <div class="bg-white rounded-3xl max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
+            <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
                  @click.away="modalMasivo = false">
                  
                 <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
@@ -265,7 +265,7 @@
                     <input type="hidden" name="ids" :value="JSON.stringify(seleccionados)">
 
                     <div class="p-6 space-y-4">
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div class="bg-slate-50 p-3 rounded-sm border border-slate-100">
                             <p class="text-[11px] text-slate-500 uppercase font-semibold">
                                 Los cambios ingresados afectarán a los <span class="text-blue-600 font-bold" x-text="seleccionados.length"></span> insumos médicos que marcaste.
                             </p>
@@ -274,25 +274,25 @@
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Nuevo Código de Lote</label>
                             <input type="text" name="codigo_lote" placeholder="Ej: LOTE-2026"
-                                   class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
+                                   class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
                             <p class="text-[9px] text-slate-400 mt-1 uppercase">Dejar vacío si no deseas cambiar el lote</p>
                         </div>
 
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Nuevo Stock Disponible</label>
                             <input type="number" name="cantidad_stock" min="0" placeholder="Ej: 150"
-                                   class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
+                                   class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
                             <p class="text-[9px] text-slate-400 mt-1 uppercase">Dejar vacío si no deseas cambiar las cantidades actuales</p>
                         </div>
                     </div>
 
                     <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
                         <button type="button" @click="modalMasivo = false"
-                            class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-100 transition text-xs uppercase tracking-wider">
+                            class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
                             Cancelar
                         </button>
                         <button type="submit"
-                            class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition text-xs uppercase tracking-wider">
+                            class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition text-xs uppercase tracking-wider">
                             Guardar Cambios
                         </button>
                     </div>
@@ -306,7 +306,7 @@
              x-cloak 
              x-transition>
              
-            <div class="bg-white rounded-3xl max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
+            <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
                  @click.away="modalImportar = false">
                  
                 <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
@@ -325,12 +325,12 @@
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Archivo Excel (F15)</label>
                             <input type="file" name="archivo" accept=".xlsx, .xls, .csv" required
-                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-50 file:text-blue-700 file:font-bold file:text-xs">
+                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:bg-blue-50 file:text-blue-700 file:font-bold file:text-xs">
                         </div>
 
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Asignar a Área</label>
-                            <select name="area_id" required class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 outline-none text-sm font-semibold text-slate-700">
+                            <select name="area_id" required class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700">
                                 <option value="" disabled selected>Seleccione área destino</option>
                                 @foreach($areas as $area)
                                     <option value="{{ $area->id }}">{{ $area->nombre_area }}</option>
@@ -341,11 +341,11 @@
 
                     <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
                         <button type="button" @click="modalImportar = false"
-                            class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-100 transition text-xs uppercase tracking-wider">
+                            class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
                             Cancelar
                         </button>
                         <button type="submit"
-                            class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition text-xs uppercase tracking-wider">
+                            class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition text-xs uppercase tracking-wider">
                             Comenzar Carga
                         </button>
                     </div>

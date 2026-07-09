@@ -12,7 +12,7 @@
 
     {{-- ALERTA ESTILO INVENTARIO DE MEDICAMENTOS (100% OFFLINE) --}}
     @if($errors->any())
-    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-xl shadow-sm">
+    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-sm shadow-sm">
         <ul class="list-disc pl-5 text-sm font-medium space-y-1">
             @foreach($errors->all() as $error)
             <li>{{ $error }}</li>
@@ -34,7 +34,7 @@
 
         {{-- Panel Izquierdo: Formulario de Registro --}}
         <div class="lg:col-span-4">
-            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm sticky top-6">
+            <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-sm sticky top-6">
                 <h2 class="text-lg font-bold mb-5 flex items-center gap-2">
                     <span class="w-2 h-6 bg-rose-600 rounded-full"></span> Nueva Alerta
                 </h2>
@@ -50,7 +50,7 @@
                                maxlength="25"
                                title="Solo se permiten letras y espacios (máx. 25 caracteres)"
                                value="{{ old('nombre_paciente') }}"
-                               class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm font-semibold">
+                               class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm font-semibold">
                     </div>
 
                     <div>
@@ -62,18 +62,18 @@
                                inputmode="numeric" 
                                value="{{ old('cedula_paciente') }}"
                                title="La cédula debe ser numérica y tener un máximo de 10 dígitos"
-                               class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm">
+                               class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase">Diagnóstico / Patología</label>
                         <input type="text" name="patologia_cie10" value="{{ old('patologia_cie10') }}"
-                            class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm font-semibold">
+                            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm font-semibold">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase">Sector / Comunidad</label>
-                        <select name="sector_procedencia" class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm font-semibold">
+                        <select name="sector_procedencia" class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm font-semibold">
                             <option value="" disabled selected>Seleccionar sector...</option>
                             @foreach($sectores as $sec)
                                 <option value="{{ $sec->nombre_sector }}" {{ old('sector_procedencia') == $sec->nombre_sector ? 'selected' : '' }}>
@@ -87,12 +87,12 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase">Inicio Síntomas</label>
                             <input type="date" name="fecha_sintomas" max="2036-12-31" required value="{{ old('fecha_sintomas') }}"
-                                class="w-full bg-slate-50 border-0 rounded-xl px-3 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-xs">
+                                class="w-full bg-slate-50 border-0 rounded-sm px-3 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-xs">
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase">Estado</label>
-                            <select name="estado_caso" required class="w-full bg-slate-50 border-0 rounded-xl px-3 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-xs font-bold">
+                            <select name="estado_caso" required class="w-full bg-slate-50 border-0 rounded-sm px-3 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-xs font-bold">
                                 <option value="SOSPECHOSO" {{ old('estado_caso') == 'SOSPECHOSO' ? 'selected' : '' }}>SOSPECHOSO</option>
                                 <option value="EN ESPERA" {{ old('estado_caso') == 'EN ESPERA' ? 'selected' : '' }}>EN ESPERA</option>
                                 <option value="CONFIRMADO" {{ old('estado_caso') == 'CONFIRMADO' ? 'selected' : '' }}>CONFIRMADO</option>
@@ -103,11 +103,11 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase">Observaciones Clínicas</label>
                         <textarea name="observaciones" rows="2" placeholder="Síntomas..."
-                            class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm"></textarea>
+                            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-rose-500 text-sm"></textarea>
                     </div>
 
                     <button type="submit"
-                        class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-slate-800 transition-all transform hover:-translate-y-1 uppercase tracking-wider text-xs">
+                        class="w-full bg-slate-900 text-white font-bold py-4 rounded-sm shadow-lg hover:bg-slate-800 transition-all transform hover:-translate-y-1 uppercase tracking-wider text-xs">
                         Registrar Ficha de Alerta
                     </button>
                 </form>
@@ -116,7 +116,7 @@
 
         {{-- Panel Derecho: Listado de Casos (OPTIMIZADO CON DESPLAZAMIENTO HORIZONTAL PARA CELULARES) --}}
         <div class="lg:col-span-8">
-            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
                 
                 {{-- Contenedor con Scrollbar horizontal táctil --}}
                 <div class="w-full overflow-x-auto">
@@ -146,7 +146,7 @@
                                     <span class="text-[10px] text-slate-400 block whitespace-nowrap">Síntomas: {{ \Carbon\Carbon::parse($c->fecha_sintomas)->format('d/m/Y') }}</span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-3 py-1 rounded-lg text-[10px] font-black tracking-wider inline-block whitespace-nowrap
+                                    <span class="px-3 py-1 rounded-sm text-[10px] font-black tracking-wider inline-block whitespace-nowrap
                                         {{ $c->estado_caso == 'CONFIRMADO' ? 'bg-red-100 text-red-600' : ($c->estado_caso == 'EN ESPERA' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-600') }}">
                                         {{ $c->estado_caso }}
                                     </span>
@@ -198,7 +198,7 @@
              class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
              x-transition>
             
-            <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 max-w-md w-full"
+            <div class="bg-white p-6 rounded-sm shadow-xl border border-slate-100 max-w-md w-full"
                  @click.away="editOpen = false">
                 
                 <div class="flex justify-between items-center mb-6">
@@ -243,14 +243,14 @@
                         </div>
                     </div>
 
-                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="bg-slate-50 p-3 rounded-sm border border-slate-100">
                         <span class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Observaciones / Síntomas</span>
                         <p class="text-xs text-slate-600 leading-relaxed italic" x-text="caso.observaciones || 'Sin anotaciones clínicas adicionales.'"></p>
                     </div>
 
                     <div class="mt-6">
                         <button type="button" @click="editOpen = false"
-                            class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-200 transition text-xs uppercase tracking-wider">
+                            class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-sm hover:bg-slate-200 transition text-xs uppercase tracking-wider">
                             Cerrar Expediente
                         </button>
                     </div>

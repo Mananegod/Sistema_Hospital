@@ -95,7 +95,7 @@
             </h1>
             <p class="text-slate-500 mt-1 text-sm">Monitoreo automático de stock e indicadores de vencimiento de medicamentos.</p>
         </div>
-        <div class="text-xs font-semibold text-slate-400 bg-white border border-slate-100 px-4 py-2 rounded-xl shadow-sm whitespace-nowrap self-start">
+        <div class="text-xs font-semibold text-slate-400 bg-white border border-slate-100 px-4 py-2 rounded-sm shadow-sm whitespace-nowrap self-start">
             <i class="fa-regular fa-clock mr-1.5"></i> Último cálculo: Hoy, {{ \Carbon\Carbon::now()->format('d/m/Y') }}
         </div>
     </div>
@@ -104,8 +104,8 @@
 
         {{-- Tarjetas Estadísticas --}}
         <div class="stats-grid grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
-            <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 transition-transform hover:scale-[1.01]">
-                <div class="bg-red-50 p-3 sm:p-4 rounded-xl text-red-600 border border-red-100/50 shrink-0">
+            <div class="bg-white p-4 sm:p-6 rounded-sm border border-slate-100 shadow-sm flex items-center gap-4 transition-transform hover:scale-[1.01]">
+                <div class="bg-red-50 p-3 sm:p-4 rounded-sm text-red-600 border border-red-100/50 shrink-0">
                     <i class="fa-solid fa-triangle-exclamation text-xl sm:text-2xl"></i>
                 </div>
                 <div class="min-w-0">
@@ -114,8 +114,8 @@
                 </div>
             </div>
 
-            <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 transition-transform hover:scale-[1.01]">
-                <div class="bg-rose-50 p-3 sm:p-4 rounded-xl text-rose-600 border border-rose-100/50 shrink-0">
+            <div class="bg-white p-4 sm:p-6 rounded-sm border border-slate-100 shadow-sm flex items-center gap-4 transition-transform hover:scale-[1.01]">
+                <div class="bg-rose-50 p-3 sm:p-4 rounded-sm text-rose-600 border border-rose-100/50 shrink-0">
                     <i class="fa-solid fa-skull-crossbones text-xl sm:text-2xl"></i>
                 </div>
                 <div class="min-w-0">
@@ -124,8 +124,8 @@
                 </div>
             </div>
 
-            <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 transition-transform hover:scale-[1.01]">
-                <div class="bg-orange-50 p-3 sm:p-4 rounded-xl text-orange-600 border border-orange-100/50 shrink-0">
+            <div class="bg-white p-4 sm:p-6 rounded-sm border border-slate-100 shadow-sm flex items-center gap-4 transition-transform hover:scale-[1.01]">
+                <div class="bg-orange-50 p-3 sm:p-4 rounded-sm text-orange-600 border border-orange-100/50 shrink-0">
                     <i class="fa-solid fa-hourglass-half text-xl sm:text-2xl"></i>
                 </div>
                 <div class="min-w-0">
@@ -136,11 +136,11 @@
         </div>
 
         {{-- TABLA 1: STOCK CRÍTICO --}}
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden" 
+        <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden" 
              x-data="stockPagination({{ $stockCritico->toJson() }})" x-init="init(); initResponsive()" x-on:resize.window="updateWidth">
 
             <div class="p-4 sm:p-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/40 flex-wrap">
-                <div class="h-8 w-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center text-sm font-bold shadow-sm shrink-0">
+                <div class="h-8 w-8 rounded-sm bg-red-100 text-red-600 flex items-center justify-center text-sm font-bold shadow-sm shrink-0">
                     <i class="fa-solid fa-boxes-stacked"></i>
                 </div>
                 <div>
@@ -170,13 +170,13 @@
                                 <td class="px-4 sm:px-6 py-4 sm:py-6 font-semibold text-xs text-slate-500" 
                                     x-text="item.area_destino || 'Almacén General'"></td>
                                 <td class="px-4 sm:px-6 py-4 sm:py-6">
-                                    <span class="text-sm font-black text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-100" x-text="item.stock_actual"></span>
+                                    <span class="text-sm font-black text-red-600 bg-red-50 px-2.5 py-1 rounded-sm border border-red-100" x-text="item.stock_actual"></span>
                                 </td>
                                 <td class="px-4 sm:px-6 py-4 sm:py-6 font-bold text-xs text-slate-400">
                                     {{ $stockMinimoEstandar }} unidades
                                 </td>
                                 <td class="px-4 sm:px-8 py-4 sm:py-6 text-right">
-                                    <span class="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase italic tracking-widest border border-red-200">
+                                    <span class="bg-red-100 text-red-600 px-3 py-1 rounded-sm text-[9px] font-black uppercase italic tracking-widest border border-red-200">
                                         Reordenar
                                     </span>
                                 </td>
@@ -205,7 +205,7 @@
                     <div class="flex items-center gap-1 pagination-buttons flex-wrap justify-center">
                         <!-- Anterior -->
                         <button @click="prevPage()" :disabled="currentPage === 1" 
-                            class="pagination-btn w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                            class="pagination-btn w-9 h-9 flex items-center justify-center rounded-sm border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
                             <i class="fa-solid fa-chevron-left"></i>
                         </button>
 
@@ -225,7 +225,7 @@
 
                         <!-- Siguiente -->
                         <button @click="nextPage()" :disabled="currentPage === totalPages" 
-                            class="pagination-btn w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                            class="pagination-btn w-9 h-9 flex items-center justify-center rounded-sm border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
@@ -234,11 +234,11 @@
         </div>
 
         {{-- TABLA 2: VENCIMIENTOS --}}
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
+        <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden"
              x-data="vencimientoPagination({{ $alertasVencimiento->toJson() }})" x-init="init(); initResponsive()" x-on:resize.window="updateWidth">
 
             <div class="p-4 sm:p-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/40 flex-wrap">
-                <div class="h-8 w-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold shadow-sm shrink-0">
+                <div class="h-8 w-8 rounded-sm bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold shadow-sm shrink-0">
                     <i class="fa-solid fa-calendar-circle-exclamation"></i>
                 </div>
                 <div>
@@ -283,7 +283,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 sm:px-8 py-4 sm:py-6 text-right">
-                                    <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase italic tracking-widest border shadow-sm whitespace-nowrap"
+                                    <span class="px-3 py-1 rounded-sm text-[9px] font-black uppercase italic tracking-widest border shadow-sm whitespace-nowrap"
                                           :class="lote.estado_vencimiento === 'Vencido' 
                                             ? 'bg-rose-100 text-rose-600 border-rose-200' 
                                             : 'bg-orange-100 text-orange-600 border-orange-200'">
@@ -314,7 +314,7 @@
 
                     <div class="flex items-center gap-1 pagination-buttons flex-wrap justify-center">
                         <button @click="prevPage()" :disabled="currentPage === 1" 
-                            class="pagination-btn w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                            class="pagination-btn w-9 h-9 flex items-center justify-center rounded-sm border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
                             <i class="fa-solid fa-chevron-left"></i>
                         </button>
 
@@ -332,7 +332,7 @@
                         </div>
 
                         <button @click="nextPage()" :disabled="currentPage === totalPages" 
-                            class="pagination-btn w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+                            class="pagination-btn w-9 h-9 flex items-center justify-center rounded-sm border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-50">
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>

@@ -13,13 +13,13 @@
             </h1>
             <p class="text-slate-500 mt-2 text-sm sm:text-base">Historial centralizado de movimientos en todos los módulos del sistema.</p>
         </div>
-        <div class="bg-blue-50 border border-blue-100 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl">
+        <div class="bg-blue-50 border border-blue-100 px-3 py-1.5 sm:px-4 sm:py-2 rounded-sm">
             <span class="text-blue-700 text-[10px] sm:text-xs font-bold uppercase tracking-wider">Control de Calidad Hospitalaria</span>
         </div>
     </div>
 
     {{-- Tabla responsiva estirada de borde a borde en móvil --}}
-    <div class="bg-white rounded-none sm:rounded-2xl shadow-sm border-t border-b sm:border border-slate-100 overflow-hidden">
+    <div class="bg-white rounded-none sm:rounded-sm shadow-sm border-t border-b sm:border border-slate-100 overflow-hidden">
         {{-- Contenedor deslizable horizontal nativo --}}
         <div class="w-full overflow-x-auto">
             {{-- min-w-[750px] para asegurar que el texto grande tenga espacio suficiente en teléfonos --}}
@@ -36,7 +36,7 @@
                     @forelse($registros as $reg)
                     <tr class="hover:bg-blue-50/30 transition-colors">
                         <td class="px-4 sm:px-6 py-4 sm:py-5">
-                            <span class="px-2 py-1 rounded-lg text-[8px] sm:text-[10px] font-black uppercase shadow-sm border 
+                            <span class="px-2 py-1 rounded-sm text-[8px] sm:text-[10px] font-black uppercase shadow-sm border 
                                 {{ $reg->modulo == 'Personal' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-amber-50 text-amber-700 border-amber-100' }}">
                                 {{ $reg->modulo }}
                             </span>
@@ -86,9 +86,9 @@
     </div>
 
     {{-- Tarjeta de resguardo adaptada a los bordes completos en celulares --}}
-    <div class="mt-6 sm:mt-8 p-4 sm:p-6 bg-slate-900 rounded-none sm:rounded-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+    <div class="mt-6 sm:mt-8 p-4 sm:p-6 bg-slate-900 rounded-none sm:rounded-sm text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
         <div class="flex items-center gap-3 sm:gap-4">
-            <div class="p-2 sm:p-3 bg-blue-600 rounded-xl">
+            <div class="p-2 sm:p-3 bg-blue-600 rounded-sm">
                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>

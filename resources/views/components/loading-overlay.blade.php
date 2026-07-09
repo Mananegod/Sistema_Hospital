@@ -25,7 +25,7 @@
         <!-- Botón reintentar (solo en timeout) -->
         <button x-show="$store.loading.timedOut" 
                 @click="$store.loading.retry()"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-xl transition shadow">
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-sm transition shadow">
             Reintentar ahora
         </button>
         

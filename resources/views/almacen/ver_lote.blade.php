@@ -13,7 +13,7 @@
             
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-xl text-xs font-mono font-bold">
+                    <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-sm text-xs font-mono font-bold">
                         LOTE: {{ $codigo_lote }}
                     </span>
                     <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight uppercase mt-2">Insumos por Lote</h1>
@@ -22,7 +22,7 @@
         </div>
 
         {{-- Tabla --}}
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
