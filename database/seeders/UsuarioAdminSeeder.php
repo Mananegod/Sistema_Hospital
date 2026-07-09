@@ -11,7 +11,7 @@ class UsuarioAdminSeeder extends Seeder
     public function run(): void
     {
         // Insertamos usando estrictamente los campos de tu migración
-        User::create([
+        User::firstOrCreate([
             'nombre'   => 'Admin',
             'password' => Hash::make('1234')
         ]);
