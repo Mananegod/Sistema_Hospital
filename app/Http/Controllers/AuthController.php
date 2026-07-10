@@ -4,25 +4,27 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User; 
+use App\Models\User;
 
 class AuthController extends Controller
 {
-    public function showLogin() {
+    public function showLogin()
+    {
         if (Auth::check()) {
             return redirect()->route('home');
         }
         return view('login');
     }
 
-    public function login(Request $request) {
+    public function login(Request $request)
+    {
         $credentials = $request->validate([
-            'nombre'   => 'required|string',
+            'nombre' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        
-        $user = User::whereRaw('LOWER(nombre) = ?', [strtolower($credentials['nombre'])])->first();
+
+        $user = User::where('nombre', 'ilike', $credentials['nombre'])->first();
 
         if ($user && Auth::attempt(['nombre' => $user->nombre, 'password' => $credentials['password']])) {
             $request->session()->regenerate();
@@ -32,11 +34,12 @@ class AuthController extends Controller
         return back()->withErrors(['error' => 'Las credenciales introducidas son incorrectas.']);
     }
 
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
+
         return redirect()->route('login');
     }
 }
