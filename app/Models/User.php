@@ -10,10 +10,11 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    // Conectamos con tu tabla personalizada
     protected $table = 'usuarios'; 
 
-    // Solo permitimos rellenar lo que existe en tu BD
+    
+    protected $primaryKey = 'id'; 
+
     protected $fillable = [
         'nombre',
         'password',
