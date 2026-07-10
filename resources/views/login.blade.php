@@ -30,63 +30,64 @@
 
                 <div class="bg-white/95 backdrop-blur-xl p-6 sm:p-10 md:p-12 border border-slate-200/90 rounded-sm shadow-md shadow-blue-900/15 w-full relative transition-all"
                     x-data="{ 
-            step: 1, 
-            nombre: '{{ old('nombre') }}', 
-            password: '', 
-            errorNombre: '', 
-            errorPassword: '',
-            shakeUser: false,
-            shakePass: false,
-            submitting: false, // <-- NUEVO ESTADO PARA BLOQUEAR DOBLE CLIC
-            validarPaso1() {
-                if (!this.nombre.trim()) {
-                    this.errorNombre = 'Por favor, introduzca su nombre de usuario.';
-                    this.shakeUser = true;
-                    setTimeout(() => this.shakeUser = false, 600);
-                    return;
-                }
-                this.errorNombre = '';
-                this.shakeUser = false;
-                this.step = 2;
-                this.$nextTick(() => { 
-                    if (this.$refs.passwordInput) {
-                        this.$refs.passwordInput.focus(); 
+                    step: 1, 
+                    nombre: '{{ old('nombre') }}', 
+                    password: '', 
+                    errorNombre: '', 
+                    errorPassword: '',
+                    shakeUser: false,
+                    shakePass: false,
+                    submitting: false, 
+                    validarPaso1() {
+                        if (!this.nombre.trim()) {
+                            this.errorNombre = 'Por favor, introduzca su nombre de usuario.';
+                            this.shakeUser = true;
+                            setTimeout(() => this.shakeUser = false, 600);
+                            return;
+                        }
+                        this.errorNombre = '';
+                        this.shakeUser = false;
+                        this.step = 2;
+                        this.$nextTick(() => { 
+                            if (this.$refs.passwordInput) {
+                                this.$refs.passwordInput.focus(); 
+                            }
+                        });
+                    },
+                    regresarPaso1() {
+                        this.errorNombre = '';
+                        this.errorPassword = '';
+                        this.step = 1;
+                        this.$nextTick(() => { 
+                            if (this.$refs.userInput) {
+                                this.$refs.userInput.focus(); 
+                            }
+                        });
+                    },
+                    procesarLogin(e) {
+                        // Si ya se está enviando, abortamos cualquier clic extra
+                        if (this.submitting) {
+                            e.preventDefault();
+                            return;
+                        }
+
+                        if (!this.password.trim()) {
+                            this.errorPassword = 'La contraseña de seguridad no puede estar vacía.';
+                            this.shakePass = true;
+                            setTimeout(() => this.shakePass = false, 600);
+                            e.preventDefault();
+                            return;
+                        }
+
+                        // Activamos el bloqueo
+                        this.submitting = true; 
+
+                        this.errorPassword = '';
+                        this.shakePass = false;
+                        this.submitting = true;
+                        $store.loading.activate('Verificando credenciales con el servidor...');
                     }
-                });
-            },
-            regresarPaso1() {
-                this.errorNombre = '';
-                this.errorPassword = '';
-                this.step = 1;
-                this.$nextTick(() => { 
-                    if (this.$refs.userInput) {
-                        this.$refs.userInput.focus(); 
-                    }
-                });
-            },
-            procesarLogin(e) {
-                // Si ya se está enviando, abortamos cualquier clic extra
-                if (this.submitting) {
-                    e.preventDefault();
-                    return;
-                }
-
-                if (!this.password.trim()) {
-                    this.errorPassword = 'La contraseña de seguridad no puede estar vacía.';
-                    this.shakePass = true;
-                    setTimeout(() => this.shakePass = false, 600);
-                    e.preventDefault();
-                    return;
-                }
-
-                // Activamos el bloqueo
-                this.submitting = true; 
-
-                this.errorPassword = '';
-                this.shakePass = false;
-                $store.loading.activate('Verificando credenciales con el servidor...');
-            }
-         }">
+                 }">
 
 
                     <div class="mb-6 sm:mb-8 flex items-center justify-between">
@@ -201,7 +202,7 @@
                                     </div>
                                 </div>
 
-                                <button type="submit" :disabled="!password.trim()"
+                                <button type="submit" :disabled="!password.trim() || submitting"
                                     class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none text-white font-bold py-3.5 sm:py-4 px-4 rounded-sm shadow-md shadow-blue-600/25 transition-all active:scale-98 text-sm sm:text-base uppercase tracking-wider cursor-pointer disabled:cursor-not-allowed">
                                     Acceder al sistema
                                 </button>

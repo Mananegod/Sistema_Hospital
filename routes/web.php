@@ -21,7 +21,8 @@ Route::get('/ping-sistema', [TraficoController::class, 'mantenerActivo']);
 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 
-Route::get('/login', [AuthController::class, 'showLogin']); 
+Route::get('/login', function() { return redirect('/'); }); 
+
 Route::post('/login', [AuthController::class, 'login']);
 
 // RUTA TEMPORAL (PÚBLICA) PARA CREAR AL ADMINISTRADOR DESDE EL NAVEGADOR
