@@ -80,3 +80,17 @@ WHERE a.id < b.id
       AND a.nombre_medicamento = b.nombre_medicamento
       AND a.area_destino = b.area_destino
 ");
+
+
+
+
+
+
+# .env backup de supabase
+
+DB_CONNECTION: pgsql
+DB_DATABASE: sistema_hospital
+DB_HOST: aws-1-us-west-2.pooler.supabase.com
+DB_PASSWORD: locomotora2020.#
+DB_PORT: 5432
+DB_USERNAME: postgres.sehpodaihjoyhiybcmfj

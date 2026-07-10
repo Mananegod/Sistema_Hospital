@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>@yield('title', 'Hospital TG')</title>
-    
+
     {{-- CSS Locales e Inmunes a fallos de red --}}
     <script src="{{ asset('js/tailwindcss.js') }}"></script>
     <link rel="icon" type="image/png" href="{{ asset('img/logo-prueba.png') }}">
@@ -41,7 +41,7 @@
 
     {{-- 🟢 Script inline para lectura inmediata de preferencia de sidebar (evita FOUC) --}}
     <script>
-        (function() {
+        (function () {
             var stored = window.localStorage.getItem('sidebar_open');
             // Si no hay valor o es 'true', ancho abierto (18rem); si es 'false', contraído (5rem)
             var width = (stored !== 'false') ? '18rem' : '5rem';
@@ -60,16 +60,17 @@
                 open: window.localStorage.getItem('sidebar_open') !== 'false',
                 mobileOpen: false,        // móvil inicia cerrado
 
-                toggle() { 
+                toggle() {
                     this.open = !this.open;
                     // Guarda estado en localStorage
                     window.localStorage.setItem('sidebar_open', this.open);
                 },
-                toggleMobile() { 
+                toggleMobile() {
                     this.mobileOpen = !this.mobileOpen;
                 }
             });
 
+            // Store para modales globales (usado por x-modal)
             Alpine.store('modal', {
                 current: null,
                 data: {},
@@ -80,6 +81,33 @@
                 close() {
                     this.current = null;
                     this.data = {};
+                },
+                // Método necesario para el componente x-modal
+                isOpen(id) {
+                    return this.current === id;
+                }
+            });
+
+            // Store para el modal de confirmación (globalConfirm)
+            Alpine.store('confirm', {
+                message: '',
+                callback: null,
+                show(message, callback) {
+                    this.message = message;
+                    this.callback = callback;
+                    // Abre el modal global de confirmación
+                    Alpine.store('modal').open('globalConfirm');
+                },
+                confirm() {
+                    if (this.callback) this.callback();
+                    this.message = '';
+                    this.callback = null;
+                    Alpine.store('modal').close();
+                },
+                cancel() {
+                    this.message = '';
+                    this.callback = null;
+                    Alpine.store('modal').close();
                 }
             });
 
@@ -117,37 +145,42 @@
 <body>
 
     @if($showSidebar ?? true)
-    <div class="flex h-screen overflow-hidden w-full" x-data>
-        
-        @include('sidebar')
+        <div class="flex h-screen overflow-hidden w-full" x-data>
 
-        <div class="flex flex-col flex-1 min-w-0 overflow-hidden relative">
-            
-            <header class="lg:hidden flex items-center justify-between p-4 bg-slate-900 text-white shadow-md z-30 shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20 shrink-0">
-                        <i class="fa-solid fa-hospital text-white"></i>
+            @include('sidebar')
+
+            <div class="flex flex-col flex-1 min-w-0 overflow-hidden relative">
+
+                <header
+                    class="lg:hidden flex items-center justify-between p-4 bg-slate-900 text-white shadow-md z-30 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20 shrink-0">
+                            <i class="fa-solid fa-hospital text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight">HOSPITAL <span class="text-blue-500">TG</span></span>
                     </div>
-                    <span class="text-xl font-bold tracking-tight">HOSPITAL <span class="text-blue-500">TG</span></span>
-                </div>
-                <button @click="$store.sidebar.toggleMobile()" class="p-2 text-slate-400 hover:text-white rounded-lg focus:outline-none">
-                    <i class="fa-solid fa-bars text-xl"></i>
-                </button>
-            </header>
+                    <button @click="$store.sidebar.toggleMobile()"
+                        class="p-2 text-slate-400 hover:text-white rounded-lg focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </header>
 
-            <main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-10 w-full relative bg-[#F7F9FB]">
-                @yield('content')
-            </main>
+                <main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-10 w-full relative bg-[#F7F9FB]">
+                    @yield('content')
+                </main>
+            </div>
         </div>
-    </div>
     @else
-    <main class="min-h-screen">
-        @yield('content')
-    </main>
+        <main class="min-h-screen">
+            @yield('content')
+        </main>
     @endif
 
     {{-- Componentes globales de la interfaz --}}
+    @include('components.loading-overlay')
+    @include('components.confirm-modal')
     @include('components.toast-notifications')
 
 </body>
+
 </html>
