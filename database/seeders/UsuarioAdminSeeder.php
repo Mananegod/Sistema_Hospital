@@ -10,13 +10,27 @@ class UsuarioAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('usuarios')->updateOrInsert(
-            ['nombre' => 'Admin'],
-            [
+        
+        $user = DB::table('usuarios')
+            ->whereRaw('LOWER(nombre) = ?', [strtolower('Admin')])
+            ->first();
+
+        if ($user) {
+          
+            DB::table('usuarios')
+                ->where('id', $user->id)
+                ->update([
+                    'password' => Hash::make('1234'),
+                    'updated_at' => now(),
+                ]);
+        } else {
+           
+            DB::table('usuarios')->insert([
+                'nombre' => 'Admin',
                 'password' => Hash::make('1234'),
                 'created_at' => now(),
-                'updated_at' => now()
-            ]
-        );
+                'updated_at' => now(),
+            ]);
+        }
     }
 }
