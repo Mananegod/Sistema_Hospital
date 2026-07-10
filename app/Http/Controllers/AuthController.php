@@ -40,6 +40,11 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        
+        $cookieSession = cookie()->forget(config('session.cookie'));
+        $cookieXsrf = cookie()->forget('XSRF-TOKEN');
+
+        
+        return redirect()->route('login')->withCookies([$cookieSession, $cookieXsrf]);
     }
 }
