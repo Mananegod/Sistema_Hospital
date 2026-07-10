@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\QueryException;
 
 class AuthController extends Controller
 {
@@ -25,7 +26,7 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
-
+           
             $user = User::where('nombre', 'ilike', $credentials['nombre'])->first();
 
             if ($user && Auth::attempt(['nombre' => $user->nombre, 'password' => $credentials['password']])) {
@@ -35,8 +36,12 @@ class AuthController extends Controller
 
             return back()->withErrors(['error' => 'Las credenciales introducidas son incorrectas.']);
 
+        } catch (QueryException $e) {
+         
+            Log::error('ERROR DE BASE DE DATOS EN LOGIN: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'No se pudo conectar con la base de datos. Intente más tarde.']);
         } catch (\Throwable $th) {
-            Log::error('ERROR EN LOGIN: ' . $th->getMessage());
+            Log::error('ERROR FATAL EN LOGIN: ' . $th->getMessage());
             return back()->withErrors(['error' => 'ERROR FATAL DEL SERVIDOR: ' . $th->getMessage()]);
         }
     }
