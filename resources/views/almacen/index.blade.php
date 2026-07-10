@@ -3,8 +3,7 @@
 @section('title', 'Gestión de Almacén')
 
 @section('content')
-    @include('components.mensajes-notificaciones')
-    @include('components.loading-overlay')
+    {{-- El layout ya incluye loading-overlay y toast-notifications, no es necesario repetirlos --}}
 
     {{-- Inicializamos modalMasivo y el arreglo de seleccionados en el x-data principal --}}
     <div class="max-w-7xl mx-auto" x-data="{
@@ -196,11 +195,29 @@
                                     @if(isset($item->codigo_lote) && $item->codigo_lote !== null && strlen(trim($item->codigo_lote)) > 0)
                                         @php
                                             $loteFormateado = trim($item->codigo_lote);
+                                            $qrGenerado = false;
+                                            $qrHtml = '';
+                                            if (class_exists('SimpleSoftwareIO\QrCode\Facades\QrCode')) {
+                                                try {
+                                                    $qrHtml = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(55)
+                                                        ->margin(1)
+                                                        ->generate(route('almacen.lote', ['codigo_lote' => $loteFormateado]));
+                                                    $qrGenerado = true;
+                                                } catch (\Exception $e) {
+                                                    // Si falla la generación, mostrar solo el enlace
+                                                }
+                                            }
                                         @endphp
                                         <div class="inline-flex flex-col items-center justify-center p-1.5 bg-white border border-slate-100 rounded-sm shadow-xs">
-                                            <div class="p-1 bg-slate-50 rounded-sm border border-slate-100">
-                                                {!! QrCode::size(55)->margin(1)->generate(route('almacen.lote', ['codigo_lote' => $loteFormateado])) !!}
-                                            </div>
+                                            @if($qrGenerado && !empty($qrHtml))
+                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100">
+                                                    {!! $qrHtml !!}
+                                                </div>
+                                            @else
+                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100 flex items-center justify-center w-[55px] h-[55px] text-slate-400 text-[8px] uppercase font-bold">
+                                                    <i class="fas fa-qrcode text-xl text-slate-300"></i>
+                                                </div>
+                                            @endif
                                             <a href="{{ route('almacen.lote', ['codigo_lote' => $loteFormateado]) }}" class="text-[10px] font-mono font-bold text-blue-600 hover:underline mt-1">
                                                 {{ $loteFormateado }}
                                             </a>
@@ -259,7 +276,7 @@
                 </div>
 
                 <form action="{{ route('almacen.editar-masivo') }}" method="POST"
-                      x-on:submit="$store.loading.activate('Applying mass changes...')">
+                      x-on:submit="$store.loading.activate('Aplicando cambios masivos...')">
                     @csrf
                     {{-- Input oculto que convierte los IDs de Alpine.js en texto plano JSON --}}
                     <input type="hidden" name="ids" :value="JSON.stringify(seleccionados)">
