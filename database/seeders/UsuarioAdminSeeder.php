@@ -11,7 +11,7 @@ class UsuarioAdminSeeder extends Seeder
     public function run(): void
     {
         DB::table('usuarios')->updateOrInsert(
-            ['nombre' => 'ADMIN'],
+            ['nombre' => 'Admin'],
             [
                 'password' => Hash::make('1234'),
                 'created_at' => now(),

@@ -25,22 +25,19 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
 
+
             $user = User::where('nombre', 'ilike', $credentials['nombre'])->first();
 
             if ($user && Auth::attempt(['nombre' => $user->nombre, 'password' => $credentials['password']])) {
-             
-                $request->session()->regenerate(); 
+                $request->session()->regenerate();
                 return redirect()->intended(route('home'));
             }
 
             return back()->withErrors(['error' => 'Las credenciales introducidas son incorrectas.']);
 
         } catch (\Throwable $th) {
-            
             Log::error('ERROR EN LOGIN: ' . $th->getMessage());
-            
-           
-            return back()->withErrors(['error' => 'ERROR FATAL DEL SERVIDOR: ' . $th->getMessage() . ' (Línea ' . $th->getLine() . ')']);
+            return back()->withErrors(['error' => 'ERROR FATAL DEL SERVIDOR: ' . $th->getMessage()]);
         }
     }
 
@@ -56,7 +53,6 @@ class AuthController extends Controller
 
             return redirect()->route('login')->withCookies([$cookieSession, $cookieXsrf]);
         } catch (\Throwable $th) {
-          
             return redirect()->route('login')->withErrors(['error' => 'Error al cerrar sesión: ' . $th->getMessage()]);
         }
     }
