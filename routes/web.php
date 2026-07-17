@@ -113,4 +113,5 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::get('/almacen/lote/{codigo_lote?}', [AlmacenController::class, 'verPorLote'])->name('almacen.lote');
     Route::post('/almacen/vencimiento-masivo', [AlmacenController::class, 'actualizarVencimientoMasivo'])->name('almacen.vencimientoMasivo');
     Route::post('/almacen/editar-masivo', [AlmacenController::class, 'editarMasivo'])->name('almacen.editar-masivo');
+    Route::post('/epidemiologia/importar', [App\Http\Controllers\EpidemiologiaController::class, 'importar'])->name('epidemiologia.importar');
 });
