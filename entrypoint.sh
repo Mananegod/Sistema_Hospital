@@ -8,7 +8,7 @@ fi
 
 
 echo "Limpiando la base de datos"
-php artisan db:wipe
+php artisan db:wipe --force --no-interaction
 
 php artisan config:clear --force --no-interaction
 
