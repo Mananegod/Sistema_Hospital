@@ -7,7 +7,11 @@ if [ ! -f "artisan" ]; then
 fi
 
 
+echo "Limpiando la base de datos"
+php artisan db:wipe
+
 php artisan config:clear --force --no-interaction
+
 
 
 echo "Running migrations..."
