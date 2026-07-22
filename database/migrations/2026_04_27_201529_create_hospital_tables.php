@@ -44,16 +44,7 @@ return new class extends Migration
         $table->timestamps();
     });
 
-    // Registro de Retiros (Auditoría)
-    Schema::create('movimientos', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('medicamento_id')->constrained('medicamentos');
-        $table->foreignId('area_id')->constrained('areas');
-        $table->integer('cantidad');
-        $table->string('tipo')->default('retiro');
-        $table->string('responsable')->nullable();
-        $table->timestamps();
-    });
+    
 }
 
     /**

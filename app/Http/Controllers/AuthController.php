@@ -22,22 +22,36 @@ class AuthController extends Controller
     {
         try {
             $credentials = $request->validate([
-                'nombre' => 'required|string',
+                'nombre'   => 'required|string',
                 'password' => 'required|string',
             ]);
 
-           
-            $user = User::where('nombre', 'ilike', $credentials['nombre'])->first();
+            // Carga la relación 'personal' para validar el estatus activo y el tipo de usuario
+            $user = User::with('personal')
+                        ->where('nombre', 'ilike', $credentials['nombre'])
+                        ->first();
 
             if ($user && Auth::attempt(['nombre' => $user->nombre, 'password' => $credentials['password']])) {
+                
+                // Verificar si el personal asociado fue desactivado
+                if ($user->personal && !$user->personal->activo) {
+                    Auth::logout();
+                    return back()->withErrors(['error' => 'Su cuenta se encuentra inactiva. Contacte al administrador.']);
+                }
+
                 $request->session()->regenerate();
+
+                // Si es un usuario estándar (No Admin), redirigir directamente al módulo de Retiros
+                if ($user->personal && $user->personal->tipo_usuario === 'Usuario') {
+                    return redirect()->route('retiros.index');
+                }
+
                 return redirect()->intended(route('home'));
             }
 
             return back()->withErrors(['error' => 'Las credenciales introducidas son incorrectas.']);
 
         } catch (QueryException $e) {
-         
             Log::error('ERROR DE BASE DE DATOS EN LOGIN: ' . $e->getMessage());
             return back()->withErrors(['error' => 'No se pudo conectar con la base de datos. Intente más tarde.']);
         } catch (\Throwable $th) {

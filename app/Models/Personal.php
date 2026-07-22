@@ -17,10 +17,18 @@ class Personal extends Model
         'nombres', 
         'apellidos', 
         'cargo', 
+        'tipo_usuario',
         'especialidad', 
         'turno', 
         'telefono',
-        'especialidad',
         'activo'
+    ];
+
+    public function usuario()
+{
+    return $table->hasOne(User::class, 'personal_id');
+}
+    protected $casts = [
+        'activo' => 'boolean',
     ];
 }
