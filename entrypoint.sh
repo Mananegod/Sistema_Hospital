@@ -7,8 +7,8 @@ if [ ! -f "artisan" ]; then
 fi
 
 
-echo "Limpiando la base de datos"
-php artisan db:wipe --force --no-interaction
+# echo "Limpiando la base de datos" /* dejo esta vaina comentada por si se necesita otra vez B)  */
+# php artisan db:wipe --no-interaction
 
 php artisan config:clear --force --no-interaction
 
