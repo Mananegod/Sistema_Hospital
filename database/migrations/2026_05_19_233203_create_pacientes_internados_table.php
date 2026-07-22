@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('cedula')->unique();
             $table->string('nombre_apellido');
             $table->integer('edad');
+            $table->string('genero')->unique();
             $table->unsignedBigInteger('area_id');
             $table->string('diagnostico');
             $table->text('tratamiento')->nullable();

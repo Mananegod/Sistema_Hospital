@@ -7,37 +7,41 @@
 
     {{-- Inicializamos modalMasivo y el arreglo de seleccionados en el x-data principal --}}
     <div class="max-w-7xl mx-auto" x-data="{
-        buscando: false,
-        resultados: [],
-        q: '',
-        seleccionado: null,
-        modalImportar: false, 
-        modalMasivo: false,
-        seleccionados: [],
-        async buscar() {
-            if (this.q.length < 2) { this.resultados = []; return; }
-            this.buscando = true;
-            try {
-                let res = await fetch('{{ route('medicamentos.buscar') }}?q=' + encodeURIComponent(this.q));
-                this.resultados = await res.json();
-            } catch(e) { this.resultados = []; }
-            this.buscando = false;
-        },
-        seleccionar(item) {
-            this.seleccionado = item;
-            this.q = item.text;
-            this.resultados = [];
-            document.getElementById('medicamento_id_real').value = item.id;
-        }
-    }">
+    buscando: false,
+    resultados: [],
+    q: '',
+    seleccionado: null,
+    modalImportar: false, 
+    modalMasivo: false,
+    modalTrazabilidad: false, {{-- <-- AGREGADO AQUÍ --}}
+    seleccionados: [],
+    async buscar() {
+        if (this.q.length < 2) { this.resultados = []; return; }
+        this.buscando = true;
+        try {
+            let res = await fetch('{{ route('medicamentos.buscar') }}?q=' + encodeURIComponent(this.q));
+            this.resultados = await res.json();
+        } catch(e) { this.resultados = []; }
+        this.buscando = false;
+    },
+    seleccionar(item) {
+        this.seleccionado = item;
+        this.q = item.text;
+        this.resultados = [];
+        document.getElementById('medicamento_id_real').value = item.id;
+    }
+}">
         {{-- Encabezado --}}
         <div class="mb-8 flex justify-between items-end">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Gestión de Almacén</h1>
                 <p class="text-slate-500 mt-1 uppercase text-xs tracking-wider">Control de inventario - Hospital Dr. Tiburcio Garrido</p>
             </div>
-            
             <div class="flex gap-3">
+                <button @click="modalTrazabilidad = true" 
+                        class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 font-bold rounded-sm hover:bg-blue-100 transition shadow-sm text-xs uppercase tracking-wider">
+                    <i class="fas fa-chart-line text-blue-600"></i> Monitoreo
+                </button>
                 <button @click="modalImportar = true" 
                         class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm hover:bg-slate-50 transition shadow-sm">
                     <i class="fas fa-file-excel text-green-600"></i> Importar Excel
@@ -316,7 +320,6 @@
                 </form>
             </div>
         </div>
-
         {{-- MODAL DE IMPORTACIÓN --}}
         <div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
              x-show="modalImportar" 
@@ -369,6 +372,104 @@
                 </form>
             </div>
         </div>
+        {{-- MODAL DE TRAZABILIDAD Y CONSUMO --}}
+<div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
+     x-show="modalTrazabilidad" 
+     x-cloak 
+     x-transition>
+     
+    <div class="bg-white rounded-sm max-w-2xl w-full border border-slate-100 overflow-hidden shadow-2xl" 
+         @click.away="modalTrazabilidad = false">
+         
+        {{-- Cabecera del Modal --}}
+        <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
+                <i class="fas fa-chart-line text-blue-600"></i> Monitoreo de Medicamentos
+            </h3>
+            <button type="button" @click="modalTrazabilidad = false" class="text-slate-400 hover:text-slate-600 transition">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
 
+        <div class="p-6 space-y-6">
+            {{-- Indicador: Almacenado / Actualizado Hoy --}}
+            <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-sm flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-500 text-white rounded-sm flex items-center justify-center font-bold">
+                        <i class="fas fa-boxes-stacked text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Almacenado / Entrada Hoy</p>
+                        <p class="text-xs text-emerald-600 font-semibold">Total de unidades agregadas o actualizadas el día de hoy</p>
+                    </div>
+                </div>
+                <span class="text-2xl font-black font-mono text-emerald-700">
+                    {{ number_format($almacenadoHoy) }} <span class="text-xs font-normal">unds</span>
+                </span>
+            </div>
+
+            {{-- Filtro de Rango de Fechas --}}
+            <form action="{{ route('almacen.index') }}" method="GET" class="bg-slate-50 p-4 rounded-sm border border-slate-100">
+                <p class="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-wider">Filtrar Consumo por Rango de Fechas</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Desde</label>
+                        <input type="date" name="fecha_inicio" value="{{ $fechaInicio }}" 
+                               class="w-full bg-white border border-slate-200 rounded-sm px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Hasta</label>
+                        <input type="date" name="fecha_fin" value="{{ $fechaFin }}" 
+                               class="w-full bg-white border border-slate-200 rounded-sm px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20">
+                    </div>
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-sm hover:bg-blue-700 transition text-xs uppercase tracking-wider">
+                        <i class="fas fa-search mr-1"></i> Consultar
+                    </button>
+                </div>
+            </form>
+
+            {{-- Tabla de Medicamentos Consumidos --}}
+            <div>
+                <h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+                    Consumo Total del {{ \Carbon\Carbon::parse($fechaInicio)->format('d/m/Y') }} al {{ \Carbon\Carbon::parse($fechaFin)->format('d/m/Y') }}
+                </h4>
+
+                <div class="max-h-60 overflow-y-auto border border-slate-100 rounded-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 bg-slate-50 border-b border-slate-100">
+                            <tr>
+                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Medicamento / Insumo</th>
+                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-right">Total Consumido</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 text-xs font-medium text-slate-600">
+                            @forelse($consumoPorFecha as $row)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-4 py-2.5 font-bold text-slate-800">{{ $row->medicamento }}</td>
+                                    <td class="px-4 py-2.5 text-right font-mono font-bold text-red-600">
+                                        -{{ number_format($row->total_consumido) }} unds
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="2" class="px-4 py-6 text-center text-xs text-slate-400 italic">
+                                        No hay registros de consumo (retiros) en este rango de fechas.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-100 text-right">
+            <button type="button" @click="modalTrazabilidad = false"
+                    class="bg-white border border-slate-200 text-slate-600 font-bold px-5 py-2 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
     </div>
 @endsection

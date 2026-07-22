@@ -12,46 +12,73 @@ use Maatwebsite\Excel\Validators\ValidationException;
 class AlmacenController extends Controller
 {
     public function index(Request $request)
-    {
-        $areas = DB::table('areas')->get();
+{
+    $areas = DB::table('areas')->get();
 
-        $tiposInsumo = DB::table('medicamentos')
-            ->whereNotNull('tipo_insumo')
-            ->distinct()
-            ->pluck('tipo_insumo');
+    $tiposInsumo = DB::table('medicamentos')
+        ->whereNotNull('tipo_insumo')
+        ->distinct()
+        ->pluck('tipo_insumo');
 
-        $inventario = DB::table('medicamentos')
-            ->select(
-                'id as medicamento_id',
-                'nombre_medicamento as medicamento',
-                'presentacion',
-                'cantidad_stock as stock_actual',
-                'stock_minimo',
-                'area_destino',
-                'tipo_insumo',
-                'codigo_lote'
-            )
-            ->when($request->area_id, function ($query, $area_id) {
-                $areaDestino = DB::table('areas')->where('id', $area_id)->value('nombre_area');
-                return $areaDestino ? $query->where('area_destino', $areaDestino) : $query;
-            })
-            ->when($request->tipo_insumo, function ($query, $tipo_insumo) {
-                return $query->where('tipo_insumo', $tipo_insumo);
-            })
-            ->orderBy('nombre_medicamento')
-            ->paginate(50)
-            ->appends($request->query())
-            ->through(function ($item) {
-                // Saneamiento estricto del código de lote para evitar URLs rotas
-                $item->codigo_lote = !empty($item->codigo_lote) ? trim($item->codigo_lote) : null;
-                if ($item->codigo_lote === '') {
-                    $item->codigo_lote = null;
-                }
-                return $item;
-            });
+    // --- TRAZABILIDAD: Consumo entre fechas (Retiros) ---
+    $fechaInicio = $request->get('fecha_inicio', now()->subDays(30)->toDateString());
+    $fechaFin = $request->get('fecha_fin', now()->toDateString());
 
-        return view('almacen.index', compact('inventario', 'areas', 'tiposInsumo'));
-    }
+    $consumoPorFecha = DB::table('retiros')
+        ->join('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
+        ->select(
+            'medicamentos.nombre_medicamento as medicamento',
+            DB::raw('SUM(retiros.cantidad) as total_consumido')
+        )
+        ->whereBetween(DB::raw('DATE(retiros.created_at)'), [$fechaInicio, $fechaFin])
+        ->groupBy('medicamentos.nombre_medicamento')
+        ->orderBy('total_consumido', 'desc')
+        ->get();
+
+    // --- TRAZABILIDAD: Cuánto se almacenó / ingresó el día de hoy ---
+    $almacenadoHoy = DB::table('medicamentos')
+        ->whereDate('updated_at', now()->toDateString())
+        ->sum('cantidad_stock');
+
+    $inventario = DB::table('medicamentos')
+        ->select(
+            'id as medicamento_id',
+            'nombre_medicamento as medicamento',
+            'presentacion',
+            'cantidad_stock as stock_actual',
+            'stock_minimo',
+            'area_destino',
+            'tipo_insumo',
+            'codigo_lote'
+        )
+        ->when($request->area_id, function ($query, $area_id) {
+            $areaDestino = DB::table('areas')->where('id', $area_id)->value('nombre_area');
+            return $areaDestino ? $query->where('area_destino', $areaDestino) : $query;
+        })
+        ->when($request->tipo_insumo, function ($query, $tipo_insumo) {
+            return $query->where('tipo_insumo', $tipo_insumo);
+        })
+        ->orderBy('nombre_medicamento')
+        ->paginate(50)
+        ->appends($request->query())
+        ->through(function ($item) {
+            $item->codigo_lote = !empty($item->codigo_lote) ? trim($item->codigo_lote) : null;
+            if ($item->codigo_lote === '') {
+                $item->codigo_lote = null;
+            }
+            return $item;
+        });
+
+    return view('almacen.index', compact(
+        'inventario', 
+        'areas', 
+        'tiposInsumo', 
+        'consumoPorFecha', 
+        'almacenadoHoy', 
+        'fechaInicio', 
+        'fechaFin'
+    ));
+}
 
     public function buscarMedicamentos(Request $request)
     {

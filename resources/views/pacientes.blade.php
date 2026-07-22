@@ -12,6 +12,7 @@
                     cedula: '{{ $paciente_item->cedula }}',
                     nombre: '{{ $paciente_item->nombre_apellido }}',
                     edad: {{ $paciente_item->edad }},
+                    genero: '{{ $paciente_item->genero ?? 'Masculino' }}',
                     area_id: {{ $paciente_item->area_id }},
                     servicio: '{{ $paciente_item->servicio }}',
                     diagnostico: '{{ $paciente_item->diagnostico }}',
@@ -27,6 +28,7 @@
             cedula: '',
             nombre_apellido: '',
             edad: '',
+            genero: '',
             area_id: '',
             diagnostico: '',
             tratamiento: '',
@@ -39,6 +41,7 @@
             cedula: '',
             nombre_apellido: '',
             edad: '',
+            genero: '',
             area_id: '',
             diagnostico: '',
             tratamiento: '',
@@ -63,6 +66,7 @@
             this.editForm.cedula = paciente.cedula;
             this.editForm.nombre_apellido = paciente.nombre;
             this.editForm.edad = paciente.edad;
+            this.editForm.genero = paciente.genero;
             this.editForm.area_id = paciente.area_id;
             this.editForm.diagnostico = paciente.diagnostico;
             this.editForm.tratamiento = paciente.tratamiento;
@@ -78,7 +82,7 @@
 
         // Validaciones y envío del formulario de creación
         registrarPaciente() {
-            if(!this.formCreate.cedula || !this.formCreate.nombre_apellido || !this.formCreate.edad || !this.formCreate.area_id || !this.formCreate.diagnostico) {
+            if(!this.formCreate.cedula || !this.formCreate.nombre_apellido || !this.formCreate.edad || !this.formCreate.genero || !this.formCreate.area_id || !this.formCreate.diagnostico) {
                 alert('Por favor complete todos los campos obligatorios.');
                 return;
             }
@@ -102,6 +106,10 @@
 
         // Validaciones y envío del formulario de edición
         actualizarPaciente() {
+            if(!this.editForm.genero) {
+                alert('Debe seleccionar un género.');
+                return;
+            }
             if(/[a-zA-Z]/.test(this.editForm.cedula)) {
                 alert('La cédula de identidad debe contener únicamente números.');
                 return;
@@ -160,8 +168,7 @@
         {{-- Bloque de Encabezado --}}
         <div class="mb-8">
             <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Registro Diario</h1>
-            <p class="text-slate-500 mt-1 uppercase text-xs tracking-wider">Gestión de pacientes hospitalizados vinculados a
-                la hoja de despacho de insumos médicos.</p>
+            <p class="text-slate-500 mt-1 uppercase text-xs tracking-wider">Gestión de pacientes hospitalizados vinculados a la hoja de despacho de insumos médicos.</p>
         </div>
 
         {{-- Formulario Principal de Carga (Nuevo Paciente) --}}
@@ -174,31 +181,37 @@
             </div>
 
             <form @submit.prevent="registrarPaciente()" class="p-8 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Cédula de
-                            Identidad</label>
+                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Cédula de Identidad</label>
                         <input type="text" x-model="formCreate.cedula" placeholder="Ej: 24123456"
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Nombre y
-                            Apellido</label>
+                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Nombre y Apellido</label>
                         <input type="text" x-model="formCreate.nombre_apellido" placeholder="Nombre completo del paciente"
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Edad del
-                            Paciente</label>
+                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Edad</label>
                         <input type="number" x-model="formCreate.edad" min="0" max="125" placeholder="Ej: 28"
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Género</label>
+                        <select x-model="formCreate.genero"
+                            class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                            <option value="" disabled selected>Seleccione...</option>
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                            <option value="Otro">Otro</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Servicio / Área
-                            Hospitalaria</label>
+                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Servicio / Área Hospitalaria</label>
                         <select x-model="formCreate.area_id"
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                             <option value="" disabled selected>Seleccione el servicio...</option>
@@ -208,8 +221,7 @@
                         </select>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Diagnóstico
-                            Inicial (Dx)</label>
+                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Diagnóstico Inicial (Dx)</label>
                         <input type="text" x-model="formCreate.diagnostico" placeholder="Indique el diagnóstico clínico..."
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
@@ -217,15 +229,13 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div class="md:col-span-3">
-                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Tratamiento
-                            Médico / Descripción de Insumos</label>
+                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Tratamiento Médico / Descripción de Insumos</label>
                         <textarea x-model="formCreate.tratamiento" rows="2"
                             placeholder="Escriba detalladamente el tratamiento o insumos..."
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 resize-none mt-2"></textarea>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Fecha
-                            Ingreso</label>
+                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Fecha Ingreso</label>
                         <input type="date" x-model="formCreate.fecha_ingreso"
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
@@ -254,11 +264,10 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr
-                            class="border-b border-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50/20">
+                        <tr class="border-b border-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50/20">
                             <th class="p-6">Cédula</th>
                             <th class="p-6">Paciente</th>
-                            <th class="p-6 text-center">Edad</th>
+                            <th class="p-6 text-center">Edad / Género</th>
                             <th class="p-6">Servicio / Área</th>
                             <th class="p-6 text-center">Ingreso</th>
                             <th class="p-6 text-right">Acciones</th>
@@ -269,14 +278,11 @@
                             <tr class="hover:bg-slate-50/50 transition duration-150">
                                 <td class="p-6 text-slate-400 font-bold" x-text="p.cedula"></td>
                                 <td class="p-6 font-bold text-slate-900" x-text="p.nombre"></td>
-                                <td class="p-6 text-center" x-text="p.edad + ' años'"></td>
+                                <td class="p-6 text-center" x-text="p.edad + ' años (' + p.genero + ')'"></td>
                                 <td class="p-6">
-                                    <span
-                                        class="bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-sm font-bold uppercase tracking-wider"
-                                        x-text="p.servicio"></span>
+                                    <span class="bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-sm font-bold uppercase tracking-wider" x-text="p.servicio"></span>
                                 </td>
-                                <td class="p-6 text-center text-xs text-slate-400 font-semibold"
-                                    x-text="p.fecha_formateada"></td>
+                                <td class="p-6 text-center text-xs text-slate-400 font-semibold" x-text="p.fecha_formateada"></td>
                                 <td class="p-6 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <button @click="verPaciente(p)"
@@ -321,21 +327,22 @@
             <div class="bg-white rounded-sm max-w-xl w-full border border-slate-100 overflow-hidden shadow-2xl"
                 @click.away="modalVer = false">
                 <div class="p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700">Expediente Clínico Informativo
-                    </h3>
-                    <button @click="modalVer = false" class="text-slate-400 hover:text-slate-600"><i
-                            class="fas fa-times"></i></button>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700">Expediente Clínico Informativo</h3>
+                    <button @click="modalVer = false" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="p-8 space-y-6">
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-3 gap-4">
                         <div>
                             <span class="text-[10px] font-bold text-slate-400 uppercase block">Cédula</span>
                             <p class="font-bold text-slate-900 text-sm mt-1" x-text="pacienteSeleccionado.cedula"></p>
                         </div>
                         <div>
                             <span class="text-[10px] font-bold text-slate-400 uppercase block">Edad</span>
-                            <p class="font-bold text-slate-900 text-sm mt-1" x-text="pacienteSeleccionado.edad + ' Años'">
-                            </p>
+                            <p class="font-bold text-slate-900 text-sm mt-1" x-text="pacienteSeleccionado.edad + ' Años'"></p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Género</span>
+                            <p class="font-bold text-slate-900 text-sm mt-1" x-text="pacienteSeleccionado.genero"></p>
                         </div>
                     </div>
                     <div>
@@ -344,8 +351,7 @@
                     </div>
                     <div>
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">Servicio Solicitado</span>
-                        <p class="font-bold text-blue-600 text-sm mt-1 uppercase" x-text="pacienteSeleccionado.servicio">
-                        </p>
+                        <p class="font-bold text-blue-600 text-sm mt-1 uppercase" x-text="pacienteSeleccionado.servicio"></p>
                     </div>
                     <div class="border-t border-slate-100 pt-4">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">Diagnóstico Inicial (Dx)</span>
@@ -360,25 +366,22 @@
             </div>
         </div>
 
-        {{-- MODAL 2: EDITAR REGISTRO (CORREGIDO) --}}
+        {{-- MODAL 2: EDITAR REGISTRO --}}
         <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4"
             x-show="modalEditar" x-cloak x-transition>
 
             <div class="bg-white rounded-sm max-w-2xl w-full border border-slate-100 shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden"
                 @click.away="modalEditar = false">
 
-                {{-- Cabecera fija --}}
-                <div
-                    class="flex-shrink-0 p-4 sm:p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                <div class="flex-shrink-0 p-4 sm:p-6 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700">Modificar Ficha de Ingreso</h3>
                     <button @click="modalEditar = false" class="text-slate-400 hover:text-slate-600">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
 
-                {{-- Formulario con scroll --}}
                 <form @submit.prevent="actualizarPaciente()" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cédula</label>
                             <input type="text" x-model="editForm.cedula"
@@ -389,18 +392,25 @@
                             <input type="number" x-model="editForm.edad"
                                 class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                         </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Género</label>
+                            <select x-model="editForm.genero"
+                                class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nombre y
-                            Apellido</label>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nombre y Apellido</label>
                         <input type="text" x-model="editForm.nombre_apellido"
                             class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
 
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Servicio /
-                            Área</label>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Servicio / Área</label>
                         <select x-model="editForm.area_id"
                             class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                             @foreach($areas as $area)
@@ -416,8 +426,7 @@
                     </div>
 
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tratamiento /
-                            Insumos</label>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tratamiento / Insumos</label>
                         <textarea x-model="editForm.tratamiento" rows="3"
                             class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 resize-none mt-2"></textarea>
                     </div>
@@ -428,7 +437,6 @@
                             class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
 
-                    {{-- Botones dentro del formulario --}}
                     <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-slate-100">
                         <button type="button" @click="modalEditar = false"
                             class="w-full sm:w-auto px-5 py-3 sm:px-6 sm:py-4 rounded-sm font-bold text-xs bg-slate-100 text-slate-600 uppercase tracking-wider hover:bg-slate-200 transition">
@@ -449,22 +457,19 @@
             <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl"
                 @click.away="modalEliminar = false">
                 <div class="p-8 text-center space-y-4">
-                    <div
-                        class="w-16 h-16 bg-rose-50 text-rose-600 rounded-sm flex items-center justify-center text-xl mx-auto">
+                    <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-sm flex items-center justify-center text-xl mx-auto">
                         <i class="fas fa-exclamation-triangle"></i>
                     </div>
                     <div>
                         <h4 class="text-base font-bold text-slate-900">¿Desea eliminar este paciente?</h4>
                         <p class="text-xs text-slate-400 mt-2">Esta acción removerá permanentemente el registro clínico de
-                            <span class="font-bold text-slate-700" x-text="pacienteSeleccionado.nombre"></span> del listado
-                            de control del día.</p>
+                            <span class="font-bold text-slate-700" x-text="pacienteSeleccionado.nombre"></span> del listado de control del día.</p>
                     </div>
                     <div class="grid grid-cols-2 gap-3 pt-4">
                         <button type="button" @click="modalEliminar = false"
                             class="p-4 rounded-sm font-bold text-xs bg-slate-100 text-slate-600 uppercase tracking-wider hover:bg-slate-200 transition">Cancelar</button>
                         <button type="button" @click="eliminarPaciente()"
-                            class="p-4 rounded-sm font-bold text-xs bg-rose-600 text-white uppercase tracking-wider hover:bg-rose-700 transition">Confirmar
-                            Eliminar</button>
+                            class="p-4 rounded-sm font-bold text-xs bg-rose-600 text-white uppercase tracking-wider hover:bg-rose-700 transition">Confirmar Eliminar</button>
                     </div>
                 </div>
             </div>
