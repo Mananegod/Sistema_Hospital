@@ -7,7 +7,7 @@ if [ ! -f "artisan" ]; then
 fi
 
 
-php artisan config:clear
+php artisan config:clear --force --no-interaction
 
 
 echo "Running migrations..."
