@@ -87,7 +87,7 @@ class PersonalController extends Controller
             DB::commit();
 
             return redirect()->route('personal.index', ['tipo' => $p->tipo_usuario])
-                             ->with('success', "👤 Personal registrado. Usuario de acceso: {$nombreUsuario} | Contraseña inicial: {$request->cedula}");
+                             ->with('success', "Personal registrado. Usuario de acceso: {$nombreUsuario} | Contraseña inicial: {$request->cedula}");
 
         } catch (\Exception $e) {
             DB::rollBack();
