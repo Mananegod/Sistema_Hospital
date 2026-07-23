@@ -13,7 +13,7 @@ php artisan migrate:status
 echo "\n Migraciones revisadas \n"
 
 echo "Running migrations..."
-php artisan migrate --force --no-interaction
+php artisan migrate:fresh --force --no-interaction
 
 echo "Running seeders..."
 php artisan db:seed --force --no-interaction
