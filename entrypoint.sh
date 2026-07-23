@@ -1,18 +1,16 @@
 #!/bin/bash
 set -e
 
-
 if [ ! -f "artisan" ]; then
     exec apache2-foreground
 fi
 
+# Limpiar caché de configuración (sin --force)
+php artisan config:clear
 
-# echo "Limpiando la base de datos" /* dejo esta vaina comentada por si se necesita otra vez B)  */
-# php artisan db:wipe --no-interaction
-
-php artisan config:clear --force --no-interaction
-
-
+echo "Revisando Migraciones...\n"
+php artisan migrate:status
+echo "\n Migraciones revisadas \n"
 
 echo "Running migrations..."
 php artisan migrate --force --no-interaction
