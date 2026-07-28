@@ -19,18 +19,16 @@
     </div>
     @endif
 
-    
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8" 
          x-data="{ 
             editOpen: false, 
-            medicamento: { id: '', nombre_medicamento: '', cantidad_stock: '', area_destino: '', fecha_vencimiento: '' },
+            medicamento: { id: '', nombre_medicamento: '', cantidad_stock: '', fecha_vencimiento: '' },
             abrirEditar(item) {
                 this.medicamento = { ...item };
                 this.editOpen = true;
             }
          }">
          
-      
         <div class="lg:col-span-4">
             <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-sm sticky top-6">
                 <h2 class="text-lg font-bold mb-5 flex items-center gap-2">
@@ -62,18 +60,6 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase">Área de Destino</label>
-                        <select name="area_destino" required class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-500">
-                            <option value="" disabled selected>Seleccionar área...</option>
-                            @foreach($areas as $area)
-                                <option value="{{ $area->nombre_area }}" {{ old('area_destino') == $area->nombre_area ? 'selected' : '' }}>
-                                    {{ $area->nombre_area }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
                         <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase">Fecha de Vencimiento</label>
                         <input type="date" name="fecha_vencimiento" value="{{ old('fecha_vencimiento') }}" required
                             class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-500">
@@ -87,18 +73,16 @@
             </div>
         </div>
 
-        {{-- Panel Derecho: Tabla con scroll horizontal optimizado para móviles --}}
+        {{-- Panel Derecho: Tabla con scroll horizontal --}}
         <div class="lg:col-span-8">
             <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
-                
-                {{-- NUEVO CONTENEDOR CON DESPLAZAMIENTO HORIZONTAL --}}
                 <div class="w-full overflow-x-auto">
                     <table class="w-full min-w-[600px] text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-100">
                                 <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Medicamento</th>
                                 <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Stock</th>
-                                <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Área</th>
+                                <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Ubicación</th>
                                 <th class="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">Acciones</th>
                             </tr>
                         </thead>
@@ -119,7 +103,7 @@
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2 whitespace-nowrap">
                                         <button type="button" 
-                                                @click='abrirEditar({{ json_encode($med->only(['id','nombre_medicamento','cantidad_stock','area_destino','fecha_vencimiento'])) }})' 
+                                                @click='abrirEditar({{ json_encode($med->only(['id','nombre_medicamento','cantidad_stock','fecha_vencimiento'])) }})' 
                                                 class="p-2 text-slate-400 hover:text-blue-600 transition"
                                                 title="Editar Registro">
                                             <i class="fa-solid fa-pen-to-square"></i>
@@ -138,11 +122,54 @@
                         </tbody>
                     </table>
                 </div>
-
             </div>
         </div>
 
-        
+        {{-- Modal para Confirmar Incremento de Stock por Duplicado --}}
+        @if(session('duplicado_detectado'))
+        @php $dup = session('duplicado_detectado'); @endphp
+        <div x-data="{ duplicateOpen: true }" 
+             x-show="duplicateOpen" 
+             x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+             x-transition>
+            
+            <div class="bg-white p-6 rounded-sm shadow-xl border border-slate-100 max-w-md w-full"
+                 @click.away="duplicateOpen = false">
+                
+                <div class="flex items-center gap-3 mb-4 text-amber-500">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                    <h3 class="text-lg font-bold text-slate-900">Medicamento Duplicado</h3>
+                </div>
+
+                <p class="text-slate-600 text-sm mb-6">
+                    El medicamento <strong class="text-slate-800">{{ $dup['nombre_medicamento'] }}</strong> ya se encuentra registrado en el almacén. ¿Quieres aumentar el stock?
+                </p>
+
+                <form action="{{ route('medicamentos.store') }}" method="POST" class="space-y-4">
+                    @csrf
+                    <input type="hidden" name="confirmar_incremento" value="1">
+                    <input type="hidden" name="nombre_medicamento" value="{{ $dup['nombre_medicamento'] }}">
+                    <input type="hidden" name="cantidad_stock" value="{{ $dup['cantidad_stock'] }}">
+                    <input type="hidden" name="fecha_vencimiento" value="{{ $dup['fecha_vencimiento'] }}">
+                    <input type="hidden" name="codigo_lote" value="{{ $dup['codigo_lote'] }}">
+
+                    <div class="flex gap-3">
+                        <button type="button" @click="duplicateOpen = false"
+                            class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-sm hover:bg-slate-200 transition text-sm">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-sm hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition text-sm">
+                            Aumentar Stock
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        @endif
+
+        {{-- Modal Editar --}}
         <div x-show="editOpen" 
              x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
@@ -170,22 +197,10 @@
                             class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Stock Actual</label>
-                            <input type="number" name="cantidad_stock" x-model="medicamento.cantidad_stock" required
-                                class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Área Destino</label>
-                            <select name="area_destino" x-model="medicamento.area_destino" required
-                                class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none text-sm">
-                                @foreach($areas as $area)
-                                    <option value="{{ $area->nombre_area }}">{{ $area->nombre_area }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Stock Actual</label>
+                        <input type="number" name="cantidad_stock" x-model="medicamento.cantidad_stock" required
+                            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none text-sm">
                     </div>
 
                     <div>

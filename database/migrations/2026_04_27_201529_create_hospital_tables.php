@@ -21,7 +21,6 @@ return new class extends Migration
         $table->string('codigo_lote');
         $table->string('nombre_medicamento');
         $table->integer('cantidad_stock');
-        $table->string('area_destino');
         $table->date('fecha_vencimiento');
         $table->string('status_disponibilidad');
         $table->string('tipo_insumo')->default('Por Determinar')->nullable();
