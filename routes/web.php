@@ -82,6 +82,7 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::post('/inventario/importar', [AlmacenController::class, 'importarExcel'])->name('inventario.import');
     Route::post('/almacen/entrada-rapida', [AlmacenController::class, 'entradaRapida'])->name('stock.entrada');
     Route::get('/api/medicamentos/buscar', [AlmacenController::class, 'buscarMedicamentos'])->name('medicamentos.buscar');
+    Route::post('/almacen/importar', [AlmacenController::class, 'importarExcel'])->name('inventario.import');
     
     // Módulo de Retiros
     Route::get('/retiros', [AlmacenController::class, 'indexRetiros'])->name('retiros.index');

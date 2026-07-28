@@ -12,73 +12,66 @@ use Maatwebsite\Excel\Validators\ValidationException;
 class AlmacenController extends Controller
 {
     public function index(Request $request)
-{
-    $areas = DB::table('areas')->get();
+    {
+        $areas = DB::table('areas')->get();
 
-    $tiposInsumo = DB::table('medicamentos')
-        ->whereNotNull('tipo_insumo')
-        ->distinct()
-        ->pluck('tipo_insumo');
+        $tiposInsumo = DB::table('medicamentos')
+            ->whereNotNull('tipo_insumo')
+            ->distinct()
+            ->pluck('tipo_insumo');
 
-    // --- TRAZABILIDAD: Consumo entre fechas (Retiros) ---
-    $fechaInicio = $request->get('fecha_inicio', now()->subDays(30)->toDateString());
-    $fechaFin = $request->get('fecha_fin', now()->toDateString());
+        $fechaInicio = $request->get('fecha_inicio', now()->subDays(30)->toDateString());
+        $fechaFin = $request->get('fecha_fin', now()->toDateString());
 
-    $consumoPorFecha = DB::table('retiros')
-        ->join('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
-        ->select(
-            'medicamentos.nombre_medicamento as medicamento',
-            DB::raw('SUM(retiros.cantidad) as total_consumido')
-        )
-        ->whereBetween(DB::raw('DATE(retiros.created_at)'), [$fechaInicio, $fechaFin])
-        ->groupBy('medicamentos.nombre_medicamento')
-        ->orderBy('total_consumido', 'desc')
-        ->get();
+        $consumoPorFecha = DB::table('retiros')
+            ->join('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
+            ->select(
+                'medicamentos.nombre_medicamento as medicamento',
+                DB::raw('SUM(retiros.cantidad) as total_consumido')
+            )
+            ->whereBetween(DB::raw('DATE(retiros.created_at)'), [$fechaInicio, $fechaFin])
+            ->groupBy('medicamentos.nombre_medicamento')
+            ->orderBy('total_consumido', 'desc')
+            ->get();
 
-    // --- TRAZABILIDAD: Cuánto se almacenó / ingresó el día de hoy ---
-    $almacenadoHoy = DB::table('medicamentos')
-        ->whereDate('updated_at', now()->toDateString())
-        ->sum('cantidad_stock');
+        $almacenadoHoy = DB::table('medicamentos')
+            ->whereDate('updated_at', now()->toDateString())
+            ->sum('cantidad_stock');
 
-    $inventario = DB::table('medicamentos')
-        ->select(
-            'id as medicamento_id',
-            'nombre_medicamento as medicamento',
-            'presentacion',
-            'cantidad_stock as stock_actual',
-            'stock_minimo',
-            'area_destino',
-            'tipo_insumo',
-            'codigo_lote'
-        )
-        ->when($request->area_id, function ($query, $area_id) {
-            $areaDestino = DB::table('areas')->where('id', $area_id)->value('nombre_area');
-            return $areaDestino ? $query->where('area_destino', $areaDestino) : $query;
-        })
-        ->when($request->tipo_insumo, function ($query, $tipo_insumo) {
-            return $query->where('tipo_insumo', $tipo_insumo);
-        })
-        ->orderBy('nombre_medicamento')
-        ->paginate(50)
-        ->appends($request->query())
-        ->through(function ($item) {
-            $item->codigo_lote = !empty($item->codigo_lote) ? trim($item->codigo_lote) : null;
-            if ($item->codigo_lote === '') {
-                $item->codigo_lote = null;
-            }
-            return $item;
-        });
+        $inventario = DB::table('medicamentos')
+            ->select(
+                'id as medicamento_id',
+                'nombre_medicamento as medicamento',
+                'presentacion',
+                'cantidad_stock as stock_actual',
+                'stock_minimo',
+                'tipo_insumo',
+                'codigo_lote'
+            )
+            ->when($request->tipo_insumo, function ($query, $tipo_insumo) {
+                return $query->where('tipo_insumo', $tipo_insumo);
+            })
+            ->orderBy('nombre_medicamento')
+            ->paginate(50)
+            ->appends($request->query())
+            ->through(function ($item) {
+                $item->codigo_lote = !empty($item->codigo_lote) ? trim($item->codigo_lote) : null;
+                if ($item->codigo_lote === '') {
+                    $item->codigo_lote = null;
+                }
+                return $item;
+            });
 
-    return view('almacen.index', compact(
-        'inventario', 
-        'areas', 
-        'tiposInsumo', 
-        'consumoPorFecha', 
-        'almacenadoHoy', 
-        'fechaInicio', 
-        'fechaFin'
-    ));
-}
+        return view('almacen.index', compact(
+            'inventario', 
+            'areas', 
+            'tiposInsumo', 
+            'consumoPorFecha', 
+            'almacenadoHoy', 
+            'fechaInicio', 
+            'fechaFin'
+        ));
+    }
 
     public function buscarMedicamentos(Request $request)
     {
@@ -102,15 +95,8 @@ class AlmacenController extends Controller
     {
         $request->validate([
             'medicamento_id' => 'required',
-            'area_id' => 'required',
             'cantidad' => 'required|integer|min:1',
         ]);
-
-        $areaDestino = DB::table('areas')->where('id', $request->area_id)->value('nombre_area');
-
-        if (!$areaDestino) {
-            return back()->with('error', 'El área seleccionada no es válida.');
-        }
 
         $medicamento = DB::table('medicamentos')->where('id', $request->medicamento_id)->first();
 
@@ -126,13 +112,12 @@ class AlmacenController extends Controller
         DB::table('medicamentos')
             ->where('id', $request->medicamento_id)
             ->update([
-                'cantidad_stock' => DB::raw('cantidad_stock + ' . $request->cantidad),
-                'area_destino' => $areaDestino,
+                'cantidad_stock' => DB::raw('cantidad_stock + ' . (int)$request->cantidad),
                 'tipo_insumo' => $tipoInsumo,
                 'updated_at' => now(),
             ]);
 
-        return back()->with('success', 'Stock actualizado correctamente en la ubicación seleccionada.');
+        return back()->with('success', 'Stock actualizado correctamente.');
     }
 
     public function importarExcel(Request $request)
@@ -141,7 +126,6 @@ class AlmacenController extends Controller
         ini_set('memory_limit', '512M');
 
         $request->validate([
-            'area_id' => 'required',
             'archivo' => 'required|mimes:xlsx,xls,csv|max:10240',
         ], [
             'archivo.max'  => 'El archivo es demasiado grande (máx. 10 MB).',
@@ -151,7 +135,7 @@ class AlmacenController extends Controller
         try {
             session_write_close();
 
-            Excel::import(new MedicamentosImport($request->area_id), $request->file('archivo'));
+            Excel::import(new MedicamentosImport, $request->file('archivo'));
 
             $this->clasificarInsumosNuevos();
 
@@ -279,7 +263,6 @@ class AlmacenController extends Controller
         }
 
         DB::transaction(function () use ($request) {
-            // CORRECCIÓN CRÍTICA: Cambiado de ->decrement('..., $request->decrement) a usar $request->cantidad
             DB::table('medicamentos')
                 ->where('id', $request->medicamento_id)
                 ->decrement('cantidad_stock', $request->cantidad);
@@ -296,57 +279,7 @@ class AlmacenController extends Controller
         return back()->with('success', 'El retiro ha sido registrado y el stock actualizado con éxito.');
     }
 
-    private function deducirAreaDestino($nombreMedicamento)
-    {
-        $desc = mb_strtolower($nombreMedicamento, 'UTF-8');
-
-        if (str_contains($desc, 'kit') || str_contains($desc, 'cirugia') || str_contains($desc, 'caina')) {
-            return 'QUIRÓFANO';
-        }
-
-        $patronesMedicamentos = [
-            'acetaminofen', 'paracetamol', 'insulina', 'rinsulin', 'ergometrina', 'mg', 'ml',
-            'ampolla', 'amp', 'tableta', 'capsula', 'suspension', 'jarabe', 'gotas',
-            'cilina', 'oxacina', 'profeno', 'fenaco', 'prazol', 'sartan'
-        ];
-
-        foreach ($patronesMedicamentos as $patron) {
-            if (str_contains($desc, $patron)) {
-                return 'EMERGENCIA';
-            }
-        }
-
-        return null;
-    }
-
-    public function actualizarVencimientoMasivo(Request $request)
-    {
-        $request->validate([
-            'area_id' => 'required',
-            'fecha_vencimiento' => 'required|date',
-        ]);
-
-        $areaDestino = DB::table('areas')->where('id', $request->area_id)->value('nombre_area');
-
-        if (!$areaDestino) {
-            return back()->with('error', 'El área seleccionada no es válida.');
-        }
-
-        $afectados = DB::table('medicamentos')
-            ->where('area_destino', $areaDestino)
-            ->update([
-                'fecha_vencimiento' => $request->fecha_vencimiento,
-                'updated_at' => now()
-            ]);
-
-        if ($afectados === 0) {
-            return back()->with('info', "No se encontraron medicamentos registrados en el área '{$areaDestino}' para actualizar.");
-        }
-
-        return back()->with('success', "¡Éxito! Se han actualizado las fechas de vencimiento.");
-    }
-
-public function verPorLote(Request $request, $codigo_lote = null)
+    public function verPorLote(Request $request, $codigo_lote = null)
     {
         if (!$codigo_lote) {
             $queryString = $request->server('QUERY_STRING');
@@ -382,17 +315,15 @@ public function verPorLote(Request $request, $codigo_lote = null)
     public function editarMasivo(Request $request)
     {
         $request->validate([
-            'ids' => 'required', // Recibe el string JSON enviado por Alpine.js
+            'ids' => 'required',
         ]);
 
-        // Decodificamos el JSON para convertirlo en un array común de PHP
         $ids = json_decode($request->ids, true);
 
         if (empty($ids)) {
             return back()->with('error', 'No se seleccionó ningún insumo médico válido.');
         }
 
-        // Estructuramos qué columnas se van a actualizar realmente
         $updateData = [];
 
         if (!empty($request->codigo_lote)) {
@@ -403,14 +334,12 @@ public function verPorLote(Request $request, $codigo_lote = null)
             $updateData['cantidad_stock'] = (int)$request->cantidad_stock;
         }
 
-        // Si el usuario abrió el modal pero le dio a guardar vacío, no hacemos nada
         if (empty($updateData)) {
             return back()->with('info', 'No se realizó ninguna modificación porque los campos estaban vacíos.');
         }
 
         $updateData['updated_at'] = now();
 
-        // Ejecutamos una sola consulta masiva en PostgreSQL de forma segura usando transacciones
         DB::transaction(function () use ($ids, $updateData) {
             DB::table('medicamentos')
                 ->whereIn('id', $ids)

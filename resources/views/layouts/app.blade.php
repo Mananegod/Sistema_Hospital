@@ -164,7 +164,7 @@
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
                 </header>
-
+            
                 <main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-10 w-full relative bg-[#F7F9FB]">
                     @yield('content')
                 </main>
