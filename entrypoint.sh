@@ -1,4 +1,4 @@
-#!/bin/bash
+
 set -e
 
 if [ ! -f "artisan" ]; then
@@ -16,16 +16,20 @@ fi
 
 # wait_for_db
 
-
 php artisan config:clear
 
-php artisan migrate:install --no-interaction
 
-echo "Aplicando migraciones pendientes..."
-php artisan migrate --force --no-interaction
-
-
-echo "Ejecutando seeders..."
-php artisan db:seed --force --no-interaction
+if [ "$FORCE_FRESH_MIGRATE" = "true" ]; then
+    echo "FORCE_FRESH_MIGRATE activado: eliminando todas las tablas y aplicando migraciones desde cero..."
+    php artisan migrate:fresh --seed --force --no-interaction
+    echo "Base de datos regenerada exitosamente."
+else
+   
+    php artisan migrate:install --no-interaction
+    echo "Aplicando migraciones pendientes..."
+    php artisan migrate --force --no-interaction
+    echo "Ejecutando seeders..."
+    php artisan db:seed --force --no-interaction
+fi
 
 exec apache2-foreground
