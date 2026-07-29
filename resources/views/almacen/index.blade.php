@@ -135,6 +135,35 @@
                 @endif
             </form>
         </div>
+        {{-- BOTÓN / TOGGLE PARA ALTERNAR ENTRE INSUMOS MÉDICOS Y MEDICAMENTOS (SOLO VISTA POR AHORA) --}}
+<div class="bg-white p-3 rounded-sm border border-slate-100 shadow-sm mb-4" x-data="{ categoria: 'todos' }">
+    <div class="flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            Vista actual: <span class="text-slate-700" x-text="categoria === 'todos' ? 'Todos los registros' : (categoria === 'insumo' ? 'Insumos Médicos' : 'Medicamentos')"></span>
+        </span>
+
+        <div class="inline-flex rounded-sm p-1 bg-slate-100 border border-slate-200">
+            <button type="button" 
+                    @click="categoria = 'todos'"
+                    :class="categoria === 'todos' ? 'bg-white text-slate-800 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
+                    class="px-3 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider">
+                <i class="fas fa-boxes mr-1"></i> Todos
+            </button>
+            <button type="button" 
+                    @click="categoria = 'insumo'"
+                    :class="categoria === 'insumo' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
+                    class="px-3 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider">
+                <i class="fas fa-syringes mr-1"></i> Insumos Médicos
+            </button>
+            <button type="button" 
+                    @click="categoria = 'medicamento'"
+                    :class="categoria === 'medicamento' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
+                    class="px-3 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider">
+                <i class="fas fa-pills mr-1"></i> Medicamentos
+            </button>
+        </div>
+    </div>
+</div>
 
         {{-- Tabla de Inventario --}}
         <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
