@@ -1,55 +1,73 @@
 @extends('layouts.app')
 
-@section('title', 'Detalle de Lote')
+@section('title', "Detalles del Lote {$codigo_lote}")
 
 @section('content')
-    <div class="max-w-7xl mx-auto">
-        
-        {{-- Botón de regreso --}}
-        <div class="mb-8">
-            <a href="{{ route('almacen.index') }}" class="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 transition uppercase tracking-wider mb-4">
-                <i class="fas fa-arrow-left"></i> Volver al Almacén
-            </a>
-            
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-sm text-xs font-mono font-bold">
-                        LOTE: {{ $codigo_lote }}
-                    </span>
-                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight uppercase mt-2">Insumos por Lote</h1>
-                </div>
-            </div>
+<div class="max-w-6xl mx-auto">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight uppercase">Trazabilidad de Lote</h1>
+            <p class="text-xs font-mono font-bold text-blue-600 mt-1">LOTE: {{ $codigo_lote }}</p>
         </div>
-
-        {{-- Tabla --}}
-        <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/30">
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Insumo Médico</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Actual</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Área Ubicación</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50 text-sm font-medium text-slate-600">
-                        @foreach($medicamentos as $item)
-                            <tr class="hover:bg-slate-50/50 transition-colors">
-                                <td class="px-6 py-4 text-slate-900 font-bold">
-                                    {{ $item->nombre_medicamento ?? ($item->nombre ?? 'Insumo Sin Nombre') }}
-                                </td>
-                                <td class="px-6 py-4 text-center font-mono">
-                                    {{ $item->cantidad_stock ?? 0 }}
-                                </td>
-                                <td class="px-6 py-4 uppercase text-xs">
-                                    {{ $item->area_destino ?? 'No Asignada' }}
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+        <a href="{{ route('almacen.index') }}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-sm uppercase tracking-wider transition">
+            <i class="fas fa-arrow-left mr-1"></i> Volver al Almacén
+        </a>
     </div>
+
+    {{-- MEDICAMENTOS ENCONTRADOS --}}
+    @if(isset($medicamentos) && $medicamentos->isNotEmpty())
+        <div class="bg-white rounded-sm border border-slate-100 shadow-sm mb-6 overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+                <i class="fas fa-pills text-blue-600"></i>
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest">Medicamentos asociados</h3>
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 text-[10px] uppercase text-slate-400 font-bold bg-slate-50/50">
+                        <th class="px-6 py-3">Nombre</th>
+                        <th class="px-6 py-3">Tipo</th>
+                        <th class="px-6 py-3 text-center">Stock Actual</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50 text-sm">
+                    @foreach($medicamentos as $med)
+                        <tr>
+                            <td class="px-6 py-3 font-bold text-slate-800">{{ $med->nombre_medicamento }}</td>
+                            <td class="px-6 py-3 text-xs text-slate-500">{{ $med->tipo_insumo ?? 'N/A' }}</td>
+                            <td class="px-6 py-3 text-center font-mono font-bold text-blue-600">{{ $med->cantidad_stock }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
+    {{-- INSUMOS MÉDICOS ENCONTRADOS --}}
+    @if(isset($insumos) && $insumos->isNotEmpty())
+        <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
+            <div class="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+                <i class="fas fa-syringes text-emerald-600"></i>
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest">Insumos Médicos asociados</h3>
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-100 text-[10px] uppercase text-slate-400 font-bold bg-slate-50/50">
+                        <th class="px-6 py-3">Nombre</th>
+                        <th class="px-6 py-3">Tipo</th>
+                        <th class="px-6 py-3 text-center">Stock Actual</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50 text-sm">
+                    @foreach($insumos as $ins)
+                        <tr>
+                            <td class="px-6 py-3 font-bold text-slate-800">{{ $ins->nombre_insumo }}</td>
+                            <td class="px-6 py-3 text-xs text-slate-500">{{ $ins->tipo_insumo ?? 'N/A' }}</td>
+                            <td class="px-6 py-3 text-center font-mono font-bold text-emerald-600">{{ $ins->cantidad_stock }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+</div>
 @endsection

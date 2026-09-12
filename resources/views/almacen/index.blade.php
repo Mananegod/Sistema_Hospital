@@ -12,6 +12,7 @@
     modalMasivo: false,
     modalTrazabilidad: false,
     seleccionados: [],
+    categoria: 'medicamento',
     async buscar() {
         if (this.q.length < 2) { this.resultados = []; return; }
         this.buscando = true;
@@ -51,6 +52,10 @@
                         class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm hover:bg-slate-50 transition shadow-sm text-xs uppercase tracking-wider">
                     <i class="fas fa-file-excel text-green-600"></i> Importar Excel
                 </button>
+                <a href="{{ route('lotes.index') }}" 
+           class="flex items-center gap-2 px-4 py-2 bg-white-50 text-green-700 border border-purple-200 font-bold rounded-sm hover:bg-gray-100 transition shadow-sm text-xs uppercase tracking-wider">
+            <i class="fas fa-boxes text-purple-600"></i> Gestión de Lotes
+        </a>
             </div>
         </div>
 
@@ -63,7 +68,7 @@
             <form action="{{ route('stock.entrada') }}" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end" x-on:submit="$store.loading.activate('Procesando entrada...')">
                 @csrf
                 <div class="relative md:col-span-1">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide">Insumos medicos</label>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide">Insumos médicos / Medicamentos</label>
                     <input type="text" x-model="q" @input.debounce.300ms="buscar()" placeholder="Escriba para buscar..."
                            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition font-semibold text-slate-700">
                     
@@ -91,7 +96,7 @@
             </form>
         </div>
 
-        {{-- BARRA SELECCIÓN MULTIPLE --}}
+        {{-- BARRA SELECCIÓN MÚLTIPLE --}}
         <div x-show="seleccionados.length > 0" 
              x-transition 
              x-cloak
@@ -101,7 +106,7 @@
                     <i class="fas fa-check-double text-xs"></i>
                 </div>
                 <span class="text-xs font-bold text-white uppercase tracking-wider">
-                    Has seleccionado <span class="bg-white text-blue-700 px-2 py-0.5 rounded-sm font-mono font-black" x-text="seleccionados.length"></span> insumos médicos
+                    Has seleccionado <span class="bg-white text-blue-700 px-2 py-0.5 rounded-sm font-mono font-black" x-text="seleccionados.length"></span> registros
                 </span>
             </div>
             <div class="flex items-center gap-2">
@@ -116,10 +121,10 @@
             </div>
         </div>
 
-        {{-- BARRA DE FILTROS --}}
-        <div class="bg-white p-4 rounded-sm border border-slate-100 shadow-sm mb-4">
-            <form action="{{ route('almacen.index') }}" method="GET" class="flex flex-wrap items-center justify-between gap-4">
-                <div class="w-full sm:w-64">
+        {{-- BARRA DE FILTROS Y SELECTOR DE VISTA --}}
+        <div class="bg-white p-4 rounded-sm border border-slate-100 shadow-sm mb-4 flex flex-wrap items-center justify-between gap-4">
+            <form action="{{ route('almacen.index') }}" method="GET" class="flex items-center gap-4">
+                <div class="w-64">
                     <select name="tipo_insumo" onchange="this.form.submit()" class="w-full bg-slate-50 border-0 rounded-sm px-4 py-2.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition">
                         <option value="">Todos los Tipos de Insumo</option>
                         @foreach($tiposInsumo as $tipo)
@@ -134,41 +139,36 @@
                     </a>
                 @endif
             </form>
-        </div>
-        {{-- BOTÓN / TOGGLE PARA ALTERNAR ENTRE INSUMOS MÉDICOS Y MEDICAMENTOS (SOLO VISTA POR AHORA) --}}
-<div class="bg-white p-3 rounded-sm border border-slate-100 shadow-sm mb-4" x-data="{ categoria: 'todos' }">
-    <div class="flex items-center justify-between">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            Vista actual: <span class="text-slate-700" x-text="categoria === 'todos' ? 'Todos los registros' : (categoria === 'insumo' ? 'Insumos Médicos' : 'Medicamentos')"></span>
-        </span>
 
-        <div class="inline-flex rounded-sm p-1 bg-slate-100 border border-slate-200">
-            <button type="button" 
-                    @click="categoria = 'todos'"
-                    :class="categoria === 'todos' ? 'bg-white text-slate-800 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
-                    class="px-3 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider">
-                <i class="fas fa-boxes mr-1"></i> Todos
-            </button>
-            <button type="button" 
-                    @click="categoria = 'insumo'"
-                    :class="categoria === 'insumo' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
-                    class="px-3 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider">
-                <i class="fas fa-syringes mr-1"></i> Insumos Médicos
-            </button>
-            <button type="button" 
-                    @click="categoria = 'medicamento'"
-                    :class="categoria === 'medicamento' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
-                    class="px-3 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider">
-                <i class="fas fa-pills mr-1"></i> Medicamentos
-            </button>
-        </div>
-    </div>
-</div>
+            {{-- TOGGLE ENTRE MEDICAMENTOS E INSUMOS MÉDICOS (SIN OPCIÓN TODOS) --}}
+            <div class="flex items-center gap-3">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Vista actual: <span class="text-slate-800 font-extrabold" x-text="categoria === 'medicamento' ? 'Medicamentos' : 'Insumos Médicos'"></span>
+                </span>
 
-        {{-- Tabla de Inventario --}}
-        <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
+                <div class="inline-flex rounded-sm p-1 bg-slate-100 border border-slate-200">
+                    <button type="button" 
+                            @click="categoria = 'medicamento'"
+                            :class="categoria === 'medicamento' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
+                            class="px-4 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fas fa-pills"></i> Medicamentos
+                    </button>
+                    <button type="button" 
+                            @click="categoria = 'insumo'"
+                            :class="categoria === 'insumo' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
+                            class="px-4 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fas fa-syringes"></i> Insumos Médicos
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- TABLA 1: MEDICAMENTOS --}}
+        <div x-show="categoria === 'medicamento'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest">Existencias en Almacén</h3>
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fas fa-pills text-blue-600"></i> Inventario de Medicamentos (`medicamentos`)
+                </h3>
             </div>
 
             <div class="overflow-x-auto">
@@ -178,7 +178,7 @@
                             <th class="px-6 py-4 text-center w-12">
                                 <input type="checkbox" @change="toggleTodos($event)" class="rounded text-blue-600 focus:ring-blue-500/20 border-slate-300 w-4 h-4 cursor-pointer">
                             </th>
-                            <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Insumos medicos</th>
+                            <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre del Medicamento</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo de Insumo</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Lote / QR</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Mínimo</th>
@@ -246,7 +246,7 @@
                         @empty
                             <tr>
                                 <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-400 italic">
-                                    <i class="fas fa-box-open text-2xl block mb-2 text-slate-300 not-italic"></i> No se encontraron registros con los filtros seleccionados.
+                                    <i class="fas fa-box-open text-2xl block mb-2 text-slate-300 not-italic"></i> No se encontraron medicamentos registrados.
                                 </td>
                             </tr>
                         @endforelse
@@ -257,6 +257,102 @@
             @if($inventario->hasPages())
                 <div class="px-6 py-4 border-t border-slate-50 bg-slate-50/30">
                     {{ $inventario->links() }}
+                </div>
+            @endif
+        </div>
+
+        {{-- TABLA 2: INSUMOS MÉDICOS --}}
+        <div x-show="categoria === 'insumo'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden" x-cloak>
+            <div class="px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fas fa-syringes text-blue-600"></i> Inventario de Insumos Médicos (`insumos_medicos`)
+                </h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-100 bg-slate-50/30">
+                            <th class="px-6 py-4 text-center w-12">
+                                <input type="checkbox" @change="toggleTodos($event)" class="rounded text-blue-600 focus:ring-blue-500/20 border-slate-300 w-4 h-4 cursor-pointer">
+                            </th>
+                            <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre del Insumo</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo de Insumo</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Lote / QR</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Mínimo</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Actual</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50 text-sm font-medium text-slate-600">
+                        @forelse($insumos as $insumo)
+                            <tr class="hover:bg-slate-50/50 transition-colors" :class="seleccionados.includes('{{ $insumo->id }}') ? 'bg-blue-50/40 hover:bg-blue-50/50' : ''">
+                                <td class="px-6 py-4 text-center">
+                                    <input type="checkbox" 
+                                           value="{{ $insumo->id }}" 
+                                           x-model="seleccionados"
+                                           class="checkbox-item rounded text-blue-600 focus:ring-blue-500/20 border-slate-300 w-4 h-4 cursor-pointer">
+                                </td>
+                                <td class="px-2 py-4 text-slate-900 font-bold tracking-tight">{{ $insumo->nombre_insumo }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded-sm text-[11px] font-bold tracking-wide
+                                        {{ $insumo->tipo_insumo === 'Por Determinar' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-100' }}">
+                                        {{ $insumo->tipo_insumo ?? 'Por Determinar' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-2 text-center">
+                                    @if(isset($insumo->codigo_lote) && $insumo->codigo_lote !== null && strlen(trim($insumo->codigo_lote)) > 0)
+                                        @php
+                                            $loteFormateado = trim($insumo->codigo_lote);
+                                            $qrGenerado = false;
+                                            $qrHtml = '';
+                                            if (class_exists('SimpleSoftwareIO\QrCode\Facades\QrCode')) {
+                                                try {
+                                                    $qrHtml = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(55)
+                                                        ->margin(1)
+                                                        ->generate(route('almacen.lote', ['codigo_lote' => $loteFormateado]));
+                                                    $qrGenerado = true;
+                                                } catch (\Exception $e) {}
+                                            }
+                                        @endphp
+                                        <div class="inline-flex flex-col items-center justify-center p-1.5 bg-white border border-slate-100 rounded-sm shadow-xs">
+                                            @if($qrGenerado && !empty($qrHtml))
+                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100">
+                                                    {!! $qrHtml !!}
+                                                </div>
+                                            @else
+                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100 flex items-center justify-center w-[55px] h-[55px] text-slate-400 text-[8px] uppercase font-bold">
+                                                    <i class="fas fa-qrcode text-xl text-slate-300"></i>
+                                                </div>
+                                            @endif
+                                            <a href="{{ route('almacen.lote', ['codigo_lote' => $loteFormateado]) }}" class="text-[10px] font-mono font-bold text-blue-600 hover:underline mt-1">
+                                                {{ $loteFormateado }}
+                                            </a>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-slate-400 italic font-semibold">S/L</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $insumo->stock_minimo ?? '0' }}</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="px-3 py-1.5 rounded-sm text-xs font-bold font-mono {{ $insumo->cantidad_stock <= ($insumo->stock_minimo ?? 0) ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600' }}">
+                                        {{ $insumo->cantidad_stock }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-400 italic">
+                                    <i class="fas fa-box-open text-2xl block mb-2 text-slate-300 not-italic"></i> No se encontraron insumos médicos registrados.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if(method_exists($insumos, 'hasPages') && $insumos->hasPages())
+                <div class="px-6 py-4 border-t border-slate-50 bg-slate-50/30">
+                    {{ $insumos->links() }}
                 </div>
             @endif
         </div>
@@ -272,7 +368,7 @@
                  
                 <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                        <i class="fas fa-edit text-blue-600"></i> Edición Masiva de Insumos
+                        <i class="fas fa-edit text-blue-600"></i> Edición Masiva
                     </h3>
                     <button type="button" @click="modalMasivo = false" class="text-slate-400 hover:text-slate-600 transition">
                         <i class="fas fa-times"></i>
@@ -283,11 +379,12 @@
                       x-on:submit="$store.loading.activate('Aplicando cambios masivos...')">
                     @csrf
                     <input type="hidden" name="ids" :value="JSON.stringify(seleccionados)">
+                    <input type="hidden" name="tabla" :value="categoria === 'insumo' ? 'insumos' : 'medicamentos'">
 
                     <div class="p-6 space-y-4">
                         <div class="bg-slate-50 p-3 rounded-sm border border-slate-100">
                             <p class="text-[11px] text-slate-500 uppercase font-semibold">
-                                Los cambios ingresados afectarán a los <span class="text-blue-600 font-bold" x-text="seleccionados.length"></span> insumos médicos que marcaste.
+                                Los cambios ingresados afectarán a los <span class="text-blue-600 font-bold" x-text="seleccionados.length"></span> elementos que marcaste en <span class="font-bold text-slate-700" x-text="categoria === 'insumo' ? 'Insumos Médicos' : 'Medicamentos'"></span>.
                             </p>
                         </div>
 
@@ -322,26 +419,36 @@
         <div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
              x-show="modalImportar" 
              x-cloak 
-             x-transition>
+             x-transition
+             x-data="{ destinoImportacion: '{{ route('insumos.import') }}' }">
              
             <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
                  @click.away="modalImportar = false">
                  
                 <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                        <i class="fas fa-file-excel text-green-600"></i> Importar Inventario Masivo
+                        <i class="fas fa-file-excel text-green-600"></i> Importar Masivo
                     </h3>
                     <button type="button" @click="modalImportar = false" class="text-slate-400 hover:text-slate-600 transition">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
 
-                <form action="{{ route('inventario.import') }}" method="POST" enctype="multipart/form-data"
+                <form :action="destinoImportacion" method="POST" enctype="multipart/form-data"
                       x-on:submit="$store.loading.activate('Importando y clasificando datos...')">
                     @csrf
                     <div class="p-6 space-y-4">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Archivo Excel (F15)</label>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Tipo de Registro a Cargar</label>
+                            <select class="w-full bg-slate-50 border-0 rounded-sm px-3 py-2.5 text-xs font-bold text-slate-700 outline-none"
+                                    x-model="destinoImportacion">
+                                <option value="{{ route('insumos.import') }}">Insumos Médicos (`insumos_medicos`)</option>
+                                <option value="{{ route('inventario.import') }}">Medicamentos (`medicamentos`)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Archivo Excel / CSV</label>
                             <input type="file" name="archivo" accept=".xlsx, .xls, .csv" required
                                 class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:bg-blue-50 file:text-blue-700 file:font-bold file:text-xs">
                         </div>
@@ -372,7 +479,7 @@
                  
                 <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                        <i class="fas fa-chart-line text-blue-600"></i> Monitoreo de Medicamentos
+                        <i class="fas fa-chart-line text-blue-600"></i> Monitoreo de Medicamentos e Insumos
                     </h3>
                     <button type="button" @click="modalTrazabilidad = false" class="text-slate-400 hover:text-slate-600 transition">
                         <i class="fas fa-times"></i>
