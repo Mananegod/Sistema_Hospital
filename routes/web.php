@@ -13,6 +13,7 @@ use App\Models\User;                  // <-- IMPORTANTE: Importamos el Modelo Us
 use Illuminate\Support\Facades\Hash;  // <-- IMPORTANTE: Importamos Hash para encriptar
 use App\Http\Controllers\TraficoController; /*epa aqui kevin, esta es la """""cronjob"""" */
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LoteController;
 
 // ==========================================
 // RUTAS PÚBLICAS
@@ -115,4 +116,11 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::post('/almacen/vencimiento-masivo', [AlmacenController::class, 'actualizarVencimientoMasivo'])->name('almacen.vencimientoMasivo');
     Route::post('/almacen/editar-masivo', [AlmacenController::class, 'editarMasivo'])->name('almacen.editar-masivo');
     Route::post('/epidemiologia/importar', [App\Http\Controllers\EpidemiologiaController::class, 'importar'])->name('epidemiologia.importar');
+
+    Route::post('/almacen/importar-insumos', [AlmacenController::class, 'importarInsumosExcel'])->name('insumos.import');
+    Route::get('/almacen/buscar-insumos', [AlmacenController::class, 'buscarInsumos'])->name('insumos.buscar');
+    Route::post('/almacen/importar-medicamentos', [AlmacenController::class, 'importarExcel'])->name('inventario.import');
+    Route::get('/lotes', [LoteController::class, 'index'])->name('lotes.index');
+    Route::get('/lotes/{id}', [LoteController::class, 'show'])->name('lotes.show');
+    Route::put('/lotes/{id}/estado', [LoteController::class, 'updateEstado'])->name('lotes.update-estado');
 });
