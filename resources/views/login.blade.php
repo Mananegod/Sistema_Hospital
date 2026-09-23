@@ -121,7 +121,7 @@
                                 x-transition:leave="transition ease-in duration-150"
                                 x-transition:leave-start="opacity-100 translate-x-0"
                                 x-transition:leave-end="opacity-0 -translate-x-2"
-                                class="col-start-1 row-start-1 space-y-5 sm:space-y-6 w-full" x-data="{ showPass: false }">
+                                class="col-start-1 row-start-1 space-y-5 sm:space-y-6 w-full" x-data="{ showPass: false, password: '' }">
 
                                 <div
                                     class="bg-slate-50 border border-slate-200 p-3.5 sm:p-4 rounded-sm flex items-center justify-between shadow-2xs">
@@ -149,7 +149,7 @@
                                     </label>
                                     <div class="relative">
                                         <input :type="showPass ? 'text' : 'password'" name="password" id="password"
-                                            x-ref="passwordInput" autocomplete="current-password" placeholder="••••••••••••"
+                                            x-model="password" x-ref="passwordInput" autocomplete="current-password" placeholder="••••••••••••"
                                             class="w-full bg-slate-50 text-slate-700 rounded-sm px-4 py-3.5 sm:py-4 pr-12 text-base sm:text-lg font-semibold shadow-inner outline-none transition border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20">
                                         <button type="button" @click="showPass = !showPass"
                                             class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-700 transition cursor-pointer">
@@ -165,7 +165,7 @@
                                     @enderror
                                 </div>
 
-                                <button type="submit" :disabled="submitting"
+                                <button type="submit" :disabled="submitting || password.trim() === ''"
                                     class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none text-white font-bold py-3.5 sm:py-4 px-4 rounded-sm shadow-md shadow-blue-600/25 transition-all active:scale-98 text-sm sm:text-base uppercase tracking-wider cursor-pointer disabled:cursor-not-allowed">
                                     Acceder al sistema
                                 </button>

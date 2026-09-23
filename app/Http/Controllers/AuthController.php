@@ -22,18 +22,21 @@ class AuthController extends Controller
     {
         try {
             $credentials = $request->validate([
-                'nombre'   => 'required|string',
+                'nombre' => 'required|string',
                 'password' => 'required|string',
+            ], [
+                'nombre.required' => 'El campo usuario es obligatorio.',
+                'nombre.string' => 'El usuario debe ser una cadena de texto.',
+                'password.required' => 'El campo contraseña es obligatorio.',
+                'password.string' => 'La contraseña debe ser una cadena de texto.',
             ]);
 
-            // Carga la relación 'personal' para validar el estatus activo y el tipo de usuario
             $user = User::with('personal')
-                        ->where('nombre', 'ilike', $credentials['nombre'])
-                        ->first();
+                ->where('nombre', 'ilike', $credentials['nombre'])
+                ->first();
 
             if ($user && Auth::attempt(['nombre' => $user->nombre, 'password' => $credentials['password']])) {
-                
-                // Verificar si el personal asociado fue desactivado
+
                 if ($user->personal && !$user->personal->activo) {
                     Auth::logout();
                     return back()->withErrors(['error' => 'Su cuenta se encuentra inactiva. Contacte al administrador.']);
@@ -41,7 +44,6 @@ class AuthController extends Controller
 
                 $request->session()->regenerate();
 
-                // Si es un usuario estándar (No Admin), redirigir directamente al módulo de Retiros
                 if ($user->personal && $user->personal->tipo_usuario === 'Usuario') {
                     return redirect()->route('retiros.index');
                 }
