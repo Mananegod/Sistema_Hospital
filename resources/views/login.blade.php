@@ -128,7 +128,7 @@
                                 x-transition:leave="transition ease-in duration-150"
                                 x-transition:leave-start="opacity-100 translate-x-0"
                                 x-transition:leave-end="opacity-0 -translate-x-2"
-                                class="col-start-1 row-start-1 space-y-5 sm:space-y-6 w-full" x-data="{ showPass: false }">
+                                class="col-start-1 row-start-1 space-y-5 sm:space-y-6 w-full" x-data="{ showPass: false, password: '' }">
 
                                 <div
                                     class="bg-white/60 backdrop-blur-sm border border-white/60 p-3.5 sm:p-4 rounded-sm flex items-center justify-between shadow-sm">
@@ -156,7 +156,7 @@
                                     </label>
                                     <div class="relative">
                                         <input :type="showPass ? 'text' : 'password'" name="password" id="password"
-                                            x-ref="passwordInput" autocomplete="current-password" placeholder="••••••••••••"
+                                            x-model="password" x-ref="passwordInput" autocomplete="current-password" placeholder="••••••••••••"
                                             class="w-full bg-white/60 backdrop-blur-sm text-slate-900 placeholder-slate-500 rounded-sm px-4 py-3.5 sm:py-4 pr-12 text-base sm:text-lg font-semibold shadow-inner outline-none transition border border-white/60 focus:bg-white/90 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20">
                                         <button type="button" @click="showPass = !showPass"
                                             class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-600 hover:text-slate-900 transition cursor-pointer">
@@ -172,7 +172,7 @@
                                     @enderror
                                 </div>
 
-                                <button type="submit" :disabled="submitting"
+                                <button type="submit" :disabled="submitting || password.trim() === ''"
                                     class="w-full bg-blue-600/90 hover:bg-blue-700 backdrop-blur-sm disabled:bg-slate-400/50 disabled:text-slate-200 disabled:border-transparent text-white font-bold py-3.5 sm:py-4 px-4 rounded-sm shadow-lg shadow-blue-900/30 transition-all active:scale-98 text-sm sm:text-base uppercase tracking-wider cursor-pointer disabled:cursor-not-allowed border border-blue-500/50">
                                     Acceder al sistema
                                 </button>
