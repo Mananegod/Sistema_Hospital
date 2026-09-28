@@ -3,15 +3,28 @@
 @section('title', "Detalles del Lote {$codigo_lote}")
 
 @section('content')
+{{-- Truco CSS para ocultar el sidebar solo en esta vista --}}
+<style>
+    /* Oculta el contenedor del menú lateral */
+    aside {
+        display: none !important;
+    }
+    
+    /* Si tu layout (layouts.app) tiene un div principal o etiqueta 'main' con margen izquierdo para dejarle espacio al sidebar, esto lo resetea para que ocupe toda la pantalla */
+    main, .main-content, #main-content {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+</style>
+
 <div class="max-w-6xl mx-auto">
     <div class="mb-6 flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-black text-slate-900 tracking-tight uppercase">Trazabilidad de Lote</h1>
             <p class="text-xs font-mono font-bold text-blue-600 mt-1">LOTE: {{ $codigo_lote }}</p>
         </div>
-        <a href="{{ route('almacen.index') }}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-sm uppercase tracking-wider transition">
-            <i class="fas fa-arrow-left mr-1"></i> Volver al Almacén
-        </a>
     </div>
 
     {{-- MEDICAMENTOS ENCONTRADOS --}}

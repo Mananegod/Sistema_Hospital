@@ -3,11 +3,22 @@
 @section('title', 'Vigilancia Epidemiológica')
 
 @section('content')
-<div class="max-w-7xl mx-auto">
+{{-- INICIO DEL X-DATA GLOBAL: Envuelve todo el contenido para que el modal y la tabla compartan el mismo estado --}}
+<div class="max-w-7xl mx-auto"
+     x-data="{ 
+        modo: 'crear',
+        editOpen: false, 
+        caso: { id: '', nombre_paciente: '', cedula_paciente: '', patologia_cie10: '', sector_procedencia: '', fecha_sintomas: '', estado_caso: '', observaciones: '' },
+        abrirEditar(item) {
+            this.caso = { ...item };
+            this.editOpen = true;
+        }
+     }">
+    
     {{-- Encabezado Principal --}}
     <div class="mb-8">
         <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Vigilancia Epidemiológica</h1>
-        <p class="text-slate-500 mt-1 uppercase text-xs tracking-wider">Hospital "Dr. Tiburcio Garrido" - Análisis Dinámico de Curvas y Canales Endémicos</p>
+        <p class="text-slate-500 mt-1 uppercase text-xs tracking-wider">Hospital &quot;Dr. Tiburcio Garrido&quot; - Análisis Dinámico de Curvas y Canales Endémicos</p>
     </div>
 
     {{-- Notificación de Éxito --}}
@@ -35,29 +46,19 @@
     </div>
     @endif
 
-    {{-- Contenedor de Gestión de Casos (Grid Superior) con Estado Global de Alpine --}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8"
-         x-data="{ 
-            modo: 'crear',
-            editOpen: false, 
-            caso: { id: '', nombre_paciente: '', cedula_paciente: '', patologia_cie10: '', sector_procedencia: '', fecha_sintomas: '', estado_caso: '', observaciones: '' },
-            abrirEditar(item) {
-                this.caso = { ...item };
-                this.editOpen = true;
-            }
-         }">
+    {{-- Contenedor de Gestión de Casos (Grid Superior) --}}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
 
         {{-- Barra Lateral Izquierda: Alternador Dinámico de Contenedores --}}
         <div class="lg:col-span-4 space-y-6">
             
-            {{-- Botón de Acción Principal --}}
-            <div>
-                <button type="button" 
-                        x-show="modo === 'crear'"
-                        @click="modo = 'importar'"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-sm shadow-sm transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-xs">
-                    <i class="fa-solid fa-file-import"></i> Importar Datos Históricos
-                </button>
+            {{-- Botones de Acción Principales --}}
+            <div class="space-y-2">
+                <a href="{{ route('epidemiologia.pdf') }}" 
+                   target="_blank"
+                   class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-sm shadow-sm transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-xs">
+                    <i class="fa-solid fa-file-pdf"></i> Generar Reporte PDF
+                </a>
 
                 <button type="button" 
                         x-show="modo === 'importar'"
@@ -239,16 +240,7 @@
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2">
                                         <button type="button" 
-                                                @click="abrirEditar({
-                                                    id: '{{ $c->id }}',
-                                                    nombre_paciente: '{{ $c->nombre_paciente }}',
-                                                    cedula_paciente: '{{ $c->cedula_paciente }}',
-                                                    patologia_cie10: '{{ $c->patologia_cie10 }}',
-                                                    sector_procedencia: '{{ $c->sector_procedencia }}',
-                                                    fecha_sintomas: '{{ $c->fecha_sintomas }}',
-                                                    estado_caso: '{{ $c->estado_caso }}',
-                                                    observaciones: '{{ $c->observaciones }}'
-                                                })" 
+                                                @click="abrirEditar({{ json_encode($c) }})" 
                                                 class="p-2 text-slate-400 hover:text-blue-600 transition"
                                                 title="Ver Ficha Detallada">
                                             <i class="fa-solid fa-eye"></i>
@@ -277,7 +269,7 @@
         </div>
     </div>
 
-    {{-- MODAL DETALLE EXPEDIENTE --}}
+    {{-- MODAL DETALLE EXPEDIENTE (Ahora dentro del ámbito global x-data) --}}
     <div x-show="editOpen" 
          x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
@@ -334,7 +326,7 @@
         </div>
     </div>
 
-    {{-- CANALES ENDÉMICOS ESTADÍSTICA --}}
+    {{-- CANALES ENDÉMICOS ESTADÍSTICA (Intacta y completamente operativa abajo) --}}
     <div class="bg-white rounded-sm border border-slate-100 shadow-sm p-6 mt-8"
          x-data="{
             patologiaSeleccionada: '{{ $patologias->first() }}',
@@ -573,7 +565,7 @@
 
     </div>
 
-</div>
+</div> {{-- FIN DEL X-DATA GLOBAL --}}
 
 {{-- Cargamos Chart.js de forma integrada en tu sistema --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

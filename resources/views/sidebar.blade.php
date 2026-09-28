@@ -39,9 +39,9 @@
              }">
             
             <div class="flex items-center gap-3 overflow-hidden">
-                <div class="bg-blue-600 p-2.5 rounded-sm shadow-sm shrink-0 flex items-center justify-center">
-                    <i class="fa-solid fa-hospital text-white text-lg"></i>
-                </div>
+                <img src="{{ asset('img/logo.jfif') }}" 
+                     alt="Logo Hospital TG" 
+                     class="w-10 h-10 rounded-sm shadow-sm object-cover shrink-0 bg-white border border-gray-100">
                 <span x-show="$store.sidebar.open" 
                       x-transition:enter="transition delay-100 duration-200"
                       x-transition:enter-start="opacity-0 translate-x-2"
@@ -102,6 +102,7 @@
                 </ul>
             </div>
 
+            {{-- ... (Grupos 2, 3 y 4 se mantienen iguales) ... --}}
             {{-- Grupo 2: Gestión Médica --}}
             <div>
                 <div class="h-6 flex items-center mb-2" :class="$store.sidebar.open ? 'px-6' : 'justify-center'">
@@ -237,22 +238,42 @@
             </div>
         </div>
 
-        {{-- Footer de Usuario y Cierre de Sesión --}}
+        {{-- Footer de Usuario y Cierre de Sesión (AHORA DINÁMICO) --}}
         <div class="p-4 border-t border-gray-200 bg-gray-50/80 flex flex-col gap-2 shrink-0">
             
-            {{-- Perfil --}}
+            @php
+                // Extraemos el usuario autenticado
+                $user = Auth::user();
+                // Verificamos si tiene datos en la tabla personal
+                $personalInfo = $user ? $user->personal : null;
+
+                // Preparamos los datos a mostrar
+                if ($personalInfo) {
+                    // Si existe en personal, mostramos sus nombres y su tipo de usuario
+                    $nombreMostrar = explode(' ', $personalInfo->nombres)[0] . ' ' . explode(' ', $personalInfo->apellidos)[0];
+                    $rolMostrar = $personalInfo->tipo_usuario; // Puede ser Admin o Usuario
+                    $iniciales = strtoupper(substr($personalInfo->nombres, 0, 1) . substr($personalInfo->apellidos, 0, 1));
+                } else {
+                    // Fallback en caso de que sea el usuario administrador maestro sin registro en "personal"
+                    $nombreMostrar = $user ? $user->nombre : 'Usuario';
+                    $rolMostrar = 'Sistema';
+                    $iniciales = strtoupper(substr($nombreMostrar, 0, 2));
+                }
+            @endphp
+
+            {{-- Perfil Dinámico --}}
             <div class="flex items-center"
                  :class="{
                      'px-2 gap-3 justify-start': $store.sidebar.open,
                      'justify-center px-0': !$store.sidebar.open,
                      'transition-all duration-300': ready
                  }">
-                <div class="h-10 w-10 rounded-sm bg-blue-50 border border-blue-200 flex items-center justify-center font-black text-blue-600 tracking-tighter shrink-0">
-                    DC
+                <div class="h-10 w-10 rounded-sm bg-blue-50 border border-blue-200 flex items-center justify-center font-black text-blue-600 tracking-tighter shrink-0 uppercase">
+                    {{ $iniciales }}
                 </div>
                 <div x-show="$store.sidebar.open" class="whitespace-nowrap overflow-hidden">
-                    <p class="text-sm font-bold text-gray-800 truncate">David Camacho</p>
-                    <p class="text-[11px] text-gray-500 truncate">Administrador</p>
+                    <p class="text-sm font-bold text-gray-800 truncate" title="{{ $nombreMostrar }}">{{ $nombreMostrar }}</p>
+                    <p class="text-[11px] text-gray-500 truncate uppercase">{{ $rolMostrar }}</p>
                 </div>
             </div>
 
@@ -285,31 +306,26 @@
        VARIABLES Y ESTILOS DEL SIDEBAR
        ============================================== */
     :root {
-        /* ---Fondo de los botones inactivos--- */
         --sidebar-link-bg: #edeff1ec;
         --sidebar-link-border: none;
         --sidebar-link-text: #3a3e44;
         --sidebar-link-hover-bg: #f3f4f6;
-
-        /* ---Colores para el botón activo--- */
         --sidebar-link-active-bg: #2564ebe7;
         --sidebar-link-active-text: #ffffff;
         --sidebar-link-active-border: #2563eb;
         --sidebar-link-active-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }
 
-    /* Estilo base de los enlaces */
     .sidebar-link {
         background-color: var(--sidebar-link-bg);
         border: 1px solid var(--sidebar-link-border);
         color: var(--sidebar-link-text);
-        user-select: none; /* evita selección de texto al hacer clic rápido */
+        user-select: none;
     }
     .sidebar-link:hover {
         background-color: var(--sidebar-link-hover-bg);
     }
 
-    /* Estilo para el enlace activo (mayor especificidad) */
     .sidebar-link.sidebar-link-active {
         background-color: var(--sidebar-link-active-bg);
         color: var(--sidebar-link-active-text);
@@ -318,7 +334,6 @@
         box-shadow: var(--sidebar-link-active-shadow);
     }
 
-    /* Animación de clic natural para todos los botones y enlaces del sidebar */
     .sidebar-link:active,
     .sidebar-link-active:active,
     .logout-btn:active {
@@ -326,18 +341,8 @@
         transition: transform 0.1s ease;
     }
 
-    /* Ajustes del scrollbar */
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #d1d5db;
-        border-radius: 9999px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #9ca3af;
-    }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 </style>
