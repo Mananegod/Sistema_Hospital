@@ -53,9 +53,14 @@
                     <i class="fas fa-file-excel text-green-600"></i> Importar Excel
                 </button>
                 <a href="{{ route('lotes.index') }}" 
-           class="flex items-center gap-2 px-4 py-2 bg-white-50 text-green-700 border border-purple-200 font-bold rounded-sm hover:bg-gray-100 transition shadow-sm text-xs uppercase tracking-wider">
-            <i class="fas fa-boxes text-purple-600"></i> Gestión de Lotes
-        </a>
+                class="flex items-center gap-2 px-4 py-2 bg-white-50 text-green-700 border border-purple-200 font-bold rounded-sm hover:bg-gray-100 transition shadow-sm text-xs uppercase tracking-wider">
+                <i class="fas fa-boxes text-purple-600"></i> Gestión de Lotes
+                </a>
+<a :href="'{{ route('almacen.pdf') }}?categoria=' + categoria + '&tipo_insumo={{ request('tipo_insumo') }}'" 
+   target="_blank"
+   class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm hover:bg-red-50 hover:text-red-700 transition shadow-sm text-xs uppercase tracking-wider">
+    <i class="fas fa-file-pdf text-red-600"></i> Exportar PDF
+</a>
             </div>
         </div>
 
@@ -399,6 +404,16 @@
                             <input type="number" name="cantidad_stock" min="0" placeholder="Ej: 150"
                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
                         </div>
+                        <div class="mb-4">
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">
+                            Fecha de Vencimiento
+                            </label>
+                            <input type="date" 
+                                   name="fecha_vencimiento" 
+                                   x-model="formEdicionMasiva.fecha_vencimiento" 
+                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
+                            <span class="text-[10px] text-slate-500">Deja este campo vacío si no deseas cambiar la fecha a los elementos seleccionados.</span>
+                        </div>
                     </div>
 
                     <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
@@ -420,7 +435,7 @@
              x-show="modalImportar" 
              x-cloak 
              x-transition
-             x-data="{ destinoImportacion: '{{ route('insumos.import') }}' }">
+             x-data="{ tipoImportacion: 'insumos' }">
              
             <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
                  @click.away="modalImportar = false">
@@ -434,16 +449,26 @@
                     </button>
                 </div>
 
-                <form :action="destinoImportacion" method="POST" enctype="multipart/form-data"
+                <form :action="tipoImportacion === 'insumos' ? '{{ route('insumos.import') }}' : '{{ route('inventario.import') }}'" method="POST" enctype="multipart/form-data"
                       x-on:submit="$store.loading.activate('Importando y clasificando datos...')">
                     @csrf
                     <div class="p-6 space-y-4">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Tipo de Registro a Cargar</label>
+                            <div class="flex justify-between items-end mb-2">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tipo de Registro a Cargar</label>
+                                
+                                {{-- BOTÓN DE DESCARGA DE PLANTILLA DINÁMICO --}}
+                                <a :href="tipoImportacion === 'insumos' ? '{{ asset('plantillas/almacen_insumos_medicos.xlsx') }}' : '{{ asset('plantillas/almacen_medicamentos.xlsx') }}'" 
+                                   download
+                                   class="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider flex items-center gap-1 transition">
+                                    <i class="fas fa-download"></i> Descargar Plantilla
+                                </a>
+                            </div>
+
                             <select class="w-full bg-slate-50 border-0 rounded-sm px-3 py-2.5 text-xs font-bold text-slate-700 outline-none"
-                                    x-model="destinoImportacion">
-                                <option value="{{ route('insumos.import') }}">Insumos Médicos (`insumos_medicos`)</option>
-                                <option value="{{ route('inventario.import') }}">Medicamentos (`medicamentos`)</option>
+                                    x-model="tipoImportacion">
+                                <option value="insumos">Insumos Médicos (`insumos_medicos`)</option>
+                                <option value="medicamentos">Medicamentos (`medicamentos`)</option>
                             </select>
                         </div>
 
