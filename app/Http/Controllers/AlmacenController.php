@@ -318,7 +318,7 @@ class AlmacenController extends Controller
         return 'Por Determinar';
     }
 
-    public function indexRetiros()
+public function indexRetiros()
     {
         $areas = DB::table('areas')->get();
         $todosLosMedicamentos = DB::table('medicamentos')->orderBy('nombre_medicamento', 'asc')->get();
@@ -336,7 +336,11 @@ class AlmacenController extends Controller
                     DB::raw("COALESCE(medicamentos.nombre_medicamento, insumos_medicos.nombre_insumo, 'Desconocido') as nombre"),
                     'areas.nombre_area',
                     'retiros.cantidad',
-                    'retiros.created_at'
+                    'retiros.created_at',
+                    DB::raw("CASE 
+                        WHEN retiros.insumo_id IS NOT NULL THEN 'Insumo' 
+                        ELSE 'Medicamento' 
+                    END as tipo_item")
                 )
                 ->whereDate('retiros.created_at', now()->toDateString())
                 ->orderBy('retiros.created_at', 'desc')
@@ -350,7 +354,8 @@ class AlmacenController extends Controller
                     'medicamentos.nombre_medicamento as nombre',
                     'areas.nombre_area',
                     'retiros.cantidad',
-                    'retiros.created_at'
+                    'retiros.created_at',
+                    DB::raw("'Medicamento' as tipo_item")
                 )
                 ->whereDate('retiros.created_at', now()->toDateString())
                 ->orderBy('retiros.created_at', 'desc')
@@ -611,7 +616,8 @@ public function pdf()
             ->join('areas', 'retiros.area_id', '=', 'areas.id')
             ->select(
                 'retiros.id',
-                DB::raw("COALESCE(medicamentos.nombre_medicamento, insumos_medicos.nombre_insumo, 'Desconocido') as nombre"),
+                'medicamentos.nombre_medicamento',
+                'insumos_medicos.nombre_insumo',
                 'areas.nombre_area',
                 'retiros.cantidad',
                 'retiros.created_at',
@@ -620,6 +626,11 @@ public function pdf()
                     ELSE 'medicamento' 
                 END as tipo_item")
             )
+            ->where(function($query) {
+                // Asegurar que solo traiga registros donde al menos uno de los dos exista en la tabla
+                $query->whereNotNull('medicamentos.id')
+                      ->orWhereNotNull('insumos_medicos.id');
+            })
             ->orderBy('retiros.created_at', 'desc')
             ->get();
     } else {
@@ -628,19 +639,19 @@ public function pdf()
             ->join('areas', 'retiros.area_id', '=', 'areas.id')
             ->select(
                 'retiros.id',
-                'medicamentos.nombre_medicamento as nombre',
+                'medicamentos.nombre_medicamento',
                 'areas.nombre_area',
                 'retiros.cantidad',
                 'retiros.created_at',
                 DB::raw("'medicamento' as tipo_item")
             )
+            ->whereNotNull('medicamentos.id')
             ->orderBy('retiros.created_at', 'desc')
             ->get();
     }
 
     $todosLosInsumos = DB::table('insumos_medicos')->get();
 
-    // Intenta retornar la vista según donde esté guardada
     if (view()->exists('almacen.retiros.pdf')) {
         return view('almacen.retiros.pdf', compact('ultimosRetiros', 'todosLosInsumos'));
     }

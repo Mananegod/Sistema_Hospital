@@ -88,16 +88,32 @@
             </a>
         </div>
 
-        {{-- Reportes (bloqueado por ahora) --}}
-        <div class="bg-white p-6 md:p-8 rounded-sm border border-slate-100 opacity-60 relative overflow-hidden">
-            <div class="bg-amber-50 text-amber-600 w-14 h-14 rounded-sm flex items-center justify-center mb-6 shadow-inner">
+        {{-- Estadísticas y Reportes --}}
+        <div class="bg-white p-6 md:p-8 rounded-sm border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+            <div class="bg-amber-50 text-amber-600 w-14 h-14 rounded-sm flex items-center justify-center mb-6 group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-inner">
                 <i class="fa-solid fa-chart-line text-2xl"></i>
             </div>
             <h3 class="text-xl font-bold text-slate-900 mb-3">Estadísticas y Reportes</h3>
             <p class="text-slate-500 text-sm leading-relaxed mb-6">
-                Generación de informes detallados sobre consumo mensual y proyecciones de necesidades.
+                Generación de informes detallados sobre consumo mensual, atenciones y proyecciones de necesidades.
             </p>
-            <span class="bg-amber-100 text-amber-600 px-4 py-1 rounded-sm text-[10px] font-black uppercase tracking-widest border border-amber-200">Próximamente</span>
+            <a href="{{ route('estadisticas.index') }}" class="inline-flex items-center text-amber-600 font-bold text-sm hover:gap-2 transition-all uppercase tracking-wider">
+                Acceder módulo <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+            </a>
+        </div>
+
+        {{-- Epidemiología (Nuevo módulo) --}}
+        <div class="bg-white p-6 md:p-8 rounded-sm border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+            <div class="bg-rose-50 text-rose-600 w-14 h-14 rounded-sm flex items-center justify-center mb-6 group-hover:bg-rose-600 group-hover:text-white transition-colors shadow-inner">
+                <i class="fa-solid fa-virus text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-3">Epidemiología</h3>
+            <p class="text-slate-500 text-sm leading-relaxed mb-6">
+                Monitoreo, registro de casos de vigilancia epidemiológica y control de brotes en la comunidad.
+            </p>
+            <a href="{{ route('epidemiologia.index') }}" class="inline-flex items-center text-rose-600 font-bold text-sm hover:gap-2 transition-all uppercase tracking-wider">
+                Acceder módulo <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+            </a>
         </div>
 
     </div>

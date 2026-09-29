@@ -114,4 +114,5 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::get('/lotes', [LoteController::class, 'index'])->name('lotes.index');
     Route::get('/lotes/{id}', [LoteController::class, 'show'])->name('lotes.show');
     Route::put('/lotes/{id}/estado', [LoteController::class, 'updateEstado'])->name('lotes.update-estado');
+    Route::get('/personal/pdf', [PersonalController::class, 'exportPdf'])->name('personal.pdf');
 });

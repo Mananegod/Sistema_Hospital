@@ -3,7 +3,7 @@
 @section('title', 'Gestión de Almacén')
 
 @section('content')
-    <div class="max-w-7xl mx-auto" x-data="{
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{
     buscando: false,
     resultados: [],
     q: '',
@@ -37,36 +37,36 @@
         }
     }
 }">
-        {{-- Encabezado --}}
-        <div class="mb-8 flex justify-between items-end">
+        {{-- Encabezado Adaptable a Celular --}}
+        <div class="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Gestión de Almacén</h1>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Gestión de Almacén</h1>
                 <p class="text-slate-500 mt-1 uppercase text-xs tracking-wider">Control de inventario - Hospital Dr. Tiburcio Garrido</p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
                 <button @click="modalTrazabilidad = true" 
-                        class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 font-bold rounded-sm hover:bg-blue-100 transition shadow-sm text-xs uppercase tracking-wider">
+                        class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 font-bold rounded-sm hover:bg-blue-100 transition shadow-sm text-xs uppercase tracking-wider">
                     <i class="fas fa-chart-line text-blue-600"></i> Monitoreo
                 </button>
                 <button @click="modalImportar = true" 
-                        class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm hover:bg-slate-50 transition shadow-sm text-xs uppercase tracking-wider">
-                    <i class="fas fa-file-excel text-green-600"></i> Importar Excel
+                        class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm hover:bg-slate-50 transition shadow-sm text-xs uppercase tracking-wider">
+                    <i class="fas fa-file-excel text-green-600"></i> Importar
                 </button>
                 <a href="{{ route('lotes.index') }}" 
-                class="flex items-center gap-2 px-4 py-2 bg-white-50 text-green-700 border border-purple-200 font-bold rounded-sm hover:bg-gray-100 transition shadow-sm text-xs uppercase tracking-wider">
-                <i class="fas fa-boxes text-purple-600"></i> Gestión de Lotes
+                   class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-white text-purple-700 border border-purple-200 font-bold rounded-sm hover:bg-purple-50 transition shadow-sm text-xs uppercase tracking-wider">
+                    <i class="fas fa-boxes text-purple-600"></i> Lotes
                 </a>
-<a :href="'{{ route('almacen.pdf') }}?categoria=' + categoria + '&tipo_insumo={{ request('tipo_insumo') }}'" 
-   target="_blank"
-   class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm hover:bg-red-50 hover:text-red-700 transition shadow-sm text-xs uppercase tracking-wider">
-    <i class="fas fa-file-pdf text-red-600"></i> Exportar PDF
-</a>
+                <a :href="'{{ route('almacen.pdf') }}?categoria=' + categoria + '&tipo_insumo={{ request('tipo_insumo') }}'" 
+                   target="_blank"
+                   class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm hover:bg-red-50 hover:text-red-700 transition shadow-sm text-xs uppercase tracking-wider">
+                    <i class="fas fa-file-pdf text-red-600"></i> PDF
+                </a>
             </div>
         </div>
 
         {{-- Formulario de Entrada Rápida --}}
-        <div class="bg-white p-6 rounded-sm border border-slate-100 shadow-sm mb-8">
-            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-700 mb-5 flex items-center gap-2">
+        <div class="bg-white p-4 sm:p-6 rounded-sm border border-slate-100 shadow-sm mb-6 sm:mb-8">
+            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-700 mb-4 sm:mb-5 flex items-center gap-2">
                 <span class="w-2 h-6 bg-slate-900 rounded-sm"></span> Registrar Entrada Rápida de Stock
             </h2>
 
@@ -105,19 +105,19 @@
         <div x-show="seleccionados.length > 0" 
              x-transition 
              x-cloak
-             class="mb-4 p-4 bg-blue-600 border border-blue-700 rounded-sm flex items-center justify-between shadow-md shadow-blue-500/10">
+             class="mb-4 p-4 bg-blue-600 border border-blue-700 rounded-sm flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-blue-500/10">
             <div class="flex items-center gap-3">
-                <div class="w-7 h-7 bg-white/20 rounded-sm flex items-center justify-center text-white">
+                <div class="w-7 h-7 bg-white/20 rounded-sm flex items-center justify-center text-white shrink-0">
                     <i class="fas fa-check-double text-xs"></i>
                 </div>
                 <span class="text-xs font-bold text-white uppercase tracking-wider">
-                    Has seleccionado <span class="bg-white text-blue-700 px-2 py-0.5 rounded-sm font-mono font-black" x-text="seleccionados.length"></span> registros
+                    Seleccionados: <span class="bg-white text-blue-700 px-2 py-0.5 rounded-sm font-mono font-black" x-text="seleccionados.length"></span>
                 </span>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <button type="button" @click="seleccionados = []" 
                         class="text-xs font-bold text-blue-200 hover:text-white uppercase tracking-wider px-3 py-2 transition">
-                    Desmarcar todos
+                    Desmarcar
                 </button>
                 <button type="button" @click="modalMasivo = true" 
                         class="bg-white hover:bg-slate-50 text-blue-700 text-xs font-extrabold px-4 py-2.5 rounded-sm uppercase tracking-wider transition shadow-sm">
@@ -127,9 +127,9 @@
         </div>
 
         {{-- BARRA DE FILTROS Y SELECTOR DE VISTA --}}
-        <div class="bg-white p-4 rounded-sm border border-slate-100 shadow-sm mb-4 flex flex-wrap items-center justify-between gap-4">
-            <form action="{{ route('almacen.index') }}" method="GET" class="flex items-center gap-4">
-                <div class="w-64">
+        <div class="bg-white p-4 rounded-sm border border-slate-100 shadow-sm mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <form action="{{ route('almacen.index') }}" method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                <div class="w-full sm:w-64">
                     <select name="tipo_insumo" onchange="this.form.submit()" class="w-full bg-slate-50 border-0 rounded-sm px-4 py-2.5 text-xs font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition">
                         <option value="">Todos los Tipos de Insumo</option>
                         @foreach($tiposInsumo as $tipo)
@@ -139,30 +139,30 @@
                 </div>
 
                 @if(request('tipo_insumo'))
-                    <a href="{{ route('almacen.index') }}" class="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wider flex items-center gap-1">
+                    <a href="{{ route('almacen.index') }}" class="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wider flex items-center justify-center gap-1">
                         <i class="fas fa-times-circle"></i> Limpiar Filtro
                     </a>
                 @endif
             </form>
 
-            {{-- TOGGLE ENTRE MEDICAMENTOS E INSUMOS MÉDICOS (SIN OPCIÓN TODOS) --}}
-            <div class="flex items-center gap-3">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Vista actual: <span class="text-slate-800 font-extrabold" x-text="categoria === 'medicamento' ? 'Medicamentos' : 'Insumos Médicos'"></span>
+            {{-- TOGGLE ENTRE MEDICAMENTOS E INSUMOS MÉDICOS --}}
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:inline">
+                    Vista: <span class="text-slate-800 font-extrabold" x-text="categoria === 'medicamento' ? 'Medicamentos' : 'Insumos'"></span>
                 </span>
 
-                <div class="inline-flex rounded-sm p-1 bg-slate-100 border border-slate-200">
+                <div class="inline-flex rounded-sm p-1 bg-slate-100 border border-slate-200 w-full sm:w-auto">
                     <button type="button" 
                             @click="categoria = 'medicamento'"
                             :class="categoria === 'medicamento' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
-                            class="px-4 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider flex items-center gap-1.5">
+                            class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider flex items-center justify-center gap-1.5">
                         <i class="fas fa-pills"></i> Medicamentos
                     </button>
                     <button type="button" 
                             @click="categoria = 'insumo'"
                             :class="categoria === 'insumo' ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700 font-semibold'"
-                            class="px-4 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fas fa-syringes"></i> Insumos Médicos
+                            class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 text-xs rounded-xs transition-all uppercase tracking-wider flex items-center justify-center gap-1.5">
+                        <i class="fas fa-syringes"></i> Insumos
                     </button>
                 </div>
             </div>
@@ -170,44 +170,44 @@
 
         {{-- TABLA 1: MEDICAMENTOS --}}
         <div x-show="categoria === 'medicamento'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+            <div class="px-4 sm:px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fas fa-pills text-blue-600"></i> Inventario de Medicamentos (`medicamentos`)
+                    <i class="fas fa-pills text-blue-600"></i> Inventario de Medicamentos
                 </h3>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse min-w-[650px]">
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/30">
-                            <th class="px-6 py-4 text-center w-12">
+                            <th class="px-4 sm:px-6 py-4 text-center w-12">
                                 <input type="checkbox" @change="toggleTodos($event)" class="rounded text-blue-600 focus:ring-blue-500/20 border-slate-300 w-4 h-4 cursor-pointer">
                             </th>
-                            <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre del Medicamento</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo de Insumo</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Lote / QR</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Mínimo</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Actual</th>
+                            <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Lote / QR</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Mín.</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Actual</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50 text-sm font-medium text-slate-600">
                         @forelse($inventario as $item)
                             <tr class="hover:bg-slate-50/50 transition-colors" :class="seleccionados.includes('{{ $item->medicamento_id }}') ? 'bg-blue-50/40 hover:bg-blue-50/50' : ''">
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-4 sm:px-6 py-4 text-center">
                                     <input type="checkbox" 
                                            value="{{ $item->medicamento_id }}" 
                                            x-model="seleccionados"
                                            class="checkbox-item rounded text-blue-600 focus:ring-blue-500/20 border-slate-300 w-4 h-4 cursor-pointer">
                                 </td>
                                 <td class="px-2 py-4 text-slate-900 font-bold tracking-tight">{{ $item->medicamento }}</td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 sm:px-6 py-4">
                                     <span class="px-2 py-1 rounded-sm text-[11px] font-bold tracking-wide
                                         {{ $item->tipo_insumo === 'Por Determinar' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-purple-50 text-purple-700 border border-purple-100' }}">
                                         {{ $item->tipo_insumo ?? 'Por Determinar' }}
                                     </span>
                                 </td>
                                 
-                                <td class="px-6 py-2 text-center">
+                                <td class="px-4 sm:px-6 py-2 text-center">
                                     @if(isset($item->codigo_lote) && $item->codigo_lote !== null && strlen(trim($item->codigo_lote)) > 0)
                                         @php
                                             $loteFormateado = trim($item->codigo_lote);
@@ -215,7 +215,7 @@
                                             $qrHtml = '';
                                             if (class_exists('SimpleSoftwareIO\QrCode\Facades\QrCode')) {
                                                 try {
-                                                    $qrHtml = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(55)
+                                                    $qrHtml = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(50)
                                                         ->margin(1)
                                                         ->generate(route('almacen.lote', ['codigo_lote' => $loteFormateado]));
                                                     $qrGenerado = true;
@@ -228,7 +228,7 @@
                                                     {!! $qrHtml !!}
                                                 </div>
                                             @else
-                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100 flex items-center justify-center w-[55px] h-[55px] text-slate-400 text-[8px] uppercase font-bold">
+                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100 flex items-center justify-center w-[50px] h-[50px] text-slate-400 text-[8px] uppercase font-bold">
                                                     <i class="fas fa-qrcode text-xl text-slate-300"></i>
                                                 </div>
                                             @endif
@@ -241,8 +241,8 @@
                                     @endif
                                 </td>
 
-                                <td class="px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $item->stock_minimo ?? '0' }}</td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-4 sm:px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $item->stock_minimo ?? '0' }}</td>
+                                <td class="px-4 sm:px-6 py-4 text-center">
                                     <span class="px-3 py-1.5 rounded-sm text-xs font-bold font-mono {{ $item->stock_actual <= ($item->stock_minimo ?? 0) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600' }}">
                                         {{ $item->stock_actual }}
                                     </span>
@@ -260,7 +260,7 @@
             </div>
 
             @if($inventario->hasPages())
-                <div class="px-6 py-4 border-t border-slate-50 bg-slate-50/30">
+                <div class="px-4 sm:px-6 py-4 border-t border-slate-50 bg-slate-50/30 overflow-x-auto">
                     {{ $inventario->links() }}
                 </div>
             @endif
@@ -268,43 +268,43 @@
 
         {{-- TABLA 2: INSUMOS MÉDICOS --}}
         <div x-show="categoria === 'insumo'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden" x-cloak>
-            <div class="px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+            <div class="px-4 sm:px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fas fa-syringes text-blue-600"></i> Inventario de Insumos Médicos (`insumos_medicos`)
+                    <i class="fas fa-syringes text-blue-600"></i> Inventario de Insumos Médicos
                 </h3>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse min-w-[650px]">
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/30">
-                            <th class="px-6 py-4 text-center w-12">
+                            <th class="px-4 sm:px-6 py-4 text-center w-12">
                                 <input type="checkbox" @change="toggleTodos($event)" class="rounded text-blue-600 focus:ring-blue-500/20 border-slate-300 w-4 h-4 cursor-pointer">
                             </th>
-                            <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre del Insumo</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo de Insumo</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Lote / QR</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Mínimo</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Stock Actual</th>
+                            <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Lote / QR</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Mín.</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Actual</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50 text-sm font-medium text-slate-600">
                         @forelse($insumos as $insumo)
                             <tr class="hover:bg-slate-50/50 transition-colors" :class="seleccionados.includes('{{ $insumo->id }}') ? 'bg-blue-50/40 hover:bg-blue-50/50' : ''">
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-4 sm:px-6 py-4 text-center">
                                     <input type="checkbox" 
                                            value="{{ $insumo->id }}" 
                                            x-model="seleccionados"
                                            class="checkbox-item rounded text-blue-600 focus:ring-blue-500/20 border-slate-300 w-4 h-4 cursor-pointer">
                                 </td>
                                 <td class="px-2 py-4 text-slate-900 font-bold tracking-tight">{{ $insumo->nombre_insumo }}</td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 sm:px-6 py-4">
                                     <span class="px-2 py-1 rounded-sm text-[11px] font-bold tracking-wide
                                         {{ $insumo->tipo_insumo === 'Por Determinar' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-blue-50 text-blue-700 border border-blue-100' }}">
                                         {{ $insumo->tipo_insumo ?? 'Por Determinar' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-2 text-center">
+                                <td class="px-4 sm:px-6 py-2 text-center">
                                     @if(isset($insumo->codigo_lote) && $insumo->codigo_lote !== null && strlen(trim($insumo->codigo_lote)) > 0)
                                         @php
                                             $loteFormateado = trim($insumo->codigo_lote);
@@ -312,7 +312,7 @@
                                             $qrHtml = '';
                                             if (class_exists('SimpleSoftwareIO\QrCode\Facades\QrCode')) {
                                                 try {
-                                                    $qrHtml = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(55)
+                                                    $qrHtml = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(50)
                                                         ->margin(1)
                                                         ->generate(route('almacen.lote', ['codigo_lote' => $loteFormateado]));
                                                     $qrGenerado = true;
@@ -325,7 +325,7 @@
                                                     {!! $qrHtml !!}
                                                 </div>
                                             @else
-                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100 flex items-center justify-center w-[55px] h-[55px] text-slate-400 text-[8px] uppercase font-bold">
+                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100 flex items-center justify-center w-[50px] h-[50px] text-slate-400 text-[8px] uppercase font-bold">
                                                     <i class="fas fa-qrcode text-xl text-slate-300"></i>
                                                 </div>
                                             @endif
@@ -337,8 +337,8 @@
                                         <span class="text-xs text-slate-400 italic font-semibold">S/L</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $insumo->stock_minimo ?? '0' }}</td>
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-4 sm:px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $insumo->stock_minimo ?? '0' }}</td>
+                                <td class="px-4 sm:px-6 py-4 text-center">
                                     <span class="px-3 py-1.5 rounded-sm text-xs font-bold font-mono {{ $insumo->cantidad_stock <= ($insumo->stock_minimo ?? 0) ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600' }}">
                                         {{ $insumo->cantidad_stock }}
                                     </span>
@@ -356,7 +356,7 @@
             </div>
 
             @if(method_exists($insumos, 'hasPages') && $insumos->hasPages())
-                <div class="px-6 py-4 border-t border-slate-50 bg-slate-50/30">
+                <div class="px-4 sm:px-6 py-4 border-t border-slate-50 bg-slate-50/30 overflow-x-auto">
                     {{ $insumos->links() }}
                 </div>
             @endif
@@ -368,10 +368,10 @@
              x-cloak 
              x-transition>
              
-            <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
+            <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto" 
                  @click.away="modalMasivo = false">
                  
-                <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                <div class="p-4 sm:p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
                         <i class="fas fa-edit text-blue-600"></i> Edición Masiva
                     </h3>
@@ -386,10 +386,10 @@
                     <input type="hidden" name="ids" :value="JSON.stringify(seleccionados)">
                     <input type="hidden" name="tabla" :value="categoria === 'insumo' ? 'insumos' : 'medicamentos'">
 
-                    <div class="p-6 space-y-4">
+                    <div class="p-4 sm:p-6 space-y-4">
                         <div class="bg-slate-50 p-3 rounded-sm border border-slate-100">
                             <p class="text-[11px] text-slate-500 uppercase font-semibold">
-                                Los cambios ingresados afectarán a los <span class="text-blue-600 font-bold" x-text="seleccionados.length"></span> elementos que marcaste en <span class="font-bold text-slate-700" x-text="categoria === 'insumo' ? 'Insumos Médicos' : 'Medicamentos'"></span>.
+                                Afectará a <span class="text-blue-600 font-bold" x-text="seleccionados.length"></span> elementos en <span class="font-bold text-slate-700" x-text="categoria === 'insumo' ? 'Insumos Médicos' : 'Medicamentos'"></span>.
                             </p>
                         </div>
 
@@ -404,26 +404,22 @@
                             <input type="number" name="cantidad_stock" min="0" placeholder="Ej: 150"
                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
                         </div>
-                        <div class="mb-4">
-                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">
-                            Fecha de Vencimiento
-                            </label>
-                            <input type="date" 
-                                   name="fecha_vencimiento" 
-                                   x-model="formEdicionMasiva.fecha_vencimiento" 
-                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
-                            <span class="text-[10px] text-slate-500">Deja este campo vacío si no deseas cambiar la fecha a los elementos seleccionados.</span>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Fecha de Vencimiento</label>
+                            <input type="date" name="fecha_vencimiento" 
+                                   class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
+                            <span class="text-[10px] text-slate-500 mt-1 block">Déjalo vacío si no deseas modificarla.</span>
                         </div>
                     </div>
 
-                    <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+                    <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
                         <button type="button" @click="modalMasivo = false"
                             class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
                             Cancelar
                         </button>
                         <button type="submit"
                             class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition text-xs uppercase tracking-wider">
-                            Guardar Cambios
+                            Guardar
                         </button>
                     </div>
                 </form>
@@ -440,7 +436,7 @@
             <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
                  @click.away="modalImportar = false">
                  
-                <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                <div class="p-4 sm:p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
                         <i class="fas fa-file-excel text-green-600"></i> Importar Masivo
                     </h3>
@@ -452,41 +448,39 @@
                 <form :action="tipoImportacion === 'insumos' ? '{{ route('insumos.import') }}' : '{{ route('inventario.import') }}'" method="POST" enctype="multipart/form-data"
                       x-on:submit="$store.loading.activate('Importando y clasificando datos...')">
                     @csrf
-                    <div class="p-6 space-y-4">
+                    <div class="p-4 sm:p-6 space-y-4">
                         <div>
                             <div class="flex justify-between items-end mb-2">
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tipo de Registro a Cargar</label>
-                                
-                                {{-- BOTÓN DE DESCARGA DE PLANTILLA DINÁMICO --}}
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tipo de Registro</label>
                                 <a :href="tipoImportacion === 'insumos' ? '{{ asset('plantillas/almacen_insumos_medicos.xlsx') }}' : '{{ asset('plantillas/almacen_medicamentos.xlsx') }}'" 
                                    download
                                    class="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider flex items-center gap-1 transition">
-                                    <i class="fas fa-download"></i> Descargar Plantilla
+                                    <i class="fas fa-download"></i> Plantilla
                                 </a>
                             </div>
 
                             <select class="w-full bg-slate-50 border-0 rounded-sm px-3 py-2.5 text-xs font-bold text-slate-700 outline-none"
                                     x-model="tipoImportacion">
-                                <option value="insumos">Insumos Médicos (`insumos_medicos`)</option>
-                                <option value="medicamentos">Medicamentos (`medicamentos`)</option>
+                                <option value="insumos">Insumos Médicos</option>
+                                <option value="medicamentos">Medicamentos</option>
                             </select>
                         </div>
 
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Archivo Excel / CSV</label>
                             <input type="file" name="archivo" accept=".xlsx, .xls, .csv" required
-                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:bg-blue-50 file:text-blue-700 file:font-bold file:text-xs">
+                                class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-sm file:border-0 file:bg-blue-50 file:text-blue-700 file:font-bold">
                         </div>
                     </div>
 
-                    <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+                    <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
                         <button type="button" @click="modalImportar = false"
                             class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
                             Cancelar
                         </button>
                         <button type="submit"
                             class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition text-xs uppercase tracking-wider">
-                            Comenzar Carga
+                            Cargar
                         </button>
                     </div>
                 </form>
@@ -499,30 +493,30 @@
              x-cloak 
              x-transition>
              
-            <div class="bg-white rounded-sm max-w-2xl w-full border border-slate-100 overflow-hidden shadow-2xl" 
+            <div class="bg-white rounded-sm max-w-2xl w-full border border-slate-100 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col" 
                  @click.away="modalTrazabilidad = false">
                  
-                <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                <div class="p-4 sm:p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 shrink-0">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                        <i class="fas fa-chart-line text-blue-600"></i> Monitoreo de Medicamentos e Insumos
+                        <i class="fas fa-chart-line text-blue-600"></i> Monitoreo de Consumo
                     </h3>
                     <button type="button" @click="modalTrazabilidad = false" class="text-slate-400 hover:text-slate-600 transition">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
 
-                <div class="p-6 space-y-6">
-                    <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-sm flex items-center justify-between">
+                <div class="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto flex-1">
+                    <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-emerald-500 text-white rounded-sm flex items-center justify-center font-bold">
+                            <div class="w-10 h-10 bg-emerald-500 text-white rounded-sm flex items-center justify-center font-bold shrink-0">
                                 <i class="fas fa-boxes-stacked text-lg"></i>
                             </div>
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Almacenado / Entrada Hoy</p>
-                                <p class="text-xs text-emerald-600 font-semibold">Total de unidades agregadas o actualizadas el día de hoy</p>
+                                <p class="text-xs text-emerald-600 font-semibold">Unidades agregadas el día de hoy</p>
                             </div>
                         </div>
-                        <span class="text-2xl font-black font-mono text-emerald-700">
+                        <span class="text-xl sm:text-2xl font-black font-mono text-emerald-700 self-end sm:self-auto">
                             {{ number_format($almacenadoHoy) }} <span class="text-xs font-normal">unds</span>
                         </span>
                     </div>
@@ -548,15 +542,15 @@
 
                     <div>
                         <h4 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
-                            Consumo Total del {{ \Carbon\Carbon::parse($fechaInicio)->format('d/m/Y') }} al {{ \Carbon\Carbon::parse($fechaFin)->format('d/m/Y') }}
+                            Consumo del {{ \Carbon\Carbon::parse($fechaInicio)->format('d/m/Y') }} al {{ \Carbon\Carbon::parse($fechaFin)->format('d/m/Y') }}
                         </h4>
 
-                        <div class="max-h-60 overflow-y-auto border border-slate-100 rounded-sm">
+                        <div class="max-h-48 overflow-y-auto border border-slate-100 rounded-sm">
                             <table class="w-full text-left border-collapse">
                                 <thead class="sticky top-0 bg-slate-50 border-b border-slate-100">
                                     <tr>
-                                        <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Medicamento / Insumo</th>
-                                        <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-right">Total Consumido</th>
+                                        <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Insumo / Medicamento</th>
+                                        <th class="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-right">Consumido</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-50 text-xs font-medium text-slate-600">
@@ -570,7 +564,7 @@
                                     @empty
                                         <tr>
                                             <td colspan="2" class="px-4 py-6 text-center text-xs text-slate-400 italic">
-                                                No hay registros de consumo (retiros) en este rango de fechas.
+                                                No hay registros de consumo en este rango.
                                             </td>
                                         </tr>
                                     @endforelse
@@ -580,7 +574,7 @@
                     </div>
                 </div>
 
-                <div class="p-4 bg-slate-50 border-t border-slate-100 text-right">
+                <div class="p-4 bg-slate-50 border-t border-slate-100 text-right shrink-0">
                     <button type="button" @click="modalTrazabilidad = false"
                             class="bg-white border border-slate-200 text-slate-600 font-bold px-5 py-2 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
                         Cerrar

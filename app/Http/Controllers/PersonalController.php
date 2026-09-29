@@ -147,4 +147,19 @@ class PersonalController extends Controller
         $empleado->delete();
         return back()->with('success', 'Registro eliminado correctamente.');
     }
+    
+    public function exportPdf() {
+        $personal = Personal::orderBy('tipo_usuario', 'asc')
+                            ->orderBy('activo', 'desc')
+                            ->orderBy('nombres', 'asc')
+                            ->get();
+
+        Auditoria::create([
+            'modulo'      => 'Personal',
+            'accion'      => 'Reporte',
+            'descripcion' => 'Se generó un reporte en PDF de todo el personal (Admin y Usuarios)',
+        ]);
+
+        return view('personal-pdf', compact('personal'));
+    }
 }
