@@ -42,7 +42,7 @@ Route::get('/crear-admin-temporal', function() {
 });
 
 // ==========================================
-// RUTAS PROTEGIDAS (Bajo AuthHospital)
+// RUTAS PROTEGIDAS GENERALES (Acceso para Admin y Usuarios estándar)
 // ==========================================
 Route::middleware([AuthHospital::class])->group(function () {
 
@@ -51,6 +51,26 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::get('/home', function () {
         return view('home');
     })->name('home');
+
+    // Estadísticas
+    Route::get('/estadisticas', [EstadisticaController::class, 'index'])->name('estadisticas.index');
+
+    // Retiros (Permitido para el rol Usuario)
+    Route::get('/retiros', [AlmacenController::class, 'indexRetiros'])->name('retiros.index');
+    Route::post('/retiros/procesar', [AlmacenController::class, 'procesarRetiro'])->name('retiros.procesar');
+    Route::get('/almacen/retiros', [AlmacenController::class, 'indexRetiros'])->name('almacen.retiros');
+    Route::post('/almacen/retiros', [AlmacenController::class, 'guardarRetiro'])->name('almacen.retiros.store');
+    Route::get('/almacen/retiros/pdf', [AlmacenController::class, 'pdf'])->name('almacen.retiros.pdf');
+
+    // Notificaciones y Alertas
+    Route::get('/notificaciones', function () { return view('notificaciones'); })->name('notificaciones.index');
+    Route::get('/alertas', [AlertasController::class, 'index'])->name('alertas.index');
+});
+
+// ==========================================
+// RUTAS EXCLUSIVAS PARA ADMINISTRADORES (Bloqueadas para el rol Usuario)
+// ==========================================
+Route::middleware([AuthHospital::class, 'admin.only'])->group(function () {
 
     // Inventario
     Route::get('/inventario', [MedicamentoController::class, 'index'])->name('medicamentos.index');
@@ -65,8 +85,9 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::patch('/personal/{id}/status', [PersonalController::class, 'toggleStatus'])->name('personal.status');
     Route::delete('/personal/{id}', [PersonalController::class, 'destroy'])->name('personal.destroy');
     Route::get('/bitacora', [PersonalController::class, 'bitacora'])->name('personal.bitacora');
+    Route::get('/personal/pdf', [PersonalController::class, 'exportPdf'])->name('personal.pdf');
 
-    // Almacén y Movimientos
+    // Almacén y Movimientos Generales
     Route::get('/almacen', [AlmacenController::class, 'index'])->name('almacen.index');
     Route::post('/almacen/movimiento', [AlmacenController::class, 'registrarMovimiento'])->name('almacen.movimiento');
     Route::post('/almacen/medicamento', [AlmacenController::class, 'storeMedicamento'])->name('almacen.store');
@@ -75,13 +96,6 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::get('/api/medicamentos/buscar', [AlmacenController::class, 'buscarMedicamentos'])->name('medicamentos.buscar');
     Route::post('/almacen/importar', [AlmacenController::class, 'importarExcel'])->name('inventario.import');
     Route::get('/almacen/pdf', [AlmacenController::class, 'exportarPdf'])->name('almacen.pdf');
-    
-    // Retiros
-    Route::get('/retiros', [AlmacenController::class, 'indexRetiros'])->name('retiros.index');
-    Route::post('/retiros/procesar', [AlmacenController::class, 'procesarRetiro'])->name('retiros.procesar');
-    Route::get('/almacen/retiros', [AlmacenController::class, 'indexRetiros'])->name('almacen.retiros');
-    Route::post('/almacen/retiros', [AlmacenController::class, 'guardarRetiro'])->name('almacen.retiros.store');
-    Route::get('/almacen/retiros/pdf', [AlmacenController::class, 'pdf'])->name('almacen.retiros.pdf');
 
     // Pacientes
     Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
@@ -91,13 +105,6 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::post('/pacientes/{id}/delete', [PacienteController::class, 'delete'])->name('pacientes.delete');
     Route::get('/pacientes/{id}/pdf', [PacienteController::class, 'imprimirPdf'])->name('pacientes.pdf');
 
-    // Notificaciones y Alertas
-    Route::get('/notificaciones', function () { return view('notificaciones'); })->name('notificaciones.index');
-    Route::get('/alertas', [AlertasController::class, 'index'])->name('alertas.index');
-
-    // Estadísticas
-    Route::get('/estadisticas', [EstadisticaController::class, 'index'])->name('estadisticas.index');
-
     // Epidemiología
     Route::get('/epidemiologia', [EpidemiologiaController::class, 'index'])->name('epidemiologia.index');
     Route::post('/epidemiologia', [EpidemiologiaController::class, 'store'])->name('epidemiologia.store');
@@ -105,7 +112,7 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::post('/epidemiologia/importar', [EpidemiologiaController::class, 'importar'])->name('epidemiologia.importar');
     Route::get('/epidemiologia/pdf', [EpidemiologiaController::class, 'pdf'])->name('epidemiologia.pdf');
 
-    // Lotes
+    // Lotes y Gestión Masiva
     Route::post('/almacen/vencimiento-masivo', [AlmacenController::class, 'actualizarVencimientoMasivo'])->name('almacen.vencimientoMasivo');
     Route::post('/almacen/editar-masivo', [AlmacenController::class, 'editarMasivo'])->name('almacen.editar-masivo');
     Route::post('/almacen/importar-insumos', [AlmacenController::class, 'importarInsumosExcel'])->name('insumos.import');
@@ -114,5 +121,4 @@ Route::middleware([AuthHospital::class])->group(function () {
     Route::get('/lotes', [LoteController::class, 'index'])->name('lotes.index');
     Route::get('/lotes/{id}', [LoteController::class, 'show'])->name('lotes.show');
     Route::put('/lotes/{id}/estado', [LoteController::class, 'updateEstado'])->name('lotes.update-estado');
-    Route::get('/personal/pdf', [PersonalController::class, 'exportPdf'])->name('personal.pdf');
 });

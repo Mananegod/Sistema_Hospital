@@ -118,4 +118,31 @@
 
     </div>
 </div>
+@if($errors->has('error'))
+    <div x-data="{ open: true }" 
+         x-show="open" 
+         class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm"
+         x-transition.opacity>
+        
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center border border-gray-100 transform transition-all"
+             @click.away="open = false">
+            
+            {{-- Icono de Advertencia --}}
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 text-red-600 mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Acceso No Permitido</h3>
+            
+            <p class="text-sm text-gray-600 mb-6">
+                {{ $errors->first('error') }}
+            </p>
+            
+            <button @click="open = false" 
+                    class="w-full inline-flex justify-center rounded-sm bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
+                Entendido
+            </button>
+        </div>
+    </div>
+@endif
 @endsection
