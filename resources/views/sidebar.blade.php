@@ -62,6 +62,11 @@
         {{-- Cuerpo de Navegación con Scroll --}}
         <div class="flex-1 overflow-y-auto overflow-x-hidden py-6 space-y-6 custom-scrollbar">
             
+            @php
+                $user = Auth::user();
+                $tipoUsuario = ($user && $user->personal) ? $user->personal->tipo_usuario : 'Admin';
+            @endphp
+
             {{-- Grupo 1: General --}}
             <div>
                 <div class="h-6 flex items-center mb-2" :class="$store.sidebar.open ? 'px-6' : 'justify-center'">
@@ -102,8 +107,8 @@
                 </ul>
             </div>
 
-            {{-- ... (Grupos 2, 3 y 4 se mantienen iguales) ... --}}
-            {{-- Grupo 2: Gestión Médica --}}
+            {{-- Grupo 2: Gestión Médica (Solo Admin) --}}
+            @if($tipoUsuario !== 'Usuario')
             <div>
                 <div class="h-6 flex items-center mb-2" :class="$store.sidebar.open ? 'px-6' : 'justify-center'">
                     <p x-show="$store.sidebar.open" class="text-[10px] font-bold uppercase tracking-widest text-gray-400 truncate transition-opacity duration-200">
@@ -142,6 +147,7 @@
                     </li>
                 </ul>
             </div>
+            @endif
 
             {{-- Grupo 3: Almacén e Inventario --}}
             <div>
@@ -152,6 +158,7 @@
                     <div x-show="!$store.sidebar.open" class="w-6 h-px bg-gray-300 transition-opacity duration-200"></div>
                 </div>
                 <ul class="space-y-1">
+                    @if($tipoUsuario !== 'Usuario')
                     <li>
                         <a href="{{ route('almacen.index') }}" 
                            class="flex items-center h-12 group sidebar-link {{ request()->routeIs('almacen.index') ? 'sidebar-link-active' : '' }}"
@@ -180,6 +187,7 @@
                             <span x-show="$store.sidebar.open" class="text-sm whitespace-nowrap">Medicamentos</span>
                         </a>
                     </li>
+                    @endif
                     <li>
                         <a href="{{ route('retiros.index') }}" 
                            class="flex items-center h-12 group sidebar-link {{ request()->routeIs('retiros.index') ? 'sidebar-link-active' : '' }}"
@@ -197,7 +205,8 @@
                 </ul>
             </div>
 
-            {{-- Grupo 4: Administración y Seguridad --}}
+            {{-- Grupo 4: Administración y Seguridad (Solo Admin) --}}
+            @if($tipoUsuario !== 'Usuario')
             <div>
                 <div class="h-6 flex items-center mb-2" :class="$store.sidebar.open ? 'px-6' : 'justify-center'">
                     <p x-show="$store.sidebar.open" class="text-[10px] font-bold uppercase tracking-widest text-gray-400 truncate transition-opacity duration-200">
@@ -236,25 +245,21 @@
                     </li>
                 </ul>
             </div>
+            @endif
         </div>
 
-        {{-- Footer de Usuario y Cierre de Sesión (AHORA DINÁMICO) --}}
+        {{-- Footer de Usuario y Cierre de Sesión --}}
         <div class="p-4 border-t border-gray-200 bg-gray-50/80 flex flex-col gap-2 shrink-0">
             
             @php
-                // Extraemos el usuario autenticado
                 $user = Auth::user();
-                // Verificamos si tiene datos en la tabla personal
                 $personalInfo = $user ? $user->personal : null;
 
-                // Preparamos los datos a mostrar
                 if ($personalInfo) {
-                    // Si existe en personal, mostramos sus nombres y su tipo de usuario
                     $nombreMostrar = explode(' ', $personalInfo->nombres)[0] . ' ' . explode(' ', $personalInfo->apellidos)[0];
-                    $rolMostrar = $personalInfo->tipo_usuario; // Puede ser Admin o Usuario
+                    $rolMostrar = $personalInfo->tipo_usuario;
                     $iniciales = strtoupper(substr($personalInfo->nombres, 0, 1) . substr($personalInfo->apellidos, 0, 1));
                 } else {
-                    // Fallback en caso de que sea el usuario administrador maestro sin registro en "personal"
                     $nombreMostrar = $user ? $user->nombre : 'Usuario';
                     $rolMostrar = 'Sistema';
                     $iniciales = strtoupper(substr($nombreMostrar, 0, 2));

@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\CheckRoleAdmin;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Registramos el alias para usarlo cómodamente en web.php
         $middleware->alias([
             'auth.hospital' => \App\Http\Middleware\AuthHospital::class,
+            'admin.only'    => CheckRoleAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
