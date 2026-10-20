@@ -121,4 +121,5 @@ Route::middleware([AuthHospital::class, 'admin.only'])->group(function () {
     Route::get('/lotes', [LoteController::class, 'index'])->name('lotes.index');
     Route::get('/lotes/{id}', [LoteController::class, 'show'])->name('lotes.show');
     Route::put('/lotes/{id}/estado', [LoteController::class, 'updateEstado'])->name('lotes.update-estado');
+    Route::get('/almacen/retiros/acta-vencido', [App\Http\Controllers\AlmacenController::class, 'generarActaVencido'])->name('almacen.retiros.acta-vencido');
 });

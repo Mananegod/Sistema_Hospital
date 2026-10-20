@@ -568,5 +568,5 @@
 </div> {{-- FIN DEL X-DATA GLOBAL --}}
 
 {{-- Cargamos Chart.js de forma integrada en tu sistema --}}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ asset('js/chart.umd.js') }}"></script>
 @endsection

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Auditoria; // <-- Importación del modelo de auditoría/bitácora
 
 class PacienteController extends Controller
 {
@@ -52,6 +53,13 @@ class PacienteController extends Controller
             'updated_at' => now(),
         ]);
 
+        // Registro en la Bitácora
+        Auditoria::create([
+            'modulo'      => 'Pacientes',
+            'accion'      => 'Registro',
+            'descripcion' => "Se registró e internó al paciente: {$request->nombre_apellido} (Cédula: {$request->cedula})",
+        ]);
+
         return back()->with('success', 'Paciente internado y registrado en el sistema correctamente.');
     }
 
@@ -94,6 +102,13 @@ class PacienteController extends Controller
                     'updated_at'      => now(),
                 ]);
 
+            // Registro en la Bitácora
+            Auditoria::create([
+                'modulo'      => 'Pacientes',
+                'accion'      => 'Edición',
+                'descripcion' => "Se actualizaron los datos del paciente: {$request->nombre_apellido} (Cédula: {$request->cedula})",
+            ]);
+
             return back()->with('success', 'El expediente del paciente ha sido actualizado con éxito.');
 
         } catch (\Exception $e) {
@@ -119,13 +134,20 @@ class PacienteController extends Controller
     public function delete($id)
     {
         try {
-            $existe = DB::table('pacientes_internados')->where('id', $id)->exists();
+            $paciente = DB::table('pacientes_internados')->where('id', $id)->first();
 
-            if (!$existe) {
+            if (!$paciente) {
                 return back()->with('error', 'El registro del paciente que intenta eliminar no existe.');
             }
 
             DB::table('pacientes_internados')->where('id', $id)->delete();
+
+            // Registro en la Bitácora
+            Auditoria::create([
+                'modulo'      => 'Pacientes',
+                'accion'      => 'Borrado',
+                'descripcion' => "Se eliminó el registro clínico del paciente: {$paciente->nombre_apellido} (Cédula: {$paciente->cedula})",
+            ]);
 
             return back()->with('success', 'El registro del paciente ha sido eliminado correctamente del sistema.');
 
@@ -145,6 +167,13 @@ class PacienteController extends Controller
         if (!$paciente) {
             return back()->with('error', 'El registro del paciente no existe.');
         }
+
+        // Registro en la Bitácora de la generación del reporte PDF
+        Auditoria::create([
+            'modulo'      => 'Pacientes',
+            'accion'      => 'Reporte',
+            'descripcion' => "Se generó el formato PDF F15 del paciente: {$paciente->nombre_apellido} (Cédula: {$paciente->cedula})",
+        ]);
 
         $html = '
         <!DOCTYPE html>

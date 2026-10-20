@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Auditoria; // <-- Importante: Importar el modelo de auditoría
 use Carbon\Carbon;
 
 class EpidemiologiaController extends Controller
@@ -208,6 +209,13 @@ class EpidemiologiaController extends Controller
                     }
                 });
 
+                // Registro en Bitácora de la importación CSV
+                Auditoria::create([
+                    'modulo'      => 'Epidemiología',
+                    'accion'      => 'Importación',
+                    'descripcion' => 'Se importó correctamente un archivo CSV con históricos de canales endémicos.',
+                ]);
+
                 return redirect()->back()->with('success', '¡Histórico anual de canales endémicos importado correctamente!');
             }
         }
@@ -282,16 +290,35 @@ class EpidemiologiaController extends Controller
             'updated_at'         => now(),
         ]);
 
+        // Registro en la Bitácora de un nuevo caso registrado
+        Auditoria::create([
+            'modulo'      => 'Epidemiología',
+            'accion'      => 'Registro',
+            'descripcion' => "Se registró ficha de alerta epidemiológica para el paciente: {$nombre} ({$patologia}).",
+        ]);
+
         return redirect()->back()->with('success', 'Caso epidemiológico registrado correctamente.');
     }
 
     public function destroy($id)
     {
-        DB::table('casos_epidemiologicos')->where('id', $id)->delete();
+        $caso = DB::table('casos_epidemiologicos')->where('id', $id)->first();
+
+        if ($caso) {
+            DB::table('casos_epidemiologicos')->where('id', $id)->delete();
+
+            // Registro en la Bitácora de la eliminación del caso
+            Auditoria::create([
+                'modulo'      => 'Epidemiología',
+                'accion'      => 'Borrado',
+                'descripcion' => "Se eliminó del sistema la alerta epidemiológica del paciente: {$caso->nombre_paciente}.",
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Alerta eliminada del sistema.');
     }
 
-public function pdf()
+    public function pdf()
     {
         $casos = DB::table('casos_epidemiologicos')
             ->select(
@@ -312,6 +339,13 @@ public function pdf()
         $confirmados = $casos->where('estado_caso', 'CONFIRMADO')->count();
         $sospechosos = $casos->where('estado_caso', 'SOSPECHOSO')->count();
         $enEspera    = $casos->where('estado_caso', 'EN ESPERA')->count();
+
+        // Registro en la Bitácora de la generación del reporte
+        Auditoria::create([
+            'modulo'      => 'Epidemiología',
+            'accion'      => 'Reporte',
+            'descripcion' => 'Se generó un reporte en PDF de las fichas de vigilancia epidemiológica.',
+        ]);
 
         // Intenta retornar la vista según donde esté guardada (igual a Retiros)
         if (view()->exists('epidemiologia_pdf')) {
