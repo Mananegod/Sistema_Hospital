@@ -4,9 +4,28 @@
 
 @section('content')
 <div class="max-w-7xl mx-auto">
-    <div class="mb-8">
-        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Módulo de Inventario</h1>
-        <p class="text-slate-500 mt-1">Hospital Dr. Tiburcio Garrido</p>
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Módulo de Inventario</h1>
+            <p class="text-slate-500 mt-1">Hospital Dr. Tiburcio Garrido</p>
+        </div>
+
+        {{-- Barra de Búsqueda --}}
+        <form action="{{ route('medicamentos.index') }}" method="GET" class="flex items-center gap-2 w-full md:w-auto">
+            <div class="relative w-full md:w-72">
+                <input type="text" name="search" value="{{ request('search') }}" 
+                    placeholder="Buscar por nombre o lote..." 
+                    class="w-full bg-white border border-slate-200 rounded-sm pl-4 pr-10 py-2.5 text-xs font-semibold shadow-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                <button type="submit" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-search"></i>
+                </button>
+            </div>
+            @if(request('search'))
+                <a href="{{ route('medicamentos.index') }}" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-sm text-xs font-bold transition" title="Limpiar filtro">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            @endif
+        </form>
     </div>
 
     @if($errors->any())
@@ -73,9 +92,9 @@
             </div>
         </div>
 
-        {{-- Panel Derecho: Tabla con scroll horizontal --}}
+        {{-- Panel Derecho: Tabla con scroll horizontal y paginación --}}
         <div class="lg:col-span-8">
-            <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
+            <div class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden flex flex-col justify-between">
                 <div class="w-full overflow-x-auto">
                     <table class="w-full min-w-[600px] text-left border-collapse">
                         <thead>
@@ -87,7 +106,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50">
-                            @foreach($medicamentos as $med)
+                            @forelse($medicamentos as $med)
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-6 py-4">
                                     <span class="font-bold text-slate-700 block text-sm whitespace-nowrap">{{ $med->nombre_medicamento }}</span>
@@ -99,7 +118,7 @@
                                         {{ $med->cantidad_stock }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">{{ $med->area_destino }}</td>
+                                <td class="px-6 py-4 text-xs font-bold text-slate-500 uppercase whitespace-nowrap">{{ $med->area_destino ?? 'General' }}</td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex justify-end gap-2 whitespace-nowrap">
                                         <button type="button" 
@@ -118,10 +137,23 @@
                                     </div>
                                 </td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-slate-400 text-sm italic">
+                                    No se encontraron medicamentos registrados.
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
+
+                {{-- Enlaces de Paginación --}}
+                @if($medicamentos->hasPages())
+                <div class="p-4 bg-slate-50/50 border-t border-slate-100">
+                    {{ $medicamentos->appends(request()->query())->links() }}
+                </div>
+                @endif
             </div>
         </div>
 

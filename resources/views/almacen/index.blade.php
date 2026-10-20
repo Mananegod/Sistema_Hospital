@@ -172,12 +172,12 @@
         <div x-show="categoria === 'medicamento'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
             <div class="px-4 sm:px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fas fa-pills text-blue-600"></i> Inventario de Medicamentos
+                    <i class="fas fa-pills text-blue-600"></i> Inventario de Medicamentos (Ordenados por Vencimiento)
                 </h3>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[650px]">
+                <table class="w-full text-left border-collapse min-w-[750px]">
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/30">
                             <th class="px-4 sm:px-6 py-4 text-center w-12">
@@ -186,6 +186,7 @@
                             <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Lote / QR</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Vencimiento</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Mín.</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Actual</th>
                         </tr>
@@ -241,6 +242,31 @@
                                     @endif
                                 </td>
 
+                                {{-- COLUMNA VENCIMIENTO --}}
+                                <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
+                                    @if(!empty($item->fecha_vencimiento))
+                                        @php
+                                            $fechaVenc = \Carbon\Carbon::parse($item->fecha_vencimiento);
+                                            $diasRestantes = now()->diffInDays($fechaVenc, false);
+                                        @endphp
+                                        <span class="px-2.5 py-1 rounded-sm text-[11px] font-mono font-bold tracking-tight block
+                                            {{ $diasRestantes < 0 ? 'bg-red-600 text-white animate-pulse' : ($diasRestantes <= 30 ? 'bg-red-100 text-red-700 border border-red-200' : ($diasRestantes <= 90 ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-100')) }}">
+                                            {{ $fechaVenc->format('d/m/Y') }}
+                                        </span>
+                                        <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block mt-0.5">
+                                            @if($diasRestantes < 0)
+                                                Vencido hace {{ abs(round($diasRestantes)) }} d
+                                            @elseif($diasRestantes == 0)
+                                                Vence Hoy
+                                            @else
+                                                Quedan {{ round($diasRestantes) }} d
+                                            @endif
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-slate-400 italic">Sin Fecha</span>
+                                    @endif
+                                </td>
+
                                 <td class="px-4 sm:px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $item->stock_minimo ?? '0' }}</td>
                                 <td class="px-4 sm:px-6 py-4 text-center">
                                     <span class="px-3 py-1.5 rounded-sm text-xs font-bold font-mono {{ $item->stock_actual <= ($item->stock_minimo ?? 0) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600' }}">
@@ -250,7 +276,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-400 italic">
+                                <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-400 italic">
                                     <i class="fas fa-box-open text-2xl block mb-2 text-slate-300 not-italic"></i> No se encontraron medicamentos registrados.
                                 </td>
                             </tr>
@@ -270,12 +296,12 @@
         <div x-show="categoria === 'insumo'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden" x-cloak>
             <div class="px-4 sm:px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fas fa-syringes text-blue-600"></i> Inventario de Insumos Médicos
+                    <i class="fas fa-syringes text-blue-600"></i> Inventario de Insumos Médicos (Ordenados por Vencimiento)
                 </h3>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[650px]">
+                <table class="w-full text-left border-collapse min-w-[750px]">
                     <thead>
                         <tr class="border-b border-slate-100 bg-slate-50/30">
                             <th class="px-4 sm:px-6 py-4 text-center w-12">
@@ -284,6 +310,7 @@
                             <th class="px-2 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tipo</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Lote / QR</th>
+                            <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Vencimiento</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Mín.</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Actual</th>
                         </tr>
@@ -337,6 +364,32 @@
                                         <span class="text-xs text-slate-400 italic font-semibold">S/L</span>
                                     @endif
                                 </td>
+
+                                {{-- COLUMNA VENCIMIENTO INSUMOS --}}
+                                <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
+                                    @if(!empty($insumo->fecha_vencimiento))
+                                        @php
+                                            $fechaVenc = \Carbon\Carbon::parse($insumo->fecha_vencimiento);
+                                            $diasRestantes = now()->diffInDays($fechaVenc, false);
+                                        @endphp
+                                        <span class="px-2.5 py-1 rounded-sm text-[11px] font-mono font-bold tracking-tight block
+                                            {{ $diasRestantes < 0 ? 'bg-red-600 text-white animate-pulse' : ($diasRestantes <= 30 ? 'bg-red-100 text-red-700 border border-red-200' : ($diasRestantes <= 90 ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-100')) }}">
+                                            {{ $fechaVenc->format('d/m/Y') }}
+                                        </span>
+                                        <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block mt-0.5">
+                                            @if($diasRestantes < 0)
+                                                Vencido hace {{ abs(round($diasRestantes)) }} d
+                                            @elseif($diasRestantes == 0)
+                                                Vence Hoy
+                                            @else
+                                                Quedan {{ round($diasRestantes) }} d
+                                            @endif
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-slate-400 italic">Sin Fecha</span>
+                                    @endif
+                                </td>
+
                                 <td class="px-4 sm:px-6 py-4 text-center font-mono text-xs text-slate-400 font-bold">{{ $insumo->stock_minimo ?? '0' }}</td>
                                 <td class="px-4 sm:px-6 py-4 text-center">
                                     <span class="px-3 py-1.5 rounded-sm text-xs font-bold font-mono {{ $insumo->cantidad_stock <= ($insumo->stock_minimo ?? 0) ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600' }}">
@@ -346,7 +399,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-400 italic">
+                                <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-400 italic">
                                     <i class="fas fa-box-open text-2xl block mb-2 text-slate-300 not-italic"></i> No se encontraron insumos médicos registrados.
                                 </td>
                             </tr>
