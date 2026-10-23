@@ -2,27 +2,27 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class Auditoria extends Model
 {
-    use HasFactory;
+    protected $table = 'auditorias'; // O el nombre de tu tabla si es diferente
 
-    // Indicamos el nombre de la tabla (opcional si sigue el plural, pero mejor asegurar)
-    protected $table = 'auditorias';
-
-    // Definimos los campos que se pueden llenar masivamente
     protected $fillable = [
         'modulo',
         'accion',
         'descripcion',
-        'usuario'
+        'usuario',
     ];
 
-    // Esto asegura que las fechas se traten como objetos Carbon
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
+    protected static function booted()
+    {
+        static::creating(function ($auditoria) {
+            // Si no se ha especificado un usuario manualmente, se asigna el actual
+            if (empty($auditoria->usuario)) {
+                $auditoria->usuario = Auth::user()->nombre ?? 'Sistema';
+            }
+        });
+    }
 }

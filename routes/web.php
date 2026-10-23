@@ -121,5 +121,9 @@ Route::middleware([AuthHospital::class, 'admin.only'])->group(function () {
     Route::get('/lotes', [LoteController::class, 'index'])->name('lotes.index');
     Route::get('/lotes/{id}', [LoteController::class, 'show'])->name('lotes.show');
     Route::put('/lotes/{id}/estado', [LoteController::class, 'updateEstado'])->name('lotes.update-estado');
-    Route::get('/almacen/retiros/acta-vencido', [App\Http\Controllers\AlmacenController::class, 'generarActaVencido'])->name('almacen.retiros.acta-vencido');
+    Route::post('/almacen/baja-vencidos', [AlmacenController::class, 'registrarBajaVencidosMasiva'])->name('almacen.baja-vencidos');
+    Route::get('/almacen/desechos', [AlmacenController::class, 'indexDesechos'])->name('almacen.desechos');
+    Route::post('/retiros/{id}/aprobar', [AlmacenController::class, 'aprobarRetiro'])->name('almacen.retiros.aprobar');
+    Route::post('/retiros/{id}/rechazar', [AlmacenController::class, 'rechazarRetiro'])->name('almacen.retiros.rechazar');
+    Route::post('/retiros/{id}/editar-aprobar', [AlmacenController::class, 'editarYAprobarRetiro'])->name('almacen.retiros.editar_aprobar');
 });

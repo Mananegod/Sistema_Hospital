@@ -159,8 +159,99 @@
                     <i class="fas fa-file-pdf text-red-400"></i> Exportar PDF
                 </a>
             </div>
+        </div> 
+{{-- SECCIÓN DE SOLICITUDES PENDIENTES (SOLO PARA ADMINISTRADORES) --}}
+@if(auth()->check() && auth()->user()->nombre === 'Admin' && isset($solicitudesPendientes) && count($solicitudesPendientes) > 0)
+    <div class="mb-8 bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg shadow-sm" x-data="{ modalEditar: false, retiroEdit: { id: '', nombre: '', cantidad: 0, stock: 0 } }">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-amber-900 flex items-center gap-2">
+                <i class="fas fa-bell text-amber-600 animate-bounce"></i> Solicitudes de Retiro Pendientes de Aprobación
+            </h3>
+            <span class="bg-amber-200 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full">
+                {{ count($solicitudesPendientes) }} pendientes
+            </span>
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach($solicitudesPendientes as $solicitud)
+                <div class="bg-white p-4 rounded-lg border border-amber-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded {{ strtolower($solicitud->tipo_item) === 'insumo' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800' }}">
+                                {{ $solicitud->tipo_item }}
+                            </span>
+                            <span class="text-xs text-slate-400">{{ \Carbon\Carbon::parse($solicitud->created_at)->format('H:i') }}</span>
+                        </div>
+                        <p class="text-sm font-bold text-slate-800 mb-1">
+                            El usuario solicita retirar <span class="text-blue-600">{{ $solicitud->cantidad }} unids</span> de <span class="text-slate-900 underline">{{ $solicitud->nombre }}</span>:
+                        </p>
+                        <p class="text-xs text-slate-600 mb-2">
+                            <i class="fas fa-hospital text-slate-400 mr-1"></i> Área solicitante: <strong>{{ $solicitud->nombre_area }}</strong>
+                        </p>
+                        <p class="text-xs text-slate-500 mb-4">
+                            <i class="fas fa-warehouse text-slate-400 mr-1"></i> Stock en almacén: <strong class="text-slate-700">{{ $solicitud->stock_disponible }} unids</strong>
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-3 border-t border-slate-100">
+                        {{-- Botón Permitir / Aprobar --}}
+                        <form action="{{ route('almacen.retiros.aprobar', $solicitud->id) }}" method="POST" class="flex-1">
+                            @csrf
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded text-xs transition flex items-center justify-center gap-1 shadow-xs">
+                                <i class="fas fa-check"></i> Permitir
+                            </button>
+                        </form>
+
+                        {{-- Botón Editar cantidad --}}
+                        <button type="button" 
+                            @click="modalEditar = true; retiroEdit = { id: {{ $solicitud->id }}, nombre: '{{ addslashes($solicitud->nombre) }}', cantidad: {{ $solicitud->cantidad }}, stock: {{ $solicitud->stock_disponible }} }"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded text-xs transition flex items-center justify-center gap-1 shadow-xs" title="Editar cantidad y permitir">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+
+                        {{-- Botón Rechazar --}}
+                        <form action="{{ route('almacen.retiros.rechazar', $solicitud->id) }}" method="POST" class="flex-1" onsubmit="return confirm('¿Está seguro de rechazar esta solicitud?');">
+                            @csrf
+                            <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-1.5 px-3 rounded text-xs transition flex items-center justify-center gap-1 shadow-xs">
+                                <i class="fas fa-times"></i> Rechazar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        {{-- MODAL PARA EDITAR CANTIDAD ANTES DE APROBAR --}}
+        <div x-show="modalEditar" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border border-slate-100" @click.away="modalEditar = false">
+                <h3 class="text-md font-bold text-slate-900 mb-1">Ajustar Cantidad Solicitada</h3>
+                <p class="text-xs text-slate-700 font-medium mb-1" x-text="'Ítem: ' + retiroEdit.nombre"></p>
+                <p class="text-xs text-slate-500 mb-4">
+                    Stock disponible: <span class="font-bold text-blue-600" x-text="retiroEdit.stock + ' unidades'"></span>
+                </p>
+
+                {{-- URL corregida sin el /almacen sobrante para evitar el 404 --}}
+                <form :action="'/retiros/' + retiroEdit.id + '/editar-aprobar'" method="POST">
+                    @csrf
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Nueva cantidad correcta:</label>
+                        <input type="number" name="cantidad" x-model="retiroEdit.cantidad" min="1" :max="retiroEdit.stock" required
+                            class="w-full bg-slate-50 border border-slate-200 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button type="submit" class="flex-1 bg-slate-900 text-white font-bold py-2 px-4 rounded text-xs hover:bg-blue-600 transition">
+                            Guardar y Aprobar
+                        </button>
+                        <button type="button" @click="modalEditar = false" class="bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded text-xs hover:bg-slate-300 transition">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
             {{-- Formularios de Retiro --}}
