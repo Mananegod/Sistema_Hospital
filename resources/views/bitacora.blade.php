@@ -60,7 +60,7 @@
                         </td>
                         <td class="px-4 sm:px-6 py-4 sm:py-5 text-slate-600 text-xs sm:text-sm font-medium leading-relaxed">
                             {{ $reg->descripcion }}
-                            <p class="text-[8px] sm:text-[10px] text-slate-400 mt-1 uppercase tracking-tighter">Realizado por: {{ $reg->usuario }}</p>
+                            <p class="text-[8px] sm:text-[10px] text-slate-400 mt-1 uppercase tracking-tighter">Realizado por: {{ $reg->usuario ?? 'N/A' }}</p>
                         </td>
                         <td class="px-4 sm:px-6 py-4 sm:py-5 text-right whitespace-nowrap">
                             <p class="text-xs sm:text-sm font-bold text-slate-700">{{ $reg->created_at->format('d/m/Y') }}</p>

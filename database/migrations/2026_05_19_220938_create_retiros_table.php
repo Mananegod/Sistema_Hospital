@@ -10,9 +10,12 @@ return new class extends Migration
     {
         Schema::create('retiros', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('medicamento_id'); 
+            $table->unsignedBigInteger('medicamento_id')->nullable(); 
+            $table->unsignedBigInteger('insumo_id')->nullable();
             $table->unsignedBigInteger('area_id');
             $table->integer('cantidad');
+            $table->string('estado', 50)->default('pendiente');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamps();
         });
     }

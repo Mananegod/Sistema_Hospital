@@ -3,7 +3,18 @@
 @section('title', 'Gestión de Almacén')
 
 @section('content')
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{
+@if(session('success'))
+    <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-sm text-xs font-bold uppercase tracking-wider flex items-center justify-between shadow-sm">
+        <span><i class="fas fa-check-circle mr-2 text-emerald-600"></i> {{ session('success') }}</span>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-sm text-xs font-bold uppercase tracking-wider flex items-center justify-between shadow-sm">
+        <span><i class="fas fa-exclamation-circle mr-2 text-red-600"></i> {{ session('error') }}</span>
+    </div>
+@endif
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{
     buscando: false,
     resultados: [],
     q: '',
@@ -11,6 +22,7 @@
     modalImportar: false, 
     modalMasivo: false,
     modalTrazabilidad: false,
+    modalBajaVencidos: false,  {{-- <-- AÑADE ESTA LÍNEA AQUÍ --}}
     seleccionados: [],
     categoria: 'medicamento',
     async buscar() {
@@ -44,6 +56,11 @@
                 <p class="text-slate-500 mt-1 uppercase text-xs tracking-wider">Control de inventario - Hospital Dr. Tiburcio Garrido</p>
             </div>
             <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                {{-- NUEVO BOTÓN DE ACCESO A DESECHOS --}}
+                <a href="{{ route('almacen.desechos') }}" 
+                   class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-700 border border-red-200 font-bold rounded-sm hover:bg-red-100 transition shadow-sm text-xs uppercase tracking-wider">
+                    <i class="fas fa-trash-alt text-red-600"></i> Desechos / Mermas
+                </a>
                 <button @click="modalTrazabilidad = true" 
                         class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 font-bold rounded-sm hover:bg-blue-100 transition shadow-sm text-xs uppercase tracking-wider">
                     <i class="fas fa-chart-line text-blue-600"></i> Monitoreo
@@ -105,7 +122,7 @@
         <div x-show="seleccionados.length > 0" 
              x-transition 
              x-cloak
-             class="mb-4 p-4 bg-blue-600 border border-blue-700 rounded-sm flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md shadow-blue-500/10">
+             class="mb-4 p-4 bg-blue-600 border border-blue-700 rounded-sm flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
             <div class="flex items-center gap-3">
                 <div class="w-7 h-7 bg-white/20 rounded-sm flex items-center justify-center text-white shrink-0">
                     <i class="fas fa-check-double text-xs"></i>
@@ -122,6 +139,11 @@
                 <button type="button" @click="modalMasivo = true" 
                         class="bg-white hover:bg-slate-50 text-blue-700 text-xs font-extrabold px-4 py-2.5 rounded-sm uppercase tracking-wider transition shadow-sm">
                     <i class="fas fa-edit mr-1"></i> Editar Selección
+                </button>
+                {{-- NUEVO BOTÓN DE BAJA POR VENCIMIENTO --}}
+                <button type="button" @click="modalBajaVencidos = true" 
+                        class="bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-sm uppercase tracking-wider transition shadow-sm">
+                    <i class="fas fa-trash-alt mr-1"></i> Dar de Baja (Vencidos)
                 </button>
             </div>
         </div>
@@ -414,7 +436,7 @@
                 </div>
             @endif
         </div>
-
+        
         {{-- MODAL DE EDICIÓN MASIVA --}}
         <div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
              x-show="modalMasivo" 
@@ -473,6 +495,59 @@
                         <button type="submit"
                             class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition text-xs uppercase tracking-wider">
                             Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- MODAL DE BAJA POR VENCIMIENTO --}}
+        <div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
+             x-show="modalBajaVencidos" 
+             x-cloak 
+             x-transition
+             x-data="{ motivoBaja: 'Vencimiento superado - Incineración' }">
+             
+            <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
+                 @click.away="modalBajaVencidos = false">
+                 
+                <div class="p-4 sm:p-6 border-b border-slate-50 flex justify-between items-center bg-red-50/50">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-red-700 flex items-center gap-2">
+                        <i class="fas fa-exclamation-triangle"></i> Desincorporar Lotes Vencidos
+                    </h3>
+                    <button type="button" @click="modalBajaVencidos = false" class="text-slate-400 hover:text-slate-600 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <form action="{{ route('almacen.baja-vencidos') }}" method="POST"
+                      x-on:submit="$store.loading.activate('Procesando desincorporación...')">
+                    @csrf
+                    <input type="hidden" name="ids" :value="JSON.stringify(seleccionados)">
+                    <input type="hidden" name="tabla" :value="categoria === 'insumo' ? 'insumos_medicos' : 'medicamentos'">
+
+                    <div class="p-4 sm:p-6 space-y-4">
+                        <div class="bg-red-50 p-3 rounded-sm border border-red-100">
+                            <p class="text-[11px] text-red-700 uppercase font-semibold">
+                                Estás a punto de dar de baja <span class="font-bold" x-text="seleccionados.length"></span> elementos seleccionados. Esta acción dejará el stock en 0 y registrará la merma de forma legal.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Motivo de la Baja</label>
+                            <input type="text" name="motivo" x-model="motivoBaja" required
+                                   class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-red-500/20 transition">
+                        </div>
+                    </div>
+
+                    <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+                        <button type="button" @click="modalBajaVencidos = false"
+                            class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="flex-1 bg-red-600 text-white font-bold py-3 rounded-sm hover:bg-red-700 shadow-lg shadow-red-500/20 transition text-xs uppercase tracking-wider">
+                            Confirmar Baja
                         </button>
                     </div>
                 </form>

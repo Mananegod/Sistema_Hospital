@@ -9,6 +9,7 @@ use App\Models\Auditoria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class PersonalController extends Controller
 {
@@ -81,7 +82,7 @@ class PersonalController extends Controller
                 'modulo'      => 'Personal',
                 'accion'      => 'Registro',
                 'descripcion' => "Se registró a: {$p->nombres} {$p->apellidos} (Usuario: {$nombreUsuario})",
-                'usuario'     => 'Admin'
+                'usuario'     => Auth::user()->nombre ?? 'Sistema',
             ]);
 
             DB::commit();
@@ -104,6 +105,7 @@ class PersonalController extends Controller
             'modulo'      => 'Personal',
             'accion'      => 'Estado',
             'descripcion' => "Se cambió el estado de: {$empleado->nombres} {$empleado->apellidos}",
+            'usuario'     => Auth::user()->nombre ?? 'Sistema',
         ]);
 
         $mensaje = $empleado->activo ? 'Personal activado correctamente.' : 'Personal desactivado correctamente.';
@@ -125,6 +127,7 @@ class PersonalController extends Controller
             'modulo'      => 'Personal',
             'accion'      => 'Edición',
             'descripcion' => "Se actualizaron los datos de: {$empleado->nombres} {$empleado->apellidos}",
+            'usuario'     => Auth::user()->nombre ?? 'Sistema',
         ]);
 
         return back()->with('success', 'Datos actualizados correctamente.');
@@ -142,6 +145,7 @@ class PersonalController extends Controller
             'modulo'      => 'Personal',
             'accion'      => 'Borrado',
             'descripcion' => "Se eliminó del sistema a: {$empleado->nombres} {$empleado->apellidos}",
+            'usuario'     => Auth::user()->nombre ?? 'Sistema',
         ]);
 
         $empleado->delete();
@@ -158,6 +162,7 @@ class PersonalController extends Controller
             'modulo'      => 'Personal',
             'accion'      => 'Reporte',
             'descripcion' => 'Se generó un reporte en PDF de todo el personal (Admin y Usuarios)',
+            'usuario'     => Auth::user()->nombre ?? 'Sistema',
         ]);
 
         return view('personal-pdf', compact('personal'));

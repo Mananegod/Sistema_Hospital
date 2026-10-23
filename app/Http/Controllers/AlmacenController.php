@@ -342,194 +342,263 @@ class AlmacenController extends Controller
         return 'Por Determinar';
     }
 
-    public function indexRetiros()
-    {
-        $areas = DB::table('areas')->get();
-        $todosLosMedicamentos = DB::table('medicamentos')->orderBy('nombre_medicamento', 'asc')->get();
-        $todosLosInsumos = DB::table('insumos_medicos')->orderBy('nombre_insumo', 'asc')->get();
+public function indexRetiros()
+{
+    $areas = DB::table('areas')->get();
+    $todosLosMedicamentos = DB::table('medicamentos')->orderBy('nombre_medicamento', 'asc')->get();
+    $todosLosInsumos = DB::table('insumos_medicos')->orderBy('nombre_insumo', 'asc')->get();
 
-        $hasInsumoId = Schema::hasColumn('retiros', 'insumo_id');
+    $hasInsumoId = Schema::hasColumn('retiros', 'insumo_id');
 
-        if ($hasInsumoId) {
-            $ultimosRetiros = DB::table('retiros')
-                ->leftJoin('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
-                ->leftJoin('insumos_medicos', 'retiros.insumo_id', '=', 'insumos_medicos.id')
-                ->join('areas', 'retiros.area_id', '=', 'areas.id')
-                ->select(
-                    'retiros.id',
-                    DB::raw("COALESCE(medicamentos.nombre_medicamento, insumos_medicos.nombre_insumo, 'Desconocido') as nombre"),
-                    'areas.nombre_area',
-                    'retiros.cantidad',
-                    'retiros.created_at',
-                    DB::raw("CASE 
-                        WHEN retiros.insumo_id IS NOT NULL THEN 'Insumo' 
-                        ELSE 'Medicamento' 
-                    END as tipo_item")
-                )
-                ->whereDate('retiros.created_at', now()->toDateString())
-                ->orderBy('retiros.created_at', 'desc')
-                ->get();
-        } else {
-            $ultimosRetiros = DB::table('retiros')
-                ->join('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
-                ->join('areas', 'retiros.area_id', '=', 'areas.id')
-                ->select(
-                    'retiros.id',
-                    'medicamentos.nombre_medicamento as nombre',
-                    'areas.nombre_area',
-                    'retiros.cantidad',
-                    'retiros.created_at',
-                    DB::raw("'Medicamento' as tipo_item")
-                )
-                ->whereDate('retiros.created_at', now()->toDateString())
-                ->orderBy('retiros.created_at', 'desc')
-                ->get();
-        }
+    // Inicializamos como colección vacía por defecto para usuarios normales
+    $solicitudesPendientes = collect();
 
-        return view('almacen.retiros', compact('areas', 'todosLosMedicamentos', 'todosLosInsumos', 'ultimosRetiros'));
+    // VERIFICAR SI EL USUARIO ES ADMINISTRADOR
+    // (Ajusta la condición 'nombre === "Admin"' o tu campo de rol según tengas estructurada tu tabla users, ej: auth()->user()->rol == 'admin')
+if (auth()->check() && auth()->user()->nombre === 'Admin') {
+        
+        $queryPendientes = DB::table('retiros')
+            ->leftJoin('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
+            ->leftJoin('insumos_medicos', 'retiros.insumo_id', '=', 'insumos_medicos.id')
+            ->join('areas', 'retiros.area_id', '=', 'areas.id')
+            ->select(
+                'retiros.id',
+                'retiros.cantidad',
+                'retiros.created_at',
+                'areas.nombre_area',
+                DB::raw("COALESCE(medicamentos.nombre_medicamento, insumos_medicos.nombre_insumo, 'Desconocido') as nombre"),
+                DB::raw("CASE WHEN retiros.insumo_id IS NOT NULL THEN 'Insumo' ELSE 'Medicamento' END as tipo_item"),
+                DB::raw("COALESCE(medicamentos.cantidad_stock, insumos_medicos.cantidad_stock, 0) as stock_disponible")
+            )
+            ->where('retiros.estado', 'pendiente')
+            ->orderBy('retiros.created_at', 'desc');
+
+        $solicitudesPendientes = $queryPendientes->get();
     }
 
-    public function guardarRetiro(Request $request)
-    {
-        $tipo = $request->input('tipo_item', 'medicamento');
-
-        if ($tipo === 'insumo') {
-            $request->validate([
-                'insumo_id' => 'required',
-                'area_id'   => 'required',
-                'cantidad'  => 'required|integer|min:1',
-            ]);
-
-            $insumo = DB::table('insumos_medicos')->where('id', $request->insumo_id)->first();
-
-            if (!$insumo) {
-                return back()->with('error', 'El insumo médico seleccionado no existe.');
-            }
-
-            if ($insumo->cantidad_stock < $request->cantidad) {
-                return back()->with('error', 'Stock insuficiente.');
-            }
-
-            // VALIDAR SI EL INSUMO ESTÁ CADUCADO (Genera acta de excepción en PDF)
-            if (!empty($insumo->fecha_vencimiento) && Carbon::parse($insumo->fecha_vencimiento)->isPast()) {
-                
-                // Registro de la incidencia de retiro vencido en la Bitácora
-                Auditoria::create([
-                    'modulo'      => 'Almacén',
-                    'accion'      => 'Retiro Vencido',
-                    'descripcion' => "Se intentó retirar el insumo vencido '{$insumo->nombre_insumo}' (Lote: {$insumo->codigo_lote}) generando acta de excepción.",
-                ]);
-
-                return redirect()->route('almacen.retiros.acta-vencido', [
-                    'tipo' => 'insumo',
-                    'id' => $insumo->id,
-                    'cantidad' => $request->cantidad,
-                    'area_id' => $request->area_id
-                ]);
-            }
-
-            $area = DB::table('areas')->where('id', $request->area_id)->first();
-            $nombreArea = $area ? $area->nombre_area : 'Área no especificada';
-
-            DB::transaction(function () use ($request, $insumo) {
-                DB::table('insumos_medicos')
-                    ->where('id', $request->insumo_id)
-                    ->decrement('cantidad_stock', $request->cantidad);
-
-                $insertData = [
-                    'insumo_id'      => $request->insumo_id,
-                    'medicamento_id' => null,
-                    'area_id'        => $request->area_id,
-                    'cantidad'       => $request->cantidad,
-                    'created_at'     => now(),
-                    'updated_at'     => now(),
-                ];
-
-                if (Schema::hasColumn('retiros', 'lote_id')) {
-                    $insertData['lote_id'] = property_exists($insumo, 'lote_id') ? $insumo->lote_id : null;
-                }
-
-                DB::table('retiros')->insert($insertData);
-            });
-
-            // Registro en Bitácora idéntico al módulo Personal
-            Auditoria::create([
-                'modulo'      => 'Almacén',
-                'accion'      => 'Retiro de Insumo',
-                'descripcion' => "Se retiraron {$request->cantidad} unidades del insumo '{$insumo->nombre_insumo}' para el área '{$nombreArea}'",
-            ]);
-
-            return back()->with('success', 'El retiro de insumo médico ha sido registrado con éxito.');
-
-        } else {
-            $request->validate([
-                'medicamento_id' => 'required',
-                'area_id'        => 'required',
-                'cantidad'       => 'required|integer|min:1',
-            ]);
-
-            $medicamento = DB::table('medicamentos')->where('id', $request->medicamento_id)->first();
-
-            if (!$medicamento) {
-                return back()->with('error', 'El medicamento seleccionado no existe.');
-            }
-
-            if ($medicamento->cantidad_stock < $request->cantidad) {
-                return back()->with('error', 'Stock insuficiente.');
-            }
-
-            // VALIDAR SI EL MEDICAMENTO ESTÁ CADUCADO (Genera acta de excepción en PDF)
-            if (!empty($medicamento->fecha_vencimiento) && Carbon::parse($medicamento->fecha_vencimiento)->isPast()) {
-                
-                // Registro de la incidencia de retiro vencido en la Bitácora
-                Auditoria::create([
-                    'modulo'      => 'Almacén',
-                    'accion'      => 'Retiro Vencido',
-                    'descripcion' => "Se intentó retirar el medicamento vencido '{$medicamento->nombre_medicamento}' (Lote: {$medicamento->codigo_lote}) generando acta de excepción.",
-                ]);
-
-                return redirect()->route('almacen.retiros.acta-vencido', [
-                    'tipo' => 'medicamento',
-                    'id' => $medicamento->id,
-                    'cantidad' => $request->cantidad,
-                    'area_id' => $request->area_id
-                ]);
-            }
-
-            $area = DB::table('areas')->where('id', $request->area_id)->first();
-            $nombreArea = $area ? $area->nombre_area : 'Área no especificada';
-
-            DB::transaction(function () use ($request, $medicamento) {
-                DB::table('medicamentos')
-                    ->where('id', $request->medicamento_id)
-                    ->decrement('cantidad_stock', $request->cantidad);
-
-                $insertData = [
-                    'medicamento_id' => $request->medicamento_id,
-                    'insumo_id'      => null,
-                    'area_id'        => $request->area_id,
-                    'cantidad'       => $request->cantidad,
-                    'created_at'     => now(),
-                    'updated_at'     => now(),
-                ];
-
-                if (Schema::hasColumn('retiros', 'lote_id')) {
-                    $insertData['lote_id'] = $medicamento->lote_id ?? null;
-                }
-
-                DB::table('retiros')->insert($insertData);
-            });
-
-            // Registro en Bitácora idéntico al módulo Personal
-            Auditoria::create([
-                'modulo'      => 'Almacén',
-                'accion'      => 'Retiro de Stock',
-                'descripcion' => "Se retiraron {$request->cantidad} unidades de '{$medicamento->nombre_medicamento}' para el área '{$nombreArea}'",
-            ]);
-
-            return back()->with('success', 'El retiro de medicamento ha sido registrado con éxito.');
-        }
+    // Historial de retiros aprobados de hoy (se mantiene igual...)
+    if ($hasInsumoId) {
+        $ultimosRetiros = DB::table('retiros')
+            ->leftJoin('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
+            ->leftJoin('insumos_medicos', 'retiros.insumo_id', '=', 'insumos_medicos.id')
+            ->join('areas', 'retiros.area_id', '=', 'areas.id')
+            ->select(
+                'retiros.id',
+                DB::raw("COALESCE(medicamentos.nombre_medicamento, insumos_medicos.nombre_insumo, 'Desconocido') as nombre"),
+                'areas.nombre_area',
+                'retiros.cantidad',
+                'retiros.created_at',
+                'retiros.estado',
+                DB::raw("CASE WHEN retiros.insumo_id IS NOT NULL THEN 'Insumo' ELSE 'Medicamento' END as tipo_item")
+            )
+            ->where('retiros.estado', 'aprobado')
+            ->whereDate('retiros.created_at', now()->toDateString())
+            ->orderBy('retiros.created_at', 'desc')
+            ->get();
+    } else {
+        $ultimosRetiros = DB::table('retiros')
+            ->join('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
+            ->join('areas', 'retiros.area_id', '=', 'areas.id')
+            ->select(
+                'retiros.id',
+                'medicamentos.nombre_medicamento as nombre',
+                'areas.nombre_area',
+                'retiros.cantidad',
+                'retiros.created_at',
+                'retiros.estado',
+                DB::raw("'Medicamento' as tipo_item")
+            )
+            ->where('retiros.estado', 'aprobado')
+            ->whereDate('retiros.created_at', now()->toDateString())
+            ->orderBy('retiros.created_at', 'desc')
+            ->get();
     }
+
+    return view('almacen.retiros', compact('areas', 'todosLosMedicamentos', 'todosLosInsumos', 'ultimosRetiros', 'solicitudesPendientes'));
+}
+
+public function guardarRetiro(Request $request)
+{
+    $tipo = $request->input('tipo_item', 'medicamento');
+
+    if ($tipo === 'insumo') {
+        $request->validate([
+            'insumo_id' => 'required',
+            'area_id'   => 'required',
+            'cantidad'  => 'required|integer|min:1',
+        ]);
+
+        $insumo = DB::table('insumos_medicos')->where('id', $request->insumo_id)->first();
+        if (!$insumo) {
+            return back()->with('error', 'El insumo médico seleccionado no existe.');
+        }
+
+        if (!empty($insumo->fecha_vencimiento) && Carbon::parse($insumo->fecha_vencimiento)->isPast()) {
+            return back()->with('error', 'ACCESO DENEGADO: El insumo médico se encuentra CADUCADO.');
+        }
+
+        // Se guarda como pendiente sin descontar stock
+        DB::table('retiros')->insert([
+            'insumo_id'      => $request->insumo_id,
+            'medicamento_id' => null,
+            'area_id'        => $request->area_id,
+            'cantidad'       => $request->cantidad,
+            'estado'         => 'pendiente',
+            'created_at'     => now(),
+            'updated_at'     => now(),
+        ]);
+
+        Auditoria::create([
+            'modulo'      => 'Almacén',
+            'accion'      => 'Solicitud Retiro Insumo',
+            'descripcion' => "Solicitud pendiente de retiro de {$request->cantidad} unidades de '{$insumo->nombre_insumo}'.",
+        ]);
+
+        return back()->with('success', 'Solicitud de retiro enviada. Esperando aprobación del administrador.');
+
+    } else {
+        $request->validate([
+            'medicamento_id' => 'required',
+            'area_id'        => 'required',
+            'cantidad'       => 'required|integer|min:1',
+        ]);
+
+        $medicamento = DB::table('medicamentos')->where('id', $request->medicamento_id)->first();
+        if (!$medicamento) {
+            return back()->with('error', 'El medicamento seleccionado no existe.');
+        }
+
+        if (!empty($medicamento->fecha_vencimiento) && Carbon::parse($medicamento->fecha_vencimiento)->isPast()) {
+            return back()->with('error', 'ACCESO DENEGADO: El medicamento se encuentra CADUCADO.');
+        }
+
+        DB::table('retiros')->insert([
+            'medicamento_id' => $request->medicamento_id,
+            'insumo_id'      => null,
+            'area_id'        => $request->area_id,
+            'cantidad'       => $request->cantidad,
+            'estado'         => 'pendiente',
+            'created_at'     => now(),
+            'updated_at'     => now(),
+        ]);
+
+        Auditoria::create([
+            'modulo'      => 'Almacén',
+            'accion'      => 'Solicitud Retiro Medicamento',
+            'descripcion' => "Solicitud pendiente de retiro de {$request->cantidad} unidades de '{$medicamento->nombre_medicamento}'.",
+        ]);
+
+        return back()->with('success', 'Solicitud de retiro enviada. Esperando aprobación del administrador.');
+    }
+}
+
+public function aprobarRetiro($id)
+{
+    $retiro = DB::table('retiros')->where('id', $id)->where('estado', 'pendiente')->first();
+    if (!$retiro) {
+        return back()->with('error', 'La solicitud no existe o ya fue procesada.');
+    }
+
+    if (!empty($retiro->medicamento_id)) {
+        $item = DB::table('medicamentos')->where('id', $retiro->medicamento_id)->first();
+        $tabla = 'medicamentos';
+        $itemId = $retiro->medicamento_id;
+        $nombreItem = $item->nombre_medicamento ?? 'Medicamento';
+    } else {
+        $item = DB::table('insumos_medicos')->where('id', $retiro->insumo_id)->first();
+        $tabla = 'insumos_medicos';
+        $itemId = $retiro->insumo_id;
+        $nombreItem = $item->nombre_insumo ?? 'Insumo';
+    }
+
+    if (!$item || $item->cantidad_stock < $retiro->cantidad) {
+        return back()->with('error', 'Stock insuficiente para aprobar esta solicitud.');
+    }
+
+    DB::transaction(function () use ($tabla, $itemId, $retiro, $id) {
+        DB::table($tabla)->where('id', $itemId)->decrement('cantidad_stock', $retiro->cantidad);
+        DB::table('retiros')->where('id', $id)->update([
+            'estado' => 'aprobado',
+            'updated_at' => now()
+        ]);
+    });
+
+    Auditoria::create([
+        'modulo'      => 'Almacén',
+        'accion'      => 'Aprobación de Retiro',
+        'descripcion' => "El administrador aprobó el retiro de {$retiro->cantidad} unidades de '{$nombreItem}'.",
+    ]);
+
+    return back()->with('success', 'Retiro aprobado y stock descontado con éxito.');
+}
+
+public function rechazarRetiro($id)
+{
+    $retiro = DB::table('retiros')->where('id', $id)->where('estado', 'pendiente')->first();
+    if (!$retiro) {
+        return back()->with('error', 'La solicitud no existe o ya fue procesada.');
+    }
+
+    DB::table('retiros')->where('id', $id)->update([
+        'estado' => 'rechazado',
+        'updated_at' => now()
+    ]);
+
+    Auditoria::create([
+        'modulo'      => 'Almacén',
+        'accion'      => 'Rechazo de Retiro',
+        'descripcion' => "El administrador rechazó la solicitud de retiro ID {$id}.",
+    ]);
+
+    return back()->with('success', 'La solicitud de retiro ha sido rechazada.');
+}
+
+public function editarYAprobarRetiro(Request $request, $id)
+{
+    $request->validate([
+        'cantidad' => 'required|integer|min:1'
+    ]);
+
+    $retiro = DB::table('retiros')->where('id', $id)->where('estado', 'pendiente')->first();
+    if (!$retiro) {
+        return back()->with('error', 'Solicitud no encontrada.');
+    }
+
+    $nuevaCantidad = (int)$request->cantidad;
+
+    if (!empty($retiro->medicamento_id)) {
+        $item = DB::table('medicamentos')->where('id', $retiro->medicamento_id)->first();
+        $tabla = 'medicamentos';
+        $itemId = $retiro->medicamento_id;
+        $nombreItem = $item->nombre_medicamento ?? 'Medicamento';
+    } else {
+        $item = DB::table('insumos_medicos')->where('id', $retiro->insumo_id)->first();
+        $tabla = 'insumos_medicos';
+        $itemId = $retiro->insumo_id;
+        $nombreItem = $item->nombre_insumo ?? 'Insumo';
+    }
+
+    if (!$item || $item->cantidad_stock < $nuevaCantidad) {
+        return back()->with('error', 'Stock insuficiente para la nueva cantidad.');
+    }
+
+    DB::transaction(function () use ($tabla, $itemId, $nuevaCantidad, $id) {
+        DB::table($tabla)->where('id', $itemId)->decrement('cantidad_stock', $nuevaCantidad);
+        DB::table('retiros')->where('id', $id)->update([
+            'cantidad' => $nuevaCantidad,
+            'estado' => 'aprobado',
+            'updated_at' => now()
+        ]);
+    });
+
+    Auditoria::create([
+        'modulo'      => 'Almacén',
+        'accion'      => 'Edición y Aprobación de Retiro',
+        'descripcion' => "El administrador ajustó la cantidad a {$nuevaCantidad} y aprobó el retiro de '{$nombreItem}'.",
+    ]);
+
+    return back()->with('success', 'Retiro ajustado, aprobado y stock descontado con éxito.');
+}
 
     public function verPorLote(Request $request, $codigo_lote = null)
     {
@@ -729,5 +798,94 @@ class AlmacenController extends Controller
         return view('almacen.acta_vencido_pdf', compact(
             'tipo', 'nombreItem', 'codigoLote', 'fechaVencimiento', 'cantidad', 'nombreArea'
         ));
+    }
+
+public function registrarBajaVencidosMasiva(Request $request)
+{
+    $request->validate([
+        'ids' => 'required',
+        'tabla' => 'required|in:medicamentos,insumos_medicos',
+        'motivo' => 'required|string|max:255',
+    ]);
+
+    $ids = json_decode($request->ids, true);
+    if (empty($ids)) {
+        return back()->with('error', 'No se seleccionó ningún registro para dar de baja.');
+    }
+
+    $tabla = $request->tabla;
+    $tipoItem = ($tabla === 'insumos_medicos') ? 'insumo' : 'medicamento';
+    $columnaNombre = ($tabla === 'insumos_medicos') ? 'nombre_insumo' : 'nombre_medicamento';
+    $idColumnaRetiro = ($tabla === 'insumos_medicos') ? 'insumo_id' : 'medicamento_id';
+
+    // Obtener los elementos seleccionados que tengan stock disponible
+    $itemsBaja = DB::table($tabla)
+        ->whereIn('id', $ids)
+        ->where('cantidad_stock', '>', 0)
+        ->get();
+
+    if ($itemsBaja->isEmpty()) {
+        return back()->with('error', 'OPERACIÓN RECHAZADA: Ninguno de los elementos seleccionados tiene stock disponible (> 0) para desincorporar.');
+    }
+
+    try {
+        DB::transaction(function () use ($itemsBaja, $tabla, $tipoItem, $columnaNombre, $idColumnaRetiro, $request) {
+            foreach ($itemsBaja as $item) {
+                
+                // Sanitizar valores vacíos para evitar errores en columnas tipo DATE o restricciones
+                $fechaVencimiento = (!empty($item->fecha_vencimiento)) ? $item->fecha_vencimiento : null;
+                $codigoLote = (!empty(trim($item->codigo_lote ?? ''))) ? trim($item->codigo_lote) : 'S/L';
+
+                // 1. Insertar el registro en la tabla de desecho / bajas
+                DB::table('bajas_inventario')->insert([
+                    'tipo_item'         => $tipoItem,
+                    'nombre_item'       => $item->{$columnaNombre},
+                    'codigo_lote'       => $codigoLote,
+                    'fecha_vencimiento' => $fechaVencimiento,
+                    'cantidad'          => $item->cantidad_stock,
+                    'motivo'            => $request->motivo,
+                    'created_at'        => now(),
+                    'updated_at'        => now(),
+                ]);
+
+                // 2. En lugar de eliminar físicamente (delete()), actualizamos el stock a 0 
+                // para preservar el ID y que los retiros sigan encontrando su nombre correctamente.
+                DB::table($tabla)->where('id', $item->id)->update([
+                    'cantidad_stock' => 0,
+                    'updated_at'     => now(),
+                ]);
+
+                // 3. Rechazar automáticamente solicitudes pendientes de este ítem si las hubiera
+                DB::table('retiros')
+                    ->where($idColumnaRetiro, $item->id)
+                    ->where('estado', 'pendiente')
+                    ->update([
+                        'estado' => 'rechazado',
+                        'updated_at' => now(),
+                    ]);
+
+                // 4. Registrar en la bitácora del sistema
+                Auditoria::create([
+                    'modulo'      => 'Almacén',
+                    'accion'      => 'Baja y Desecho de Inventario',
+                    'descripcion' => "Se desincorporaron y enviaron a desecho {$item->cantidad_stock} unidades de '{$item->{$columnaNombre}}' (Lote: {$codigoLote}). Motivo: {$request->motivo}",
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Los elementos seleccionados fueron dados de baja, su stock se actualizó a 0 y se trasladaron formalmente al registro de desecho.');
+
+    } catch (\Exception $e) {
+        return back()->with('error', 'Error al procesar la baja de inventario: ' . $e->getMessage());
+    }
+}
+
+    public function indexDesechos()
+    {
+        $desechos = DB::table('bajas_inventario')
+            ->orderBy('created_at', 'desc')
+            ->paginate(50);
+
+        return view('almacen.desechos', compact('desechos'));
     }
 }
