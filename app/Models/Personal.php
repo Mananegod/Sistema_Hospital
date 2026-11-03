@@ -25,10 +25,11 @@ class Personal extends Model
     ];
 
     public function usuario()
-{
-    return $table->hasOne(User::class, 'personal_id');
-}
+    {
+        return $this->hasOne(User::class, 'personal_id');
+    }
+
     protected $casts = [
-        'activo' => 'boolean',
+        'activo' => 'boolean', // <-- Esto es vital para PostgreSQL
     ];
 }

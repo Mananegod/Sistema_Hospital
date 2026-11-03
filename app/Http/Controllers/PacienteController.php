@@ -30,14 +30,22 @@ class PacienteController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'cedula' => 'required|string|unique:pacientes_internados,cedula',
-            'nombre_apellido' => 'required|string|max:255',
-            'edad' => 'required|integer|min:0|max:120',
+            'cedula' => ['required', 'numeric', 'digits_between:1,10', 'unique:pacientes_internados,cedula'],
+            'nombre_apellido' => ['required', 'string', 'max:255', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'],
+            'edad' => 'required|integer|min:0|max:125',
             'genero' => 'required|string|in:Masculino,Femenino,Otro',
             'area_id' => 'required',
             'diagnostico' => 'required|string',
             'tratamiento' => 'nullable|string',
             'fecha_ingreso' => 'required|date',
+        ], [
+            'cedula.required' => 'La cédula es obligatoria.',
+            'cedula.numeric' => 'La cédula debe contener exclusivamente números.',
+            'cedula.digits_between' => 'La cédula no puede exceder los 10 dígitos.',
+            'cedula.unique' => 'Ya existe un paciente registrado con esta cédula.',
+            'nombre_apellido.required' => 'El nombre y apellido son obligatorios.',
+            'nombre_apellido.regex' => 'El nombre y apellido debe contener exclusivamente letras.',
+            'edad.integer' => 'La edad debe ser un número entero.',
         ]);
 
         DB::table('pacientes_internados')->insert([
@@ -66,8 +74,8 @@ class PacienteController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'cedula'           => 'required|regex:/^[0-9]+$/',
-            'nombre_apellido'  => 'required|string|regex:/^[^0-9]+$/|max:255',
+            'cedula'           => ['required', 'numeric', 'digits_between:1,10', 'unique:pacientes_internados,cedula,' . $id],
+            'nombre_apellido'  => ['required', 'string', 'max:255', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'],
             'edad'             => 'required|integer|min:0|max:125',
             'genero'           => 'required|string|in:Masculino,Femenino,Otro',
             'area_id'          => 'required|exists:areas,id',
@@ -75,8 +83,10 @@ class PacienteController extends Controller
             'tratamiento'      => 'nullable|string',
             'fecha_ingreso'    => 'required|date|before_or_equal:2036-12-31',
         ], [
-            'cedula.regex'            => 'La cédula de identidad debe contener únicamente números.',
-            'nombre_apellido.regex'   => 'El nombre y apellido no puede contener números.',
+            'cedula.numeric'          => 'La cédula debe contener exclusivamente números.',
+            'cedula.digits_between'   => 'La cédula no puede exceder los 10 dígitos.',
+            'cedula.unique'           => 'Ya existe otro paciente con esta cédula.',
+            'nombre_apellido.regex'   => 'El nombre y apellido debe contener exclusivamente letras.',
             'edad.integer'            => 'La edad del paciente debe ser un número entero.',
             'genero.in'               => 'El género seleccionado no es válido.',
             'fecha_ingreso.before_or_equal' => 'La fecha de ingreso no puede ser posterior al año 2036.',
