@@ -126,4 +126,6 @@ Route::middleware([AuthHospital::class, 'admin.only'])->group(function () {
     Route::post('/retiros/{id}/aprobar', [AlmacenController::class, 'aprobarRetiro'])->name('almacen.retiros.aprobar');
     Route::post('/retiros/{id}/rechazar', [AlmacenController::class, 'rechazarRetiro'])->name('almacen.retiros.rechazar');
     Route::post('/retiros/{id}/editar-aprobar', [AlmacenController::class, 'editarYAprobarRetiro'])->name('almacen.retiros.editar_aprobar');
+    Route::patch('/personal/{id}/password', [PersonalController::class, 'updatePassword'])->name('personal.password');
+    Route::post('/almacen/retiros/emergencia', [AlmacenController::class, 'retiroEmergencia'])->name('almacen.retiros.emergencia');
 });

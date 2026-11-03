@@ -146,6 +146,57 @@
 
             document.body.appendChild(formSubmit);
             formSubmit.submit();
+        },
+        registrarEmergenciaMed() {
+            if (!this.formMed.medicamento_id || !this.formMed.area_id || !this.formMed.cantidad) {
+                if (this.$store && this.$store.toast) this.$store.toast.add('Por favor llena todos los campos.', 'error');
+                return;
+            }
+            if (!confirm('¿CONFIRMAR EMERGENCIA? Esta acción descontará el stock inmediatamente sin aprobación previa pero quedará registrada en la bitácora.')) {
+                return;
+            }
+            this.enviarFormEmergencia(this.formMed, 'medicamento');
+        },
+        registrarEmergenciaIns() {
+            if (!this.formIns.insumo_id || !this.formIns.area_id || !this.formIns.cantidad) {
+                if (this.$store && this.$store.toast) this.$store.toast.add('Por favor llena todos los campos.', 'error');
+                return;
+            }
+            if (!confirm('¿CONFIRMAR EMERGENCIA? Esta acción descontará el stock inmediatamente sin aprobación previa pero quedará registrada en la bitácora.')) {
+                return;
+            }
+            this.enviarFormEmergencia(this.formIns, 'insumo');
+        },
+        enviarFormEmergencia(data, tipo) {
+            if (this.$store && this.$store.loading) {
+                this.$store.loading.activate('Procesando retiro de emergencia...');
+            }
+            let formSubmit = document.createElement('form');
+            formSubmit.method = 'POST';
+            formSubmit.action = '{{ route('almacen.retiros.emergencia') }}';
+
+            let csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            formSubmit.appendChild(csrfInput);
+
+            let typeInput = document.createElement('input');
+            typeInput.type = 'hidden';
+            typeInput.name = 'tipo_item';
+            typeInput.value = tipo;
+            formSubmit.appendChild(typeInput);
+
+            for (let key in data) {
+                let input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = data[key];
+                formSubmit.appendChild(input);
+            }
+
+            document.body.appendChild(formSubmit);
+            formSubmit.submit();
         }
     }">
         <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -161,7 +212,7 @@
             </div>
         </div> 
 {{-- SECCIÓN DE SOLICITUDES PENDIENTES (SOLO PARA ADMINISTRADORES) --}}
-@if(auth()->check() && auth()->user()->nombre === 'Admin' && isset($solicitudesPendientes) && count($solicitudesPendientes) > 0)
+@if(auth()->check() && (auth()->user()->nombre === 'Admin' || (auth()->user()->personal_id && \App\Models\Personal::where('id', auth()->user()->personal_id)->value('tipo_usuario') === 'Admin')) && isset($solicitudesPendientes) && count($solicitudesPendientes) > 0)
     <div class="mb-8 bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg shadow-sm" x-data="{ modalEditar: false, retiroEdit: { id: '', nombre: '', cantidad: 0, stock: 0 } }">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-bold text-amber-900 flex items-center gap-2">
@@ -230,7 +281,6 @@
                     Stock disponible: <span class="font-bold text-blue-600" x-text="retiroEdit.stock + ' unidades'"></span>
                 </p>
 
-                {{-- URL corregida sin el /almacen sobrante para evitar el 404 --}}
                 <form :action="'/retiros/' + retiroEdit.id + '/editar-aprobar'" method="POST">
                     @csrf
                     <div class="mb-4">
@@ -314,6 +364,10 @@
                                 class="w-full bg-slate-900 text-white font-bold py-3 px-4 rounded-sm shadow-lg hover:bg-blue-600 transition duration-300">
                                 Confirmar Retiro Medicamento
                             </button>
+                            <button type="button" @click="registrarEmergenciaMed()"
+                                class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-sm shadow-lg transition duration-300 flex items-center justify-center gap-2">
+                                <i class="fas fa-exclamation-triangle"></i> Retiro por Emergencia (Sin Esperar Admin)
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -358,6 +412,10 @@
                             <button type="submit"
                                 class="w-full bg-slate-900 text-white font-bold py-3 px-4 rounded-sm shadow-lg hover:bg-blue-600 transition duration-300">
                                 Confirmar Retiro Insumo
+                            </button>
+                            <button type="button" @click="registrarEmergenciaIns()"
+                                class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-sm shadow-lg transition duration-300 flex items-center justify-center gap-2">
+                                <i class="fas fa-exclamation-triangle"></i> Retiro por Emergencia (Sin Esperar Admin)
                             </button>
                         </div>
                     </form>

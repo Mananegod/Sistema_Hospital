@@ -350,13 +350,26 @@ public function indexRetiros()
 
     $hasInsumoId = Schema::hasColumn('retiros', 'insumo_id');
 
-    // Inicializamos como colección vacía por defecto para usuarios normales
+    // Inicializamos como colección vacía por defecto
     $solicitudesPendientes = collect();
 
-    // VERIFICAR SI EL USUARIO ES ADMINISTRADOR
-    // (Ajusta la condición 'nombre === "Admin"' o tu campo de rol según tengas estructurada tu tabla users, ej: auth()->user()->rol == 'admin')
-if (auth()->check() && auth()->user()->nombre === 'Admin') {
-        
+    // VERIFICACIÓN ROBUSTA DE ADMINISTRADOR:
+    // 1. Si el nombre de usuario es 'Admin' (seeder) O
+    // 2. Si el usuario tiene un registro en la tabla 'personal' con tipo_usuario 'Admin'
+    $esAdmin = false;
+    if (auth()->check()) {
+        $user = auth()->user();
+        if ($user->nombre === 'Admin') {
+            $esAdmin = true;
+        } elseif (!empty($user->personal_id)) {
+            $personal = DB::table('personal')->where('id', $user->personal_id)->first();
+            if ($personal && $personal->tipo_usuario === 'Admin') {
+                $esAdmin = true;
+            }
+        }
+    }
+
+    if ($esAdmin) {
         $queryPendientes = DB::table('retiros')
             ->leftJoin('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
             ->leftJoin('insumos_medicos', 'retiros.insumo_id', '=', 'insumos_medicos.id')
@@ -376,7 +389,7 @@ if (auth()->check() && auth()->user()->nombre === 'Admin') {
         $solicitudesPendientes = $queryPendientes->get();
     }
 
-    // Historial de retiros aprobados de hoy (se mantiene igual...)
+    // Historial de retiros aprobados de hoy
     if ($hasInsumoId) {
         $ultimosRetiros = DB::table('retiros')
             ->leftJoin('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
@@ -888,4 +901,110 @@ public function registrarBajaVencidosMasiva(Request $request)
 
         return view('almacen.desechos', compact('desechos'));
     }
+ public function retiroEmergencia(Request $request)
+{
+    $tipo = $request->input('tipo_item', 'medicamento');
+
+    try {
+        if ($tipo === 'insumo') {
+            $request->validate([
+                'insumo_id' => 'required',
+                'area_id'   => 'required',
+                'cantidad'  => 'required|integer|min:1',
+            ]);
+
+            $insumo = DB::table('insumos_medicos')->where('id', $request->insumo_id)->first();
+            if (!$insumo) {
+                return back()->with('error', 'El insumo médico seleccionado no existe.');
+            }
+
+            if (!empty($insumo->fecha_vencimiento) && Carbon::parse($insumo->fecha_vencimiento)->isPast()) {
+                return back()->with('error', 'ACCESO DENEGADO: El insumo médico se encuentra CADUCADO.');
+            }
+
+            if ($insumo->cantidad_stock < $request->cantidad) {
+                return back()->with('error', 'Stock insuficiente para procesar la emergencia.');
+            }
+
+            $nombreUsuario = auth()->check() ? auth()->user()->nombre : 'Sistema';
+
+            DB::transaction(function () use ($insumo, $request, $nombreUsuario) {
+                // 1. Descontar stock inmediatamente
+                DB::table('insumos_medicos')->where('id', $request->insumo_id)->decrement('cantidad_stock', $request->cantidad);
+
+                // 2. Registrar como aprobado/emergencia en la tabla retiros
+                DB::table('retiros')->insert([
+                    'insumo_id'      => $request->insumo_id,
+                    'medicamento_id' => null,
+                    'area_id'        => $request->area_id,
+                    'cantidad'       => $request->cantidad,
+                    'estado'         => 'aprobado',
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
+
+                // 3. Registrar en la Bitácora/Auditoría
+                Auditoria::create([
+                    'modulo'      => 'Almacén',
+                    'accion'      => 'Retiro de Emergencia (Insumo)',
+                    'descripcion' => "EMERGENCIA: Se retiraron de forma inmediata {$request->cantidad} unidades de '{$insumo->nombre_insumo}' sin previa aprobación administrativa.",
+                    'usuario'     => $nombreUsuario,
+                ]);
+            });
+
+            return back()->with('success', '¡Retiro de emergencia de insumo procesado con éxito!');
+
+        } else {
+            $request->validate([
+                'medicamento_id' => 'required',
+                'area_id'        => 'required',
+                'cantidad'       => 'required|integer|min:1',
+            ]);
+
+            $medicamento = DB::table('medicamentos')->where('id', $request->medicamento_id)->first();
+            if (!$medicamento) {
+                return back()->with('error', 'El medicamento seleccionado no existe.');
+            }
+
+            if (!empty($medicamento->fecha_vencimiento) && Carbon::parse($medicamento->fecha_vencimiento)->isPast()) {
+                return back()->with('error', 'ACCESO DENEGADO: El medicamento se encuentra CADUCADO.');
+            }
+
+            if ($medicamento->cantidad_stock < $request->cantidad) {
+                return back()->with('error', 'Stock insuficiente para procesar la emergencia.');
+            }
+
+            $nombreUsuario = auth()->check() ? auth()->user()->nombre : 'Sistema';
+
+            DB::transaction(function () use ($medicamento, $request, $nombreUsuario) {
+                // 1. Descontar stock inmediatamente
+                DB::table('medicamentos')->where('id', $request->medicamento_id)->decrement('cantidad_stock', $request->cantidad);
+
+                // 2. Registrar como aprobado/emergencia en la tabla retiros
+                DB::table('retiros')->insert([
+                    'medicamento_id' => $request->medicamento_id,
+                    'insumo_id'      => null,
+                    'area_id'        => $request->area_id,
+                    'cantidad'       => $request->cantidad,
+                    'estado'         => 'aprobado',
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
+
+                // 3. Registrar en la Bitácora/Auditoría
+                Auditoria::create([
+                    'modulo'      => 'Almacén',
+                    'accion'      => 'Retiro de Emergencia (Medicamento)',
+                    'descripcion' => "EMERGENCIA: Se retiraron de forma inmediata {$request->cantidad} unidades de '{$medicamento->nombre_medicamento}' sin previa aprobación administrativa.",
+                    'usuario'     => $nombreUsuario,
+                ]);
+            });
+
+            return back()->with('success', '¡Retiro de emergencia de medicamento procesado con éxito!');
+        }
+
+    } catch (\Exception $e) {
+        return back()->with('error', 'Error al procesar el retiro de emergencia: ' . $e->getMessage());
+    }
+}
 }

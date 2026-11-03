@@ -87,12 +87,12 @@
                 return;
             }
 
-            if(/[a-zA-Z]/.test(this.formCreate.cedula)) {
-                alert('La cédula de identidad debe contener únicamente números.');
+            if(!/^[0-9]{1,10}$/.test(this.formCreate.cedula)) {
+                alert('La cédula debe contener exclusivamente números y un máximo de 10 dígitos.');
                 return;
             }
-            if(/[0-9]/.test(this.formCreate.nombre_apellido)) {
-                alert('El nombre y apellido no puede contener números.');
+            if(!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(this.formCreate.nombre_apellido)) {
+                alert('El nombre y apellido debe contener exclusivamente letras.');
                 return;
             }
             let añoIngreso = new Date(this.formCreate.fecha_ingreso).getFullYear();
@@ -110,12 +110,12 @@
                 alert('Debe seleccionar un género.');
                 return;
             }
-            if(/[a-zA-Z]/.test(this.editForm.cedula)) {
-                alert('La cédula de identidad debe contener únicamente números.');
+            if(!/^[0-9]{1,10}$/.test(this.editForm.cedula)) {
+                alert('La cédula debe contener exclusivamente números y un máximo de 10 dígitos.');
                 return;
             }
-            if(/[0-9]/.test(this.editForm.nombre_apellido)) {
-                alert('El nombre y apellido no puede contener números.');
+            if(!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(this.editForm.nombre_apellido)) {
+                alert('El nombre y apellido debe contener exclusivamente letras.');
                 return;
             }
             let añoIngreso = new Date(this.editForm.fecha_ingreso).getFullYear();
@@ -184,12 +184,14 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Cédula de Identidad</label>
-                        <input type="text" x-model="formCreate.cedula" placeholder="Ej: 24123456"
+                        <input type="text" x-model="formCreate.cedula" placeholder="Ej: 24123456" maxlength="10"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Nombre y Apellido</label>
                         <input type="text" x-model="formCreate.nombre_apellido" placeholder="Nombre completo del paciente"
+                            oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
                     <div>
@@ -384,12 +386,13 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cédula</label>
-                            <input type="text" x-model="editForm.cedula"
+                            <input type="text" x-model="editForm.cedula" maxlength="10"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Edad</label>
-                            <input type="number" x-model="editForm.edad"
+                            <input type="number" x-model="editForm.edad" min="0" max="125"
                                 class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                         </div>
                         <div>
@@ -406,6 +409,7 @@
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nombre y Apellido</label>
                         <input type="text" x-model="editForm.nombre_apellido"
+                            oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"
                             class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
 

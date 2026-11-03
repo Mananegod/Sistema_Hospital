@@ -37,7 +37,7 @@
         </ul>
     </div>
     @endif
-
+    
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {{-- Formulario de Registro --}}
         <div class="lg:col-span-4">
@@ -52,6 +52,8 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">Cédula</label>
                         <input type="text" name="cedula" value="{{ old('cedula') }}" placeholder="Cédula" required
+                            maxlength="10"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                             class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow">
                     </div>
 
@@ -59,12 +61,14 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1">Nombres</label>
                             <input type="text" name="nombres" value="{{ old('nombres') }}" placeholder="Nombres" required
+                                oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"
                                 class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1">Apellidos</label>
-                            <input type="text" name="apellidos" value="{{ old('apellidos') }}" placeholder="Apellidos"
-                                required class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow">
+                            <input type="text" name="apellidos" value="{{ old('apellidos') }}" placeholder="Apellidos" required
+                                oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"
+                                class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow">
                         </div>
                     </div>
 
@@ -100,6 +104,8 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1">Teléfono</label>
                         <input type="text" name="telefono" value="{{ old('telefono') }}" placeholder="Teléfono" required
+                            maxlength="13"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                             class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow">
                     </div>
 
@@ -148,54 +154,69 @@
                                         {{ $p->activo ? 'Activo' : 'Inactivo' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-5 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <button @click="$store.modal.open('viewPerson', {{ Js::from($p) }})"
-                                            class="p-2 text-slate-500 hover:bg-slate-100 rounded-sm transition">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                                                </path>
-                                            </svg>
-                                        </button>
-                                        @if($p->activo)
-                                        <button @click="$store.modal.open('editPerson', {{ Js::from($p) }})"
-                                            class="p-2 text-amber-600 hover:bg-amber-50 rounded-sm transition">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                                                </path>
-                                            </svg>
-                                        </button>
-                                        @endif
+<td class="px-6 py-5 text-right">
+    <div class="flex justify-end gap-2">
+        {{-- Botón Ver --}}
+        <button @click="$store.modal.open('viewPerson', {{ Js::from($p) }})"
+            class="p-2 text-slate-500 hover:bg-slate-100 rounded-sm transition" title="Ver ficha">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                </path>
+            </svg>
+        </button>
 
-                                        <form :id="'status-form-{{ $p->id }}'"
-                                            action="{{ route('personal.status', $p->id) }}" method="POST"
-                                            style="display: none;">
-                                            @csrf @method('PATCH')
-                                        </form>
-                                        <button type="button" @click="confirmAction(
-                                                '{{ $p->activo ? 'Desactivar' : 'Reactivar' }} personal',
-                                                '¿Seguro que quieres {{ $p->activo ? 'desactivar' : 'reactivar' }} a {{ $p->nombres }} {{ $p->apellidos }}?',
-                                                'status-form-{{ $p->id }}'
-                                            )"
-                                            class="p-2 {{ $p->activo ? 'text-red-500 hover:bg-red-50' : 'text-emerald-600 hover:bg-emerald-50' }} rounded-sm transition">
-                                            @if($p->activo)
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636">
-                                                </path>
-                                            </svg>
-                                            @else
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                                                </path>
-                                            </svg>
-                                            @endif
-                                        </button>
-                                    </div>
-                                </td>
+        {{-- Botón Editar (Solo si está activo) --}}
+        @if($p->activo)
+        <button @click="$store.modal.open('editPerson', {{ Js::from($p) }})"
+            class="p-2 text-amber-600 hover:bg-amber-50 rounded-sm transition" title="Editar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                </path>
+            </svg>
+        </button>
+        {{-- Botón Cambiar Contraseña (Solo si está activo) --}}
+        @if($p->activo)
+        <button @click="$store.modal.open('changePassword', {{ Js::from($p) }})"
+            class="p-2 text-purple-600 hover:bg-purple-50 rounded-sm transition" title="Cambiar Contraseña">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z">
+                </path>
+            </svg>
+        </button>
+        @endif
+        @endif
+
+        {{-- Formulario y Botón de Desactivar / Reactivar Directo --}}
+        <form id="status-form-{{ $p->id }}" action="{{ route('personal.status', $p->id) }}" method="POST" style="display: none;">
+            @csrf 
+            @method('PATCH')
+        </form>
+
+        <button type="button" 
+            onclick="if(confirm('¿Seguro que deseas {{ $p->activo ? 'desactivar' : 'reactivar' }} a {{ $p->nombres }} {{ $p->apellidos }}?')) { document.getElementById('status-form-{{ $p->id }}').submit(); }"
+            class="p-2 {{ $p->activo ? 'text-red-500 hover:bg-red-50' : 'text-emerald-600 hover:bg-emerald-50' }} rounded-sm transition"
+            title="{{ $p->activo ? 'Desactivar personal' : 'Reactivar personal' }}">
+            @if($p->activo)
+            {{-- Icono de Desactivar (Prohibido/Círculo tachado) --}}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636">
+                </path>
+            </svg>
+            @else
+            {{-- Icono de Activar (Check/Refrescar) --}}
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                </path>
+            </svg>
+            @endif
+        </button>
+    </div>
+</td>
                             </tr>
                             @empty
                             <tr>
@@ -264,6 +285,41 @@
                 class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-sm">Cancelar</button>
             <button type="submit"
                 class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-sm shadow">Actualizar</button>
+        </div>
+    </form>
+</x-modal>
+{{-- Modal Cambiar Contraseña --}}
+<x-modal id="changePassword" title="Cambiar Contraseña de Acceso" maxWidth="max-w-md">
+    <form :action="'/personal/' + $store.modal.data.id + '/password'" method="POST"
+        x-on:submit.prevent="$store.loading.submitForm($event.target)">
+        @csrf
+        @method('PATCH')
+        
+        <div class="mb-4 p-3 bg-slate-50 rounded-sm text-sm text-slate-600">
+            Personal seleccionado: <strong class="text-slate-900" x-text="$store.modal.data.nombres + ' ' + $store.modal.data.apellidos"></strong>
+        </div>
+
+        <div class="mb-4 p-3 bg-amber-50 border-l-4 border-amber-500 text-amber-800 text-xs">
+            Por seguridad, ingrese <strong>su contraseña de administrador actual</strong> para autorizar este cambio.
+        </div>
+
+        <label class="block text-xs font-bold text-slate-500 mb-1">Su Contraseña Actual (Admin)</label>
+        <input type="password" name="current_password" required placeholder="••••••••"
+            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow mb-4">
+
+        <label class="block text-xs font-bold text-slate-500 mb-1">Nueva Contraseña para el Usuario</label>
+        <input type="password" name="password" required placeholder="••••••••"
+            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow mb-4">
+            
+        <label class="block text-xs font-bold text-slate-500 mb-1">Confirmar Nueva Contraseña</label>
+        <input type="password" name="password_confirmation" required placeholder="••••••••"
+            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow mb-4">
+
+        <div class="flex gap-3 pt-2">
+            <button type="button" @click="$store.modal.close()"
+                class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-sm">Cancelar</button>
+            <button type="submit"
+                class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-sm shadow">Confirmar y Cambiar</button>
         </div>
     </form>
 </x-modal>
