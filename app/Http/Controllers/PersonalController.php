@@ -186,33 +186,40 @@ public function toggleStatus($id) {
     }
 public function updatePassword(Request $request, $id) {
         $request->validate([
-            'current_password' => 'required|string',
-            'password'         => 'required|string|min:4|confirmed',
+            'current_password'      => 'required|string',
+            'user_current_password' => 'required|string',
+            'password'              => 'required|string|min:4|confirmed',
         ], [
-            'current_password.required' => 'Debe ingresar su contraseña actual para confirmar la acción.',
-            'password.required'         => 'La nueva contraseña es obligatoria.',
-            'password.min'              => 'La contraseña debe tener al menos 4 caracteres.',
-            'password.confirmed'        => 'Las contraseñas no coinciden.',
+            'current_password.required'      => 'Debe ingresar su contraseña de administrador.',
+            'user_current_password.required' => 'Debe ingresar la contraseña actual del empleado.',
+            'password.required'              => 'La nueva contraseña es obligatoria.',
+            'password.min'                   => 'La contraseña debe tener al menos 4 caracteres.',
+            'password.confirmed'             => 'Las contraseñas no coinciden.',
         ]);
 
         try {
             $adminActual = Auth::user();
 
-            // Verificamos que la contraseña actual ingresada pertenezca al usuario autenticado que realiza la acción
+            // 1. Verificamos que la contraseña del administrador actual sea correcta
             if (!Hash::check($request->current_password, $adminActual->password)) {
-                return back()->withErrors(['current_password' => 'La contraseña actual es incorrecta.']);
+                return back()->withErrors(['current_password' => 'Su contraseña de administrador es incorrecta.']);
             }
 
             $empleado = Personal::findOrFail($id);
             
-            // Buscamos el usuario asociado al personal al que se le cambiará la clave
+            // 2. Buscamos el usuario de acceso vinculado al personal
             $user = User::where('personal_id', $empleado->id)->first();
 
             if (!$user) {
                 return back()->withErrors(['db_error' => 'No se encontró un usuario de acceso vinculado a este personal.']);
             }
 
-            // Actualizamos la contraseña cifrada
+            // 3. NUEVO: Verificamos que la contraseña actual ingresada del empleado coincida con la BD
+            if (!Hash::check($request->user_current_password, $user->password)) {
+                return back()->withErrors(['user_current_password' => 'La contraseña actual del empleado es incorrecta.']);
+            }
+
+            // 4. Actualizamos la contraseña cifrada del empleado
             $user->update([
                 'password' => Hash::make($request->password)
             ]);
@@ -220,7 +227,7 @@ public function updatePassword(Request $request, $id) {
             Auditoria::create([
                 'modulo'      => 'Personal',
                 'accion'      => 'Seguridad',
-                'descripcion' => "Se actualizó la contraseña de acceso para: {$empleado->nombres} {$empleado->apellidos} (Usuario: {$user->nombre}) por autorización de: {$adminActual->nombre}",
+                'descripcion' => "Se actualizó la contraseña de acceso para: {$empleado->nombres} {$empleado->apellidos} (Usuario: {$user->nombre}) por autorización de administrador: {$adminActual->nombre}",
                 'usuario'     => $adminActual->nombre ?? 'Sistema',
             ]);
 

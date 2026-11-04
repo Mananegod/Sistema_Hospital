@@ -5,8 +5,11 @@
     <title>{{ $titulo }}</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 11px; color: #333; margin: 20px; }
-        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .institution { font-size: 10px; color: #444; }
+        
+        /* Estilos del Membrete */
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+        .header-table td { vertical-align: middle; padding: 0; }
+        
         .header-title { text-align: center; font-weight: bold; font-size: 14px; text-transform: uppercase; }
         
         .table-data { width: 100%; border: 1px solid #000; border-collapse: collapse; margin-top: 10px; }
@@ -29,16 +32,46 @@
         </button>
     </div>
 
+    <!-- Tabla del Membrete Institucional -->
     <table class="header-table">
         <tr>
-            <td class="institution" width="45%">
-                MINISTERIO DEL PODER POPULAR PARA LA SALUD<br>
-                HOSPITAL GENERAL DR. TIBURCIO GARRIDO<br>
-                CHIVACOA - ESTADO YARACUY
+            <!-- Membrete 1 (Banderas) -->
+            <td style="width: 30%; text-align: left;">
+                @php
+                    $path1 = public_path('membretes/membrete1.png');
+                    $type1 = pathinfo($path1, PATHINFO_EXTENSION);
+                    $data1 = file_exists($path1) ? file_get_contents($path1) : '';
+                    $base641 = 'data:image/' . $type1 . ';base64,' . base64_encode($data1);
+                @endphp
+                <img src="{{ $base641 }}" alt="Membrete 1" style="max-height: 45px; width: auto; display: block;" />
             </td>
-            <td class="header-title" width="55%">
+
+            <!-- Membrete 2 (Prosalud) + Texto Institucional -->
+            <td style="width: 45%; text-align: left;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 35%; text-align: left; vertical-align: middle;">
+                            @php
+                                $path2 = public_path('membretes/membrete2.png');
+                                $type2 = pathinfo($path2, PATHINFO_EXTENSION);
+                                $data2 = file_exists($path2) ? file_get_contents($path2) : '';
+                                $base642 = 'data:image/' . $type2 . ';base64,' . base64_encode($data2);
+                            @endphp
+                            <img src="{{ $base642 }}" alt="Membrete 2" style="max-height: 45px; width: auto; display: block;" />
+                        </td>
+                        <td style="width: 65%; vertical-align: middle; font-size: 7.5px; color: #6b7250; line-height: 1.2; font-weight: bold; padding-left: 5px;">
+                            Instituto Autónomo de la Salud del Edo. Yaracuy<br>
+                            Prosalud Yaracuy<br>
+                            Hospital Dr. Tiburcio Garrido de Chivacoa
+                        </td>
+                    </tr>
+                </table>
+            </td>
+
+            <!-- Título del Reporte a la Derecha del Membrete -->
+            <td class="header-title" style="width: 25%; text-align: right; font-size: 12px;">
                 {{ $titulo }}<br>
-                <span style="font-size: 10px; font-weight: normal;">FECHA DE EMISIÓN: {{ date('d/m/Y h:i A') }}</span>
+                <span style="font-size: 8.5px; font-weight: normal; color: #555;">FECHA: {{ date('d/m/Y h:i A') }}</span>
             </td>
         </tr>
     </table>

@@ -13,21 +13,31 @@
             font-size: 12px;
         }
         .header {
-            text-align: center;
             border-bottom: 2px solid #0f172a;
-            padding-bottom: 12px;
+            padding-bottom: 10px;
             margin-bottom: 20px;
         }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+        }
+        .header-table td {
+            vertical-align: middle;
+            padding: 0;
+        }
         .header h1 {
-            margin: 0;
+            margin: 5px 0 0 0;
             font-size: 18px;
             text-transform: uppercase;
             color: #0f172a;
+            text-align: center;
         }
         .header p {
-            margin: 4px 0 0 0;
+            margin: 2px 0 0 0;
             font-size: 11px;
             color: #64748b;
+            text-align: center;
         }
         .meta-info {
             display: flex;
@@ -89,6 +99,43 @@
     </div>
 
     <div class="header">
+        <table class="header-table">
+            <tr>
+                <!-- Membrete 1 (Banderas) -->
+                <td style="width: 35%; text-align: left; vertical-align: middle;">
+                    @php
+                        $path1 = public_path('membretes/membrete1.png');
+                        $type1 = pathinfo($path1, PATHINFO_EXTENSION);
+                        $data1 = file_exists($path1) ? file_get_contents($path1) : '';
+                        $base641 = 'data:image/' . $type1 . ';base64,' . base64_encode($data1);
+                    @endphp
+                    <img src="{{ $base641 }}" alt="Membrete 1" style="max-height: 45px; width: auto; display: block;" />
+                </td>
+
+                <!-- Membrete 2 (Prosalud) + Texto Institucional -->
+                <td style="width: 65%; text-align: left; vertical-align: middle;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 30%; text-align: left; vertical-align: middle;">
+                                @php
+                                    $path2 = public_path('membretes/membrete2.png');
+                                    $type2 = pathinfo($path2, PATHINFO_EXTENSION);
+                                    $data2 = file_exists($path2) ? file_get_contents($path2) : '';
+                                    $base642 = 'data:image/' . $type2 . ';base64,' . base64_encode($data2);
+                                @endphp
+                                <img src="{{ $base642 }}" alt="Membrete 2" style="max-height: 45px; width: auto; display: block;" />
+                            </td>
+                            <td style="width: 70%; vertical-align: middle; font-size: 8.5px; color: #6b7250; line-height: 1.2; font-weight: bold; padding-left: 5px;">
+                                Instituto Autónomo de la Salud del Edo. Yaracuy<br>
+                                Prosalud Yaracuy<br>
+                                Hospital Dr. Tiburcio Garrido de Chivacoa
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
         <h1>Hospital Dr. Tiburcio Garrido</h1>
         <p>Reporte Oficial de Salidas y Retiros de Inventario</p>
     </div>

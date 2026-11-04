@@ -76,7 +76,7 @@
                                         Usuario / Nombre <span class="text-red-600">*</span>
                                     </label>
                                     <input type="text" name="nombre" id="nombre" x-ref="userInput" autocomplete="username"
-                                        value="{{ old('nombre') }}" placeholder="EJ. JUAN.PEREZ" @keydown.enter.prevent="
+                                        value="{{ old('nombre') }}" placeholder="" @keydown.enter.prevent="
                                                 if ($refs.userInput.value.trim() === '') {
                                                     $refs.userInput.classList.add('border-red-500', 'ring-4', 'ring-red-500/30', 'animate-bounce');
                                                     setTimeout(() => {

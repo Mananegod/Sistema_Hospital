@@ -11,22 +11,40 @@
             margin: 20px;
         }
         .header {
-            text-align: center;
             border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 12px;
+            padding-bottom: 10px;
             margin-bottom: 20px;
         }
+        /* Estilos para alinear los elementos del membrete horizontalmente */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+        }
+        .header-table td {
+            vertical-align: middle;
+            padding: 0;
+        }
+        .header-text {
+            font-size: 9px;
+            color: #6b7250; /* Tono caqui institucional similar al ejemplo */
+            line-height: 1.3;
+            font-weight: bold;
+            padding-left: 8px;
+        }
         .header h1 {
-            margin: 0;
-            font-size: 18px;
+            margin: 5px 0 0 0;
+            font-size: 16px;
             text-transform: uppercase;
             color: #0f172a;
+            text-align: center;
         }
         .header p {
-            margin: 4px 0 0 0;
-            font-size: 10px;
+            margin: 2px 0 0 0;
+            font-size: 9px;
             color: #64748b;
             text-transform: uppercase;
+            text-align: center;
         }
         .summary-grid {
             width: 100%;
@@ -93,10 +111,57 @@
         </button>
     </div>
 
-    <div class="header">
-        <h1>Hospital "Dr. Tiburcio Garrido"</h1>
-        <p>Reporte Oficial de Vigilancia Epidemiológica - Generado el {{ date('d/m/Y H:i') }}</p>
-    </div>
+<div class="header">
+    <table class="header-table" style="width: 100%; border-collapse: collapse; margin-bottom: 5px;">
+        <tr>
+            <!-- Membrete 1 -->
+            <td style="width: 30%; text-align: left; vertical-align: middle;">
+                @php
+                    $path1 = public_path('membretes/membrete1.png');
+                    $type1 = pathinfo($path1, PATHINFO_EXTENSION);
+                    $data1 = file_exists($path1) ? file_get_contents($path1) : '';
+                    $base641 = 'data:image/' . $type1 . ';base64,' . base64_encode($data1);
+                @endphp
+                <img src="{{ $base641 }}" alt="Membrete 1" style="max-height: 45px; width: auto; display: block;" />
+            </td>
+
+            <!-- Membrete 2 + Texto Institucional -->
+            <td style="width: 48%; text-align: left; vertical-align: middle;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 35%; text-align: left; vertical-align: middle;">
+                            @php
+                                $path2 = public_path('membretes/membrete2.png');
+                                $type2 = pathinfo($path2, PATHINFO_EXTENSION);
+                                $data2 = file_exists($path2) ? file_get_contents($path2) : '';
+                                $base642 = 'data:image/' . $type2 . ';base64,' . base64_encode($data2);
+                            @endphp
+                        </td>
+                        <td style="width: 65%; vertical-align: middle; font-size: 8px; color: #6b7250; line-height: 1.2; font-weight: bold; padding-left: 5px;">
+                            Instituto Autónomo de la Salud del Edo. Yaracuy<br>
+                            Prosalud Yaracuy<br>
+                            Hospital Dr. Tiburcio Garrido de Chivacoa
+                        </td>
+                    </tr>
+                </table>
+            </td>
+
+            <!-- Sello del Hospital -->
+            <td style="width: 22%; text-align: right; vertical-align: middle;">
+                @php
+                    $pathSello = public_path('membretes/sello_hospital.png');
+                    $typeSello = pathinfo($pathSello, PATHINFO_EXTENSION);
+                    $dataSello = file_exists($pathSello) ? file_get_contents($pathSello) : '';
+                    $base64Sello = 'data:image/' . $typeSello . ';base64,' . base64_encode($dataSello);
+                @endphp
+                <img src="{{ $base642 }}" alt="Membrete 2" style="max-height: 45px; width: auto; display: block;" />
+            </td>
+        </tr>
+    </table>
+
+    <h1 style="margin: 5px 0 0 0; font-size: 16px; text-transform: uppercase; color: #0f172a; text-align: center;">Reporte Oficial de Vigilancia Epidemiológica</h1>
+    <p style="margin: 2px 0 0 0; font-size: 9px; color: #64748b; text-transform: uppercase; text-align: center;">Generado el {{ date('d/m/Y H:i') }}</p>
+</div>
 
     <table class="summary-grid">
         <tr>
