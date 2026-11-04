@@ -12,6 +12,16 @@
             font-family: 'Courier Prime', monospace;
         }
 
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+        }
+        .header-table td {
+            vertical-align: middle;
+            padding: 0;
+        }
+
         @media print {
             @page {
                 size: letter portrait;
@@ -46,10 +56,48 @@
     <div class="max-w-3xl mx-auto bg-white p-6 border border-slate-300 shadow-lg rounded-none print-border min-h-[10.5in] flex flex-col justify-between">
         
         <div>
-            <div class="text-center space-y-1 border-b-2 border-black pb-3">
-                <h4 class="text-xs font-bold uppercase tracking-wide">Ministerio del Poder Popular para la Salud</h4>
-                <h2 class="text-base font-bold uppercase tracking-widest">HOJA DE PEDIDO Y DESPACHO DE INSUMOS</h2>
-                <p class="text-xs font-bold uppercase text-slate-600">HOSPITAL "DR. TIBURCIO GARRIDO" - CHIVACOA, EDO. YARACUY</p>
+            <!-- Header con Membretes -->
+            <div class="border-b-2 border-black pb-3">
+                <table class="header-table">
+                    <tr>
+                        <!-- Membrete 1 (Banderas) -->
+                        <td style="width: 35%; text-align: left; vertical-align: middle;">
+                            @php
+                                $path1 = public_path('membretes/membrete1.png');
+                                $type1 = pathinfo($path1, PATHINFO_EXTENSION);
+                                $data1 = file_exists($path1) ? file_get_contents($path1) : '';
+                                $base641 = 'data:image/' . $type1 . ';base64,' . base64_encode($data1);
+                            @endphp
+                            <img src="{{ $base641 }}" alt="Membrete 1" style="max-height: 42px; width: auto; display: block;" />
+                        </td>
+
+                        <!-- Membrete 2 (Prosalud) + Texto Institucional -->
+                        <td style="width: 65%; text-align: left; vertical-align: middle;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="width: 30%; text-align: left; vertical-align: middle;">
+                                        @php
+                                            $path2 = public_path('membretes/membrete2.png');
+                                            $type2 = pathinfo($path2, PATHINFO_EXTENSION);
+                                            $data2 = file_exists($path2) ? file_get_contents($path2) : '';
+                                            $base642 = 'data:image/' . $type2 . ';base64,' . base64_encode($data2);
+                                        @endphp
+                                        <img src="{{ $base642 }}" alt="Membrete 2" style="max-height: 42px; width: auto; display: block;" />
+                                    </td>
+                                    <td style="width: 70%; vertical-align: middle; font-size: 8px; color: #6b7250; line-height: 1.2; font-weight: bold; padding-left: 5px;">
+                                        Instituto Autónomo de la Salud del Edo. Yaracuy<br>
+                                        Prosalud Yaracuy<br>
+                                        Hospital Dr. Tiburcio Garrido de Chivacoa
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="text-center mt-2">
+                    <h2 class="text-base font-bold uppercase tracking-widest text-black">HOJA DE PEDIDO Y DESPACHO DE INSUMOS</h2>
+                </div>
             </div>
 
             {{-- Metadatos de Control Diario --}}

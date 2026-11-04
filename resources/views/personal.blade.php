@@ -300,17 +300,25 @@
         </div>
 
         <div class="mb-4 p-3 bg-amber-50 border-l-4 border-amber-500 text-amber-800 text-xs">
-            Por seguridad, ingrese <strong>su contraseña de administrador actual</strong> para autorizar este cambio.
+            Por seguridad, ingrese <strong>su contraseña de administrador actual</strong> y la <strong>contraseña actual del empleado</strong> para autorizar este cambio.
         </div>
 
+        {{-- Contraseña del Administrador autenticado --}}
         <label class="block text-xs font-bold text-slate-500 mb-1">Su Contraseña Actual (Admin)</label>
         <input type="password" name="current_password" required placeholder="••••••••"
             class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow mb-4">
 
+        {{-- NUEVO CAMPO: Contraseña actual del usuario afectado --}}
+        <label class="block text-xs font-bold text-slate-500 mb-1">Contraseña Actual del Empleado</label>
+        <input type="password" name="user_current_password" required placeholder="••••••••"
+            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow mb-4">
+
+        {{-- Nueva Contraseña --}}
         <label class="block text-xs font-bold text-slate-500 mb-1">Nueva Contraseña para el Usuario</label>
         <input type="password" name="password" required placeholder="••••••••"
             class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow mb-4">
             
+        {{-- Confirmar Nueva Contraseña --}}
         <label class="block text-xs font-bold text-slate-500 mb-1">Confirmar Nueva Contraseña</label>
         <input type="password" name="password_confirmation" required placeholder="••••••••"
             class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 input-shadow mb-4">
