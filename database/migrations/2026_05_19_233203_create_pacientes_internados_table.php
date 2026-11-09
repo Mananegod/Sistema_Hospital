@@ -10,8 +10,11 @@ return new class extends Migration
     {
         Schema::create('pacientes_internados', function (Blueprint $table) {
             $table->id();
-            $table->string('cedula')->unique();
+            $table->string('tipo_documento', 5)->default('V');
+            $table->string('cedula')->nullable();
+            $table->string('cedula_tutor')->nullable();
             $table->string('nombre_apellido');
+            $table->date('fecha_nacimiento');
             $table->integer('edad');
             $table->string('genero');
             $table->unsignedBigInteger('area_id');

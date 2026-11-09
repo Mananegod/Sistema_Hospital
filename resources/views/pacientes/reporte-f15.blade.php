@@ -120,24 +120,46 @@
                         <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900">{{ $paciente->nombre_apellido }}</p>
                     </div>
                     <div class="uppercase">
-                        <span class="font-bold">CÉDULA:</span>
+                        <span class="font-bold">
+                            @if($paciente->tipo_documento === 'SC')
+                                CÉDULA TUTOR:
+                            @else
+                                CÉDULA / DOC:
+                            @endif
+                        </span>
                         <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900">
-                            {{ is_numeric($paciente->cedula) ? number_format($paciente->cedula, 0, ',', '.') : $paciente->cedula }}
+                            @if($paciente->tipo_documento === 'SC')
+                                {{ $paciente->cedula_tutor && is_numeric($paciente->cedula_tutor) ? number_format($paciente->cedula_tutor, 0, ',', '.') : ($paciente->cedula_tutor ?: 'N/A') }}
+                            @else
+                                {{ $paciente->cedula && is_numeric($paciente->cedula) ? number_format($paciente->cedula, 0, ',', '.') : ($paciente->cedula ?: 'S/C') }}
+                            @endif
                         </p>
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-4 gap-2">
-                    <div class="col-span-1 uppercase">
-                        <span class="font-bold">EDAD:</span>
-                        <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900">{{ $paciente->edad }} Años</p>
-                    </div>
-                    <div class="col-span-3 uppercase">
-                        <span class="font-bold">DIAGNÓSTICO INICIAL (Dx):</span>
-                        <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900">{{ $paciente->diagnostico }}</p>
-                    </div>
-                </div>
-            </div>
+<div class="grid grid-cols-12 gap-4">
+    <div class="col-span-4 uppercase">
+        <span class="font-bold">EDAD:</span>
+        <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900 whitespace-nowrap">
+            @php
+                $nacimiento = \Carbon\Carbon::parse($paciente->fecha_nacimiento);
+                $hoy = \Carbon\Carbon::now();
+                $anos = (int) $nacimiento->diffInYears($hoy);
+                $mesesTotales = (int) $nacimiento->diffInMonths($hoy);
+            @endphp
+
+            @if($anos >= 1)
+                {{ $anos }} {{ $anos == 1 ? 'AÑO' : 'AÑOS' }}
+            @else
+                {{ $mesesTotales > 0 ? $mesesTotales : 1 }} {{ ($mesesTotales == 1) ? 'MES' : 'MESES' }}
+            @endif
+        </p>
+    </div>
+    <div class="col-span-8 uppercase">
+        <span class="font-bold">DIAGNÓSTICO INICIAL (Dx):</span>
+        <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900">{{ $paciente->diagnostico }}</p>
+    </div>
+</div>
 
             {{-- Sección del Tratamiento o Pedido del Almacén (Compactado) --}}
             <div class="py-4 space-y-3">

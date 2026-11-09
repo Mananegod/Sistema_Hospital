@@ -12,5 +12,6 @@ class DatabaseSeeder extends Seeder
         $this->call(SectorSeeder::class);
         $this->call(AreaSeeder::class);
         $this->call(UsuarioAdminSeeder::class);
+        $this->call(OpenFdaVademecumSeeder::class);
     }
 }

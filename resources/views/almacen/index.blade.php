@@ -19,12 +19,33 @@
     resultados: [],
     q: '',
     seleccionado: null,
+    seleccionados: [],
+    categoria: 'medicamento', {{-- ASEGÚRATE DE QUE ESTE ATRIBUTO EXISTA --}}
     modalImportar: false, 
     modalMasivo: false,
     modalTrazabilidad: false,
-    modalBajaVencidos: false,  {{-- <-- AÑADE ESTA LÍNEA AQUÍ --}}
-    seleccionados: [],
-    categoria: 'medicamento',
+    modalBajaVencidos: false,
+modalVademecum: false,
+    editando: false, // <-- NUEVO ESTADO DE EDICIÓN
+    vademecumActivo: {
+        id: '',
+        nombre: '',
+        generico: '',
+        laboratorio: '',
+        forma: '',
+        atc: '',
+        dispensa: '',
+        almacenamiento: '',
+        indicaciones: '',
+        dosificacion: '',
+        contraindicaciones: '',
+        advertencias: ''
+    },
+    abrirVademecum(item) {
+        this.vademecumActivo = item;
+        this.editando = false; // Siempre abre en modo lectura
+        this.modalVademecum = true;
+    },
     async buscar() {
         if (this.q.length < 2) { this.resultados = []; return; }
         this.buscando = true;
@@ -56,7 +77,6 @@
                 <p class="text-slate-500 mt-1 uppercase text-xs tracking-wider">Control de inventario - Hospital Dr. Tiburcio Garrido</p>
             </div>
             <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-                {{-- NUEVO BOTÓN DE ACCESO A DESECHOS --}}
                 <a href="{{ route('almacen.desechos') }}" 
                    class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-700 border border-red-200 font-bold rounded-sm hover:bg-red-100 transition shadow-sm text-xs uppercase tracking-wider">
                     <i class="fas fa-trash-alt text-red-600"></i> Desechos / Mermas
@@ -81,40 +101,38 @@
             </div>
         </div>
 
-        {{-- Formulario de Entrada Rápida --}}
-        <div class="bg-white p-4 sm:p-6 rounded-sm border border-slate-100 shadow-sm mb-6 sm:mb-8">
-            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-700 mb-4 sm:mb-5 flex items-center gap-2">
-                <span class="w-2 h-6 bg-slate-900 rounded-sm"></span> Registrar Entrada Rápida de Stock
+{{-- FILTRO RÁPIDO POR NOMBRE / BÚSQUEDA EN TIEMPO REAL --}}
+        <div class="bg-white p-4 sm:p-6 rounded-sm border border-slate-100 shadow-sm mb-6 sm:mb-8" x-data="{ filtroTexto: '{{ request('filtro_texto', '') }}' }">
+            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-700 mb-4 flex items-center gap-2">
+                <span class="w-2 h-6 bg-blue-600 rounded-sm"></span> Filtrar Inventario por Nombre
             </h2>
 
-            <form action="{{ route('stock.entrada') }}" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end" x-on:submit="$store.loading.activate('Procesando entrada...')">
-                @csrf
-                <div class="relative md:col-span-1">
-                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide">Insumos médicos / Medicamentos</label>
-                    <input type="text" x-model="q" @input.debounce.300ms="buscar()" placeholder="Escriba para buscar..."
-                           class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition font-semibold text-slate-700">
+            <form action="{{ route('almacen.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3 items-center">
+                {{-- Mantenemos el tipo de insumo actual si existía en el request --}}
+                <input type="hidden" name="tipo_insumo" value="{{ request('tipo_insumo') }}">
+                
+                <div class="relative flex-1 w-full">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fas fa-search text-xs"></i>
+                    </span>
+                    <input type="text" 
+                           name="filtro_texto" 
+                           x-model="filtroTexto" 
+                           placeholder="Escriba el nombre del medicamento o insumo para filtrar..."
+                           class="w-full bg-slate-50 border-0 rounded-sm pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition font-semibold text-slate-700">
+                </div>
+
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button type="submit" class="flex-1 sm:flex-none bg-blue-600 text-white font-bold py-3 px-5 rounded-sm hover:bg-blue-700 transition shadow-sm flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
                     
-                    <div class="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-sm shadow-xl max-h-60 overflow-y-auto"
-                         x-show="resultados.length > 0" x-cloak>
-                        <template x-for="item in resultados" :key="item.id">
-                            <button type="button" @click="seleccionar(item)"
-                                    class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 font-bold transition border-b border-slate-50 last:border-0"
-                                    x-text="item.text"></button>
-                        </template>
-                    </div>
+                    @if(request('filtro_texto'))
+                        <a href="{{ route('almacen.index', ['tipo_insumo' => request('tipo_insumo')]) }}" class="flex-1 sm:flex-none bg-slate-100 text-slate-600 font-bold py-3 px-4 rounded-sm hover:bg-slate-200 transition flex items-center justify-center gap-1 text-xs uppercase tracking-wider">
+                            <i class="fas fa-times"></i> Limpiar
+                        </a>
+                    @endif
                 </div>
-
-                <input type="hidden" name="medicamento_id" id="medicamento_id_real" required>
-
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-wide">Cantidad a Sumar</label>
-                    <input type="number" name="cantidad" required min="1" placeholder="Ej. 10"
-                           class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition font-semibold text-slate-700">
-                </div>
-
-                <button type="submit" class="w-full bg-slate-900 text-white font-bold py-3 px-4 rounded-sm hover:bg-slate-800 transition shadow-md flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
-                    <i class="fas fa-plus-circle"></i> Sumar Stock
-                </button>
             </form>
         </div>
 
@@ -140,7 +158,6 @@
                         class="bg-white hover:bg-slate-50 text-blue-700 text-xs font-extrabold px-4 py-2.5 rounded-sm uppercase tracking-wider transition shadow-sm">
                     <i class="fas fa-edit mr-1"></i> Editar Selección
                 </button>
-                {{-- NUEVO BOTÓN DE BAJA POR VENCIMIENTO --}}
                 <button type="button" @click="modalBajaVencidos = true" 
                         class="bg-red-600 hover:bg-red-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-sm uppercase tracking-wider transition shadow-sm">
                     <i class="fas fa-trash-alt mr-1"></i> Dar de Baja (Vencidos)
@@ -167,7 +184,6 @@
                 @endif
             </form>
 
-            {{-- TOGGLE ENTRE MEDICAMENTOS E INSUMOS MÉDICOS --}}
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:inline">
                     Vista: <span class="text-slate-800 font-extrabold" x-text="categoria === 'medicamento' ? 'Medicamentos' : 'Insumos'"></span>
@@ -191,7 +207,7 @@
         </div>
 
         {{-- TABLA 1: MEDICAMENTOS --}}
-        <div x-show="categoria === 'medicamento'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
+        <div x-show="categoria === 'medicamento'" :style="categoria === 'medicamento' ? 'display: block;' : 'display: none;'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden">
             <div class="px-4 sm:px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
                     <i class="fas fa-pills text-blue-600"></i> Inventario de Medicamentos (Ordenados por Vencimiento)
@@ -211,6 +227,7 @@
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Vencimiento</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Mín.</th>
                             <th class="px-4 sm:px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Actual</th>
+                            <th class="px-4 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wide text-center">Vademécum</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50 text-sm font-medium text-slate-600">
@@ -264,7 +281,6 @@
                                     @endif
                                 </td>
 
-                                {{-- COLUMNA VENCIMIENTO --}}
                                 <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
                                     @if(!empty($item->fecha_vencimiento))
                                         @php
@@ -295,10 +311,32 @@
                                         {{ $item->stock_actual }}
                                     </span>
                                 </td>
+
+                                {{-- NUEVO BOTÓN DE FICHA VADEMÉCUM --}}
+                                <td class="px-4 py-4 text-center">
+<button type="button" 
+        @click="abrirVademecum({
+            nombre: '{{ addslashes($item->medicamento) }}',
+            generico: '{{ addslashes($item->nombre_generico ?? 'No especificado') }}',
+            laboratorio: '{{ addslashes($item->laboratorio ?? 'No registrado') }}',
+            forma: '{{ addslashes($item->forma_farmaceutica ?? 'No especificada') }}',
+            atc: '{{ addslashes($item->codigo_atc ?? 'S/C') }}',
+            dispensa: '{{ addslashes($item->condicion_dispensa ?? 'No especificada') }}',
+            almacenamiento: '{{ addslashes($item->almacenamiento ?? 'Temperatura ambiente (< 30°C)') }}',
+            indicaciones: '{{ addslashes($item->indicaciones ?? 'Sin información farmacológica registrada.') }}',
+            dosificacion: '{{ addslashes($item->dosificacion ?? 'Consulte al médico tratante.') }}',
+            contraindicaciones: '{{ addslashes($item->contraindicaciones ?? 'Sin contraindicaciones listadas.') }}',
+            advertencias: '{{ addslashes($item->advertencias ?? 'Uso bajo supervisión profesional.') }}'
+        })"
+        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-sm font-bold text-[10px] uppercase tracking-wider transition shadow-xs"
+        title="Ver Ficha Farmacológica">
+    <i class="fas fa-book-medical"></i> Ficha
+</button>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-400 italic">
+                                <td colspan="8" class="px-6 py-12 text-center text-sm text-slate-400 italic">
                                     <i class="fas fa-box-open text-2xl block mb-2 text-slate-300 not-italic"></i> No se encontraron medicamentos registrados.
                                 </td>
                             </tr>
@@ -315,7 +353,7 @@
         </div>
 
         {{-- TABLA 2: INSUMOS MÉDICOS --}}
-        <div x-show="categoria === 'insumo'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden" x-cloak>
+        <div x-show="categoria === 'insumo'" :style="categoria === 'insumo' ? 'display: block;' : 'display: none;'" class="bg-white rounded-sm border border-slate-100 shadow-sm overflow-hidden" x-cloak>
             <div class="px-4 sm:px-6 py-4 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest flex items-center gap-2">
                     <i class="fas fa-syringes text-blue-600"></i> Inventario de Insumos Médicos (Ordenados por Vencimiento)
@@ -387,7 +425,6 @@
                                     @endif
                                 </td>
 
-                                {{-- COLUMNA VENCIMIENTO INSUMOS --}}
                                 <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
                                     @if(!empty($insumo->fecha_vencimiento))
                                         @php
@@ -710,5 +747,208 @@
                 </div>
             </div>
         </div>
+
+{{-- MODAL DE VADEMÉCUM / FICHA CLÍNICA OPENFDA CON MODO EDICIÓN --}}
+<div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
+     x-show="modalVademecum" 
+     x-cloak 
+     x-transition>
+     
+    <div class="bg-white rounded-sm max-w-3xl w-full border border-slate-100 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col" 
+         @click.away="modalVademecum = false">
+         
+        {{-- FORMULARIO QUE ENVÍA LOS DATOS SI ESTÁ EDITANDO --}}
+        <form action="{{ route('vademecum.actualizar') }}" method="POST" class="flex flex-col flex-1 overflow-hidden"
+              x-on:submit="$store.loading.activate('Actualizando ficha farmacológica...')">
+            @csrf
+
+            <div class="p-4 sm:p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 shrink-0">
+                <div class="flex-1 mr-4">
+                    {{-- Si está editando se muestra un input para el genérico, sino texto --}}
+                    <template x-if="!editando">
+                        <div>
+                            <span class="text-[9px] font-extrabold uppercase tracking-widest text-blue-600 block mb-0.5" x-text="'Principio Activo (Genérico): ' + vademecumActivo.generico"></span>
+                            <h3 class="text-sm sm:text-base font-extrabold text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                                <i class="fas fa-pills text-blue-600"></i> Comercial: <span x-text="vademecumActivo.nombre"></span>
+                            </h3>
+                        </div>
+                    </template>
+                    <template x-if="editando">
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase">Principio Activo (Genérico)</label>
+                                <input type="text" name="nombre_generico" x-model="vademecumActivo.generico" required
+                                       class="w-full bg-white border border-slate-200 rounded-sm px-2.5 py-1 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase">Nombre Comercial</label>
+                                <input type="text" name="nombre_comercial" x-model="vademecumActivo.nombre" required
+                                       class="w-full bg-white border border-slate-200 rounded-sm px-2.5 py-1 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    {{-- Botón Alternar Edición --}}
+                    <button type="button" @click="editando = !editando" 
+                            :class="editando ? 'bg-amber-500 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'"
+                            class="px-3 py-1.5 rounded-sm font-bold text-[10px] uppercase tracking-wider transition shadow-xs flex items-center gap-1">
+                        <i :class="editando ? 'fas fa-eye' : 'fas fa-edit'"></i> 
+                        <span x-text="editando ? 'Ver Ficha' : 'Editar Ficha'"></span>
+                    </button>
+
+                    <button type="button" @click="modalVademecum = false" class="text-slate-400 hover:text-slate-600 transition p-1">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 text-xs text-slate-600">
+{{-- Grid de los 4 puntos principales (Ahora totalmente editables) --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-sm border border-slate-100">
+                {{-- Laboratorio --}}
+                <div>
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Laboratorio</span>
+                    <template x-if="!editando">
+                        <span class="font-bold text-slate-700 block" x-text="vademecumActivo.laboratorio"></span>
+                    </template>
+                    <template x-if="editando">
+                        <input type="text" name="laboratorio" x-model="vademecumActivo.laboratorio"
+                               class="w-full bg-white border border-slate-200 rounded-sm px-2 py-1 text-xs font-semibold text-slate-700">
+                    </template>
+                </div>
+
+                {{-- Forma / Presentación --}}
+                <div>
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Forma / Presentación</span>
+                    <template x-if="!editando">
+                        <span class="font-bold text-slate-700 block" x-text="vademecumActivo.forma"></span>
+                    </template>
+                    <template x-if="editando">
+                        <input type="text" name="forma_farmaceutica" x-model="vademecumActivo.forma"
+                               class="w-full bg-white border border-slate-200 rounded-sm px-2 py-1 text-xs font-semibold text-slate-700">
+                    </template>
+                </div>
+
+                {{-- Código ATC --}}
+                <div>
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Código ATC</span>
+                    <template x-if="!editando">
+                        <span class="font-mono font-bold text-blue-600 block" x-text="vademecumActivo.atc"></span>
+                    </template>
+                    <template x-if="editando">
+                        <input type="text" name="codigo_atc" x-model="vademecumActivo.atc"
+                               class="w-full bg-white border border-slate-200 rounded-sm px-2 py-1 text-xs font-mono font-bold text-blue-600">
+                    </template>
+                </div>
+
+                {{-- Condición Dispensa --}}
+                <div>
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Condición Dispensa</span>
+                    <template x-if="!editando">
+                        <span class="font-bold text-purple-700 block" x-text="vademecumActivo.dispensa"></span>
+                    </template>
+                    <template x-if="editando">
+                        <input type="text" name="condicion_dispensa" x-model="vademecumActivo.dispensa"
+                               class="w-full bg-white border border-slate-200 rounded-sm px-2 py-1 text-xs font-semibold text-slate-700">
+                    </template>
+                </div>
+            </div>
+
+                {{-- Almacenamiento --}}
+                <div class="bg-indigo-50/50 p-3 rounded-sm border border-indigo-100 flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-temperature-low text-indigo-600 text-base shrink-0"></i>
+                        <span class="text-[9px] font-bold text-indigo-800 uppercase">Condiciones de Almacenamiento</span>
+                    </div>
+                    <template x-if="!editando">
+                        <p class="font-semibold text-indigo-950 pl-6" x-text="vademecumActivo.almacenamiento"></p>
+                    </template>
+                    <template x-if="editando">
+                        <textarea name="almacenamiento" x-model="vademecumActivo.almacenamiento" rows="2"
+                                  class="w-full bg-white border border-indigo-200 rounded-sm p-2 text-xs text-indigo-950 outline-none"></textarea>
+                    </template>
+                </div>
+
+                {{-- Indicaciones --}}
+                <div class="bg-slate-50 p-3.5 rounded-sm border border-slate-100">
+                    <h4 class="font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5 text-[11px]">
+                        <i class="fas fa-check-circle text-emerald-600"></i> Indicaciones y Uso
+                    </h4>
+                    <template x-if="!editando">
+                        <p class="leading-relaxed whitespace-pre-line" x-text="vademecumActivo.indicaciones"></p>
+                    </template>
+                    <template x-if="editando">
+                        <textarea name="indicaciones" x-model="vademecumActivo.indicaciones" rows="3"
+                                  class="w-full bg-white border border-slate-200 rounded-sm p-2 text-xs text-slate-700 outline-none"></textarea>
+                    </template>
+                </div>
+
+                {{-- Dosificación --}}
+                <div class="bg-blue-50/50 p-3.5 rounded-sm border border-blue-100/60">
+                    <h4 class="font-bold text-blue-900 uppercase tracking-wider mb-1.5 flex items-center gap-1.5 text-[11px]">
+                        <i class="fas fa-prescription text-blue-600"></i> Dosificación y Administración
+                    </h4>
+                    <template x-if="!editando">
+                        <p class="leading-relaxed whitespace-pre-line text-blue-950" x-text="vademecumActivo.dosificacion"></p>
+                    </template>
+                    <template x-if="editando">
+                        <textarea name="dosificacion" x-model="vademecumActivo.dosificacion" rows="3"
+                                  class="w-full bg-white border border-blue-200 rounded-sm p-2 text-xs text-blue-950 outline-none"></textarea>
+                    </template>
+                </div>
+
+                {{-- Contraindicaciones --}}
+                <div class="bg-amber-50/50 p-3.5 rounded-sm border border-amber-100/60">
+                    <h4 class="font-bold text-amber-900 uppercase tracking-wider mb-1.5 flex items-center gap-1.5 text-[11px]">
+                        <i class="fas fa-ban text-amber-600"></i> Contraindicaciones
+                    </h4>
+                    <template x-if="!editando">
+                        <p class="leading-relaxed whitespace-pre-line text-amber-950" x-text="vademecumActivo.contraindicaciones"></p>
+                    </template>
+                    <template x-if="editando">
+                        <textarea name="contraindicaciones" x-model="vademecumActivo.contraindicaciones" rows="3"
+                                  class="w-full bg-white border border-amber-200 rounded-sm p-2 text-xs text-amber-950 outline-none"></textarea>
+                    </template>
+                </div>
+
+                {{-- Advertencias --}}
+                <div class="bg-red-50/50 p-3.5 rounded-sm border border-red-100/60">
+                    <h4 class="font-bold text-red-900 uppercase tracking-wider mb-1.5 flex items-center gap-1.5 text-[11px]">
+                        <i class="fas fa-exclamation-triangle text-red-600"></i> Advertencias y Precauciones
+                    </h4>
+                    <template x-if="!editando">
+                        <p class="leading-relaxed whitespace-pre-line text-red-950" x-text="vademecumActivo.advertencias"></p>
+                    </template>
+                    <template x-if="editando">
+                        <textarea name="advertencias" x-model="vademecumActivo.advertencias" rows="3"
+                                  class="w-full bg-white border border-red-200 rounded-sm p-2 text-xs text-red-950 outline-none"></textarea>
+                    </template>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center shrink-0">
+                <span class="text-[10px] text-slate-400 font-semibold italic">Fuente: Sincronizado vía openFDA / Base de Datos del Hospital</span>
+                
+                <div class="flex gap-2">
+                    <button type="button" @click="modalVademecum = false"
+                            class="bg-white border border-slate-200 text-slate-600 font-bold px-4 py-2 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
+                        Cerrar
+                    </button>
+                    
+                    {{-- Botón de Guardar que solo aparece si editando es true --}}
+                    <template x-if="editando">
+                        <button type="submit"
+                                class="bg-blue-600 text-white font-bold px-5 py-2 rounded-sm hover:bg-blue-700 transition text-xs uppercase tracking-wider shadow-md">
+                            Guardar Cambios
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
     </div>
 @endsection

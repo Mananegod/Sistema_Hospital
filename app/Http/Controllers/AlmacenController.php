@@ -11,11 +11,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Validators\ValidationException;
+use App\Services\Vademecum\VademecumService;
+use App\Services\Vademecum\CimaProvider;
 use Carbon\Carbon;
 
 class AlmacenController extends Controller
 {
-    public function index(Request $request)
+public function index(Request $request)
     {
         $areas = DB::table('areas')->get();
 
@@ -26,6 +28,7 @@ class AlmacenController extends Controller
 
         $fechaInicio = $request->get('fecha_inicio', now()->subDays(30)->toDateString());
         $fechaFin = $request->get('fecha_fin', now()->toDateString());
+        $filtroTexto = trim($request->get('filtro_texto', ''));
 
         $consumoPorFecha = DB::table('retiros')
             ->join('medicamentos', 'retiros.medicamento_id', '=', 'medicamentos.id')
@@ -42,32 +45,62 @@ class AlmacenController extends Controller
             ->whereDate('updated_at', now()->toDateString())
             ->sum('cantidad_stock');
 
-        // Query 1: Medicamentos (Ordenados por fecha de vencimiento más próxima primero)
-        $inventario = DB::table('medicamentos')
+        // Query 1: Medicamentos (Con filtro de texto opcional y subconsultas seguras)
+        $queryMedicamentos = DB::table('medicamentos')
             ->select(
-                'id as medicamento_id',
-                'nombre_medicamento as medicamento',
-                'presentacion',
-                'cantidad_stock as stock_actual',
-                'stock_minimo',
-                'tipo_insumo',
-                'codigo_lote',
-                'fecha_vencimiento'
-            )
-            ->when($request->tipo_insumo, function ($query, $tipo_insumo) {
-                return $query->where('tipo_insumo', $tipo_insumo);
-            })
-            ->orderByRaw('fecha_vencimiento IS NULL ASC')
-            ->orderBy('fecha_vencimiento', 'asc')
-            ->orderBy('nombre_medicamento')
+                'medicamentos.id as medicamento_id',
+                'medicamentos.nombre_medicamento as medicamento',
+                'medicamentos.presentacion',
+                'medicamentos.cantidad_stock as stock_actual',
+                'medicamentos.stock_minimo',
+                'medicamentos.tipo_insumo',
+                'medicamentos.codigo_lote',
+                'medicamentos.fecha_vencimiento',
+                DB::raw('(SELECT c.nombre_generico FROM catalogo_medicamentos c WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as nombre_generico'),
+                DB::raw('(SELECT l.nombre FROM catalogo_medicamentos c LEFT JOIN laboratorios l ON c.laboratorio_id = l.id WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as laboratorio'),
+                DB::raw('(SELECT f.nombre FROM catalogo_medicamentos c LEFT JOIN formas_farmaceuticas f ON c.forma_farmaceutica_id = f.id WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as forma_farmaceutica'),
+                DB::raw('(SELECT c.codigo_atc FROM catalogo_medicamentos c WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as codigo_atc'),
+                DB::raw('(SELECT c.condicion_dispensa FROM catalogo_medicamentos c WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as condicion_dispensa'),
+                DB::raw('(SELECT c.almacenamiento FROM catalogo_medicamentos c WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as almacenamiento'),
+                DB::raw('(SELECT c.indicaciones FROM catalogo_medicamentos c WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as indicaciones'),
+                DB::raw('(SELECT c.dosificacion FROM catalogo_medicamentos c WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as dosificacion'),
+                DB::raw('(SELECT c.contraindicaciones FROM catalogo_medicamentos c WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as contraindicaciones'),
+                DB::raw('(SELECT c.advertencias FROM catalogo_medicamentos c WHERE LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_generico, \'%\')) OR LOWER(medicamentos.nombre_medicamento) LIKE LOWER(CONCAT(\'%\', c.nombre_comercial, \'%\')) LIMIT 1) as advertencias')
+            );
+
+        if (!empty($filtroTexto)) {
+            $queryMedicamentos->where(function($q) use ($filtroTexto) {
+                $q->where(DB::raw('LOWER(medicamentos.nombre_medicamento)'), 'like', '%' . strtolower($filtroTexto) . '%')
+                  ->orWhere(DB::raw('LOWER(medicamentos.codigo_lote)'), 'like', '%' . strtolower($filtroTexto) . '%');
+            });
+        }
+
+        if ($request->filled('tipo_insumo')) {
+            $queryMedicamentos->where('medicamentos.tipo_insumo', $request->tipo_insumo);
+        }
+
+        $inventario = $queryMedicamentos
+            ->orderByRaw('medicamentos.fecha_vencimiento IS NULL ASC')
+            ->orderBy('medicamentos.fecha_vencimiento', 'asc')
+            ->orderBy('medicamentos.nombre_medicamento')
             ->paginate(50)
             ->appends($request->query());
 
-        // Query 2: Insumos Médicos (Ordenados por fecha de vencimiento más próxima primero)
-        $insumos = DB::table('insumos_medicos')
-            ->when($request->tipo_insumo, function ($query, $tipo_insumo) {
-                return $query->where('tipo_insumo', $tipo_insumo);
-            })
+        // Query 2: Insumos Médicos (Con filtro de texto opcional)
+        $queryInsumos = DB::table('insumos_medicos');
+
+        if (!empty($filtroTexto)) {
+            $queryInsumos->where(function($q) use ($filtroTexto) {
+                $q->where(DB::raw('LOWER(nombre_insumo)'), 'like', '%' . strtolower($filtroTexto) . '%')
+                  ->orWhere(DB::raw('LOWER(codigo_lote)'), 'like', '%' . strtolower($filtroTexto) . '%');
+            });
+        }
+
+        if ($request->filled('tipo_insumo')) {
+            $queryInsumos->where('tipo_insumo', $request->tipo_insumo);
+        }
+
+        $insumos = $queryInsumos
             ->orderByRaw('fecha_vencimiento IS NULL ASC')
             ->orderBy('fecha_vencimiento', 'asc')
             ->orderBy('nombre_insumo')
@@ -1007,4 +1040,80 @@ public function registrarBajaVencidosMasiva(Request $request)
         return back()->with('error', 'Error al procesar el retiro de emergencia: ' . $e->getMessage());
     }
 }
+public function actualizarVademecum(Request $request)
+    {
+        $request->validate([
+            'nombre_generico' => 'required|string|max:255',
+            'nombre_comercial' => 'required|string|max:255',
+        ]);
+
+        try {
+            // 1. Resolver ID de Laboratorio
+            $laboratorioId = null;
+            if ($request->filled('laboratorio')) {
+                $nombreLab = trim($request->laboratorio);
+                $lab = DB::table('laboratorios')
+                    ->where(DB::raw('LOWER(nombre)'), strtolower($nombreLab))
+                    ->first();
+
+                if ($lab) {
+                    $laboratorioId = $lab->id;
+                } else {
+                    $laboratorioId = DB::table('laboratorios')->insertGetId([
+                        'nombre'     => strtoupper($nombreLab),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            // 2. Resolver ID de Forma Farmacéutica
+            $formaId = null;
+            if ($request->filled('forma_farmaceutica')) {
+                $nombreForma = trim($request->forma_farmaceutica);
+                $forma = DB::table('formas_farmaceuticas')
+                    ->where(DB::raw('LOWER(nombre)'), strtolower($nombreForma))
+                    ->first();
+
+                if ($forma) {
+                    $formaId = $forma->id;
+                } else {
+                    $formaId = DB::table('formas_farmaceuticas')->insertGetId([
+                        'nombre'     => strtoupper($nombreForma),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            // 3. Actualizar o Insertar incluyendo el Código ATC
+            DB::table('catalogo_medicamentos')
+                ->updateOrInsert(
+                    ['nombre_generico' => strtoupper(trim($request->nombre_generico))],
+                    [
+                        'nombre_comercial'      => strtoupper(trim($request->nombre_comercial)),
+                        'laboratorio_id'        => $laboratorioId,
+                        'forma_farmaceutica_id' => $formaId,
+                        'codigo_atc'            => strtoupper(trim($request->codigo_atc)), // <-- Guardando el código ATC real
+                        'condicion_dispensa'    => $request->condicion_dispensa,
+                        'almacenamiento'        => $request->almacenamiento,
+                        'indicaciones'          => $request->indicaciones,
+                        'dosificacion'          => $request->dosificacion,
+                        'contraindicaciones'    => $request->contraindicaciones,
+                        'advertencias'          => $request->advertencias,
+                        'updated_at'            => now(),
+                    ]
+                );
+
+            Auditoria::create([
+                'modulo'      => 'Almacén',
+                'accion'      => 'Actualización Vademécum',
+                'descripcion' => "Se actualizó la ficha clínica farmacológica de: {$request->nombre_generico}",
+            ]);
+
+            return back()->with('success', '¡Ficha farmacológica actualizada con éxito!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al actualizar la ficha: ' . $e->getMessage());
+        }
+    }
 }
