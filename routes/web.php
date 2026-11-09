@@ -128,4 +128,16 @@ Route::middleware([AuthHospital::class, 'admin.only'])->group(function () {
     Route::post('/retiros/{id}/editar-aprobar', [AlmacenController::class, 'editarYAprobarRetiro'])->name('almacen.retiros.editar_aprobar');
     Route::patch('/personal/{id}/password', [PersonalController::class, 'updatePassword'])->name('personal.password');
     Route::post('/almacen/retiros/emergencia', [AlmacenController::class, 'retiroEmergencia'])->name('almacen.retiros.emergencia');
+    Route::post('/almacen/vademecum/actualizar', [AlmacenController::class, 'actualizarVademecum'])->name('vademecum.actualizar');
+    Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
+    Route::get('/pacientes/verificar-documento', [PacienteController::class, 'verificarDocumento'])->name('pacientes.verificar');
+    Route::post('/pacientes/store', [PacienteController::class, 'store'])->name('pacientes.store');
+    Route::post('/medicamentos', [MedicamentoController::class, 'store'])->name('medicamentos.store');
+
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Ruta para consultar el API Vademécum en tiempo real desde la interfaz
+    Route::get('/almacen/vademecum/buscar', [AlmacenController::class, 'consultarVademecumExterno'])->name('vademecum.externo.buscar');
+    Route::post('/almacen/vademecum/importar', [AlmacenController::class, 'importarDesdeVademecum'])->name('vademecum.importar');
 });

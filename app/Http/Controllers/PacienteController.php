@@ -4,54 +4,239 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Auditoria; // <-- Importación del modelo de auditoría/bitácora
+use Illuminate\Validation\Rule;
+use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Auditoria;
 
 class PacienteController extends Controller
 {
+    private function formatearCedulaPdf(?string $cedula): string
+    {
+        if (!$cedula) return '';
+        return number_format((int) $cedula, 0, ',', '.');
+    }
+
+    private function calcularEdadTexto(?string $fechaNacimiento): string
+    {
+        if (!$fechaNacimiento) return 'N/A';
+        $nacimiento = Carbon::parse($fechaNacimiento);
+        $hoy = Carbon::now();
+
+        $anos = $nacimiento->diffInYears($hoy);
+        $meses = $nacimiento->copy()->addYears($anos)->diffInMonths($hoy);
+        $dias = $nacimiento->copy()->addYears($anos)->addMonths($meses)->diffInDays($hoy);
+
+        if ($anos > 0) {
+            return $anos . ($anos == 1 ? ' año' : ' años');
+        } elseif ($meses > 0) {
+            return $meses . ($meses == 1 ? ' mes' : ' meses');
+        } else {
+            return $dias . ($dias == 1 ? ' día' : ' días');
+        }
+    }
+
     public function index()
     {
-        $areas = DB::table('areas')->get();
+        $areas = DB::table('areas')->orderBy('nombre_area')->get();
 
         $pacientes = DB::table('pacientes_internados')
-            ->join('areas', 'pacientes_internados.area_id', '=', 'areas.id')
-            ->select(
-                'pacientes_internados.*',
-                'areas.nombre_area as servicio'
-            )
-            ->whereDate('pacientes_internados.created_at', now()->toDateString())
-            ->orderBy('pacientes_internados.created_at', 'desc')
-            ->get();
+            ->leftJoin('areas', 'pacientes_internados.area_id', '=', 'areas.id')
+            ->select('pacientes_internados.*', 'areas.nombre_area as servicio', 'pacientes_internados.nombre_apellido as nombre')
+            ->orderByDesc('pacientes_internados.created_at')
+            ->get()
+            ->map(function ($paciente_item) {
+                $paciente_item->fecha_formateada = $paciente_item->fecha_ingreso 
+                    ? Carbon::parse($paciente_item->fecha_ingreso)->format('d/m/Y') 
+                    : '';
+                
+                if ($paciente_item->cedula && is_numeric($paciente_item->cedula)) {
+                    $paciente_item->cedula_formateada = number_format((int) $paciente_item->cedula, 0, ',', '.');
+                } else {
+                    $paciente_item->cedula_formateada = $paciente_item->cedula;
+                }
+
+                if ($paciente_item->cedula_tutor && is_numeric($paciente_item->cedula_tutor)) {
+                    $paciente_item->cedula_tutor_formateada = number_format((int) $paciente_item->cedula_tutor, 0, ',', '.');
+                } else {
+                    $paciente_item->cedula_tutor_formateada = $paciente_item->cedula_tutor;
+                }
+
+                return $paciente_item;
+            });
 
         return view('pacientes', compact('areas', 'pacientes'));
     }
 
+    public function verificarDocumento(Request $request)
+    {
+        $tipo = strtoupper(trim((string) $request->query('tipo_documento')));
+        $documento = strtoupper(preg_replace('/\s+/', '', (string) $request->query('cedula')));
+        $nombre = trim((string) $request->query('nombre_apellido'));
+        $fechaNacimiento = $request->query('fecha_nacimiento');
+
+        if (!in_array($tipo, ['V', 'E', 'P', 'SC'], true)) {
+            return response()->json(['encontrado' => false, 'mensaje' => 'Tipo de identificación no válido.'], 422);
+        }
+
+        $base = DB::table('pacientes_internados')
+            ->leftJoin('areas', 'pacientes_internados.area_id', '=', 'areas.id')
+            ->select(
+                'pacientes_internados.id',
+                'pacientes_internados.tipo_documento',
+                'pacientes_internados.cedula',
+                'pacientes_internados.cedula_tutor',
+                'pacientes_internados.nombre_apellido',
+                'pacientes_internados.edad',
+                'pacientes_internados.fecha_nacimiento',
+                'pacientes_internados.genero',
+                'pacientes_internados.area_id',
+                'pacientes_internados.diagnostico',
+                'pacientes_internados.tratamiento',
+                'pacientes_internados.fecha_ingreso',
+                'areas.nombre_area as servicio'
+            );
+
+        if ($tipo === 'SC') {
+            if ($nombre === '' || !$fechaNacimiento) {
+                return response()->json(['encontrado' => false, 'posibles' => []]);
+            }
+
+            $coincidencias = $base
+                ->where('pacientes_internados.tipo_documento', 'SC')
+                ->whereRaw('LOWER(pacientes_internados.nombre_apellido) = ?', [mb_strtolower($nombre)])
+                ->where('pacientes_internados.fecha_nacimiento', $fechaNacimiento)
+                ->orderByDesc('pacientes_internados.created_at')
+                ->limit(5)
+                ->get();
+
+            return response()->json([
+                'encontrado' => false,
+                'posibles' => $coincidencias,
+                'mensaje' => $coincidencias->isNotEmpty()
+                    ? 'Existen registros con el mismo nombre y fecha de nacimiento. Verifique que no sea el mismo niño.'
+                    : null,
+            ]);
+        }
+
+        if ($documento === '') {
+            return response()->json(['encontrado' => false]);
+        }
+
+        $paciente = $base
+            ->where('pacientes_internados.tipo_documento', $tipo)
+            ->where('pacientes_internados.cedula', $documento)
+            ->first();
+
+        return response()->json([
+            'encontrado' => (bool) $paciente,
+            'paciente' => $paciente,
+            'mensaje' => $paciente
+                ? 'Este documento ya está asociado a un paciente registrado.'
+                : 'No se encontró un paciente con este documento.',
+        ]);
+    }
+
     public function store(Request $request)
     {
-        $request->validate([
-            'cedula' => ['required', 'numeric', 'digits_between:1,10', 'unique:pacientes_internados,cedula'],
-            'nombre_apellido' => ['required', 'string', 'max:255', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'],
-            'edad' => 'required|integer|min:0|max:125',
-            'genero' => 'required|string|in:Masculino,Femenino,Otro',
-            'area_id' => 'required',
-            'diagnostico' => 'required|string',
-            'tratamiento' => 'nullable|string',
-            'fecha_ingreso' => 'required|date',
-        ], [
-            'cedula.required' => 'La cédula es obligatoria.',
-            'cedula.numeric' => 'La cédula debe contener exclusivamente números.',
-            'cedula.digits_between' => 'La cédula no puede exceder los 10 dígitos.',
-            'cedula.unique' => 'Ya existe un paciente registrado con esta cédula.',
-            'nombre_apellido.required' => 'El nombre y apellido son obligatorios.',
-            'nombre_apellido.regex' => 'El nombre y apellido debe contener exclusivamente letras.',
-            'edad.integer' => 'La edad debe ser un número entero.',
+        $tipo = strtoupper((string) $request->input('tipo_documento', 'V'));
+        
+        if ($tipo === 'SC') {
+            $cedula = null;
+            $cedulaTutor = preg_replace('/[^0-9]/', '', (string) $request->input('cedula_tutor', ''));
+        } else {
+            $cedula = strtoupper(preg_replace('/\s+/', '', (string) $request->input('cedula', '')));
+            $cedulaTutor = ''; 
+        }
+        
+        $request->merge([
+            'tipo_documento' => $tipo,
+            'cedula' => $cedula,
+            'cedula_tutor' => $cedulaTutor,
         ]);
 
-        DB::table('pacientes_internados')->insert([
-            'cedula' => $request->cedula,
-            'nombre_apellido' => $request->nombre_apellido,
-            'edad' => $request->edad,
+        $cedulaRules = [
+            Rule::requiredIf(in_array($tipo, ['V', 'E', 'P'], true)),
+            'nullable',
+            'string',
+            'max:20',
+            function ($attribute, $value, $fail) use ($tipo) {
+                if ($value === null || $value === '') return;
+                if (in_array($tipo, ['V', 'E'], true) && !preg_match('/^[0-9]{6,10}$/', $value)) {
+                    $fail('La cédula venezolana debe contener entre 6 y 10 dígitos.');
+                }
+                if ($tipo === 'P' && !preg_match('/^[A-Z0-9]{5,20}$/', $value)) {
+                    $fail('El pasaporte debe contener entre 5 y 20 caracteres alfanuméricos.');
+                }
+            },
+        ];
+
+        if ($tipo !== 'SC' && $cedula) {
+            $cedulaRules[] = Rule::unique('pacientes_internados', 'cedula')
+                ->where(fn ($q) => $q->where('tipo_documento', $tipo));
+        }
+
+        $validator = Validator::make($request->all(), [
+            'tipo_documento' => ['required', Rule::in(['V', 'E', 'P', 'SC'])],
+            'cedula' => $cedulaRules,
+            'cedula_tutor' => [
+                'nullable',
+                function ($attribute, $value, $fail) use ($tipo) {
+                    if ($tipo === 'SC') {
+                        if (empty($value)) {
+                            $fail('Debe indicar la cédula del tutor legal.');
+                        } elseif (!preg_match('/^[0-9]{6,10}$/', $value)) {
+                            $fail('La cédula del tutor debe contener entre 6 y 10 dígitos numéricos.');
+                        }
+                    }
+                }
+            ],
+            'nombre_apellido' => ['required', 'string', 'max:255', 'regex:/^[\pL\s\'.-]+$/u'],
+            'fecha_nacimiento' => ['required', 'date', 'before_or_equal:today'],
+            'genero' => ['required', Rule::in(['Masculino', 'Femenino', 'Otro'])],
+            'area_id' => ['required', 'exists:areas,id'],
+            'diagnostico' => ['required', 'string', 'max:500'],
+            'tratamiento' => ['nullable', 'string'],
+            'fecha_ingreso' => ['required', 'date', 'before_or_equal:2036-12-31'],
+        ], [
+            'cedula.required' => 'Debe indicar la cédula o el número de pasaporte.',
+            'cedula.unique' => 'Ya existe un paciente registrado con este tipo y número de documento.',
+            'nombre_apellido.regex' => 'El nombre solo debe contener letras, espacios, apóstrofes, puntos o guiones.',
+            'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser una fecha futura.',
+            'area_id.exists' => 'El servicio o área seleccionada no es válido.',
+            'fecha_ingreso.before_or_equal' => 'La fecha de ingreso no puede ser posterior al 31/12/2036.',
+        ]);
+
+        $edadCalculada = Carbon::parse($request->fecha_nacimiento)->age;
+
+        $validator->after(function ($validator) use ($tipo, $edadCalculada) {
+            if ($tipo === 'SC' && $edadCalculada > 12) {
+                $validator->errors()->add('tipo_documento', 'La opción Sin Cédula está destinada exclusivamente a niños menores de 13 años.');
+            }
+            if ($tipo !== 'SC' && $edadCalculada < 13) {
+                $validator->errors()->add('tipo_documento', 'Los pacientes menores sin cedula deben registrarse bajo la opción "Sin cédula / Usar Tutor".');
+            }
+        });
+
+        if ($validator->fails()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $id = DB::table('pacientes_internados')->insertGetId([
+            'tipo_documento' => $tipo,
+            'cedula' => $cedula,
+            'cedula_tutor' => $cedulaTutor,
+            'nombre_apellido' => trim($request->nombre_apellido),
+            'edad' => $edadCalculada,
+            'fecha_nacimiento' => $request->fecha_nacimiento,
             'genero' => $request->genero,
             'area_id' => $request->area_id,
             'diagnostico' => $request->diagnostico,
@@ -61,84 +246,135 @@ class PacienteController extends Controller
             'updated_at' => now(),
         ]);
 
-        // Registro en la Bitácora
         Auditoria::create([
-            'modulo'      => 'Pacientes',
-            'accion'      => 'Registro',
-            'descripcion' => "Se registró e internó al paciente: {$request->nombre_apellido} (Cédula: {$request->cedula})",
+            'modulo' => 'Pacientes',
+            'accion' => 'Registro',
+            'descripcion' => "Se registró e internó al paciente: {$request->nombre_apellido}",
         ]);
 
-        return back()->with('success', 'Paciente internado y registrado en el sistema correctamente.');
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Paciente internado y registrado correctamente.']);
+        }
+
+        return back()->with('success', 'Paciente internado y registrado correctamente.');
     }
 
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'cedula'           => ['required', 'numeric', 'digits_between:1,10', 'unique:pacientes_internados,cedula,' . $id],
-            'nombre_apellido'  => ['required', 'string', 'max:255', 'regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/'],
-            'edad'             => 'required|integer|min:0|max:125',
-            'genero'           => 'required|string|in:Masculino,Femenino,Otro',
-            'area_id'          => 'required|exists:areas,id',
-            'diagnostico'      => 'required|string|max:500',
-            'tratamiento'      => 'nullable|string',
-            'fecha_ingreso'    => 'required|date|before_or_equal:2036-12-31',
-        ], [
-            'cedula.numeric'          => 'La cédula debe contener exclusivamente números.',
-            'cedula.digits_between'   => 'La cédula no puede exceder los 10 dígitos.',
-            'cedula.unique'           => 'Ya existe otro paciente con esta cédula.',
-            'nombre_apellido.regex'   => 'El nombre y apellido debe contener exclusivamente letras.',
-            'edad.integer'            => 'La edad del paciente debe ser un número entero.',
-            'genero.in'               => 'El género seleccionado no es válido.',
-            'fecha_ingreso.before_or_equal' => 'La fecha de ingreso no puede ser posterior al año 2036.',
-            'area_id.exists'          => 'El servicio o área seleccionada no es válida.',
+        $tipo = strtoupper((string) $request->input('tipo_documento', 'V'));
+        
+        if ($tipo === 'SC') {
+            $cedula = null;
+            $cedulaTutor = preg_replace('/[^0-9]/', '', (string) $request->input('cedula_tutor', ''));
+        } else {
+            $cedula = strtoupper(preg_replace('/\s+/', '', (string) $request->input('cedula', '')));
+            $cedulaTutor = ''; 
+        }
+        
+        $request->merge([
+            'tipo_documento' => $tipo,
+            'cedula' => $cedula,
+            'cedula_tutor' => $cedulaTutor,
         ]);
 
+        $cedulaRules = [
+            Rule::requiredIf(in_array($tipo, ['V', 'E', 'P'], true)),
+            'nullable',
+            'string',
+            'max:20',
+            function ($attribute, $value, $fail) use ($tipo) {
+                if ($value === null || $value === '') return;
+                if (in_array($tipo, ['V', 'E'], true) && !preg_match('/^[0-9]{6,10}$/', $value)) {
+                    $fail('La cédula debe contener entre 6 y 10 dígitos.');
+                }
+                if ($tipo === 'P' && !preg_match('/^[A-Z0-9]{5,20}$/', $value)) {
+                    $fail('El pasaporte debe contener entre 5 y 20 caracteres alfanuméricos.');
+                }
+            },
+        ];
+
+        if ($tipo !== 'SC' && $cedula) {
+            $cedulaRules[] = Rule::unique('pacientes_internados', 'cedula')
+                ->where(fn ($q) => $q->where('tipo_documento', $tipo))
+                ->ignore($id);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'tipo_documento' => ['required', Rule::in(['V', 'E', 'P', 'SC'])],
+            'cedula' => $cedulaRules,
+            'cedula_tutor' => [
+                'nullable',
+                function ($attribute, $value, $fail) use ($tipo) {
+                    if ($tipo === 'SC') {
+                        if (empty($value)) {
+                            $fail('Debe indicar la cédula del tutor legal.');
+                        } elseif (!preg_match('/^[0-9]{6,10}$/', $value)) {
+                            $fail('La cédula del tutor debe contener entre 6 y 10 dígitos numéricos.');
+                        }
+                    }
+                }
+            ],
+            'nombre_apellido' => ['required', 'string', 'max:255', 'regex:/^[\pL\s\'.-]+$/u'],
+            'fecha_nacimiento' => ['required', 'date', 'before_or_equal:today'],
+            'genero' => ['required', Rule::in(['Masculino', 'Femenino', 'Otro'])],
+            'area_id' => ['required', 'exists:areas,id'],
+            'diagnostico' => ['required', 'string', 'max:500'],
+            'tratamiento' => ['nullable', 'string'],
+            'fecha_ingreso' => ['required', 'date', 'before_or_equal:2036-12-31'],
+        ], [
+            'cedula.unique' => 'Ya existe otro paciente con este tipo y número de documento.',
+            'nombre_apellido.regex' => 'El nombre solo debe contener letras, espacios, apóstrofes, puntos o guiones.',
+            'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser una fecha futura.',
+        ]);
+
+        $edadCalculada = Carbon::parse($request->fecha_nacimiento)->age;
+
+        $validator->after(function ($validator) use ($tipo, $edadCalculada) {
+            if ($tipo === 'SC' && $edadCalculada > 12) {
+                $validator->errors()->add('tipo_documento', 'La opción Sin Cédula está destinada a niños menores sin cedula.');
+            }
+        });
+
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput()->with('error', 'Error en el formulario. Por favor revisa los campos.');
+            return back()->withErrors($validator)->withInput()->with('error', 'No se pudieron validar los datos del paciente.');
         }
 
         try {
-            DB::table('pacientes_internados')
-                ->where('id', $id)
-                ->update([
-                    'cedula'          => $request->cedula,
-                    'nombre_apellido' => $request->nombre_apellido,
-                    'edad'            => $request->edad,
-                    'genero'          => $request->genero,
-                    'area_id'         => $request->area_id,
-                    'diagnostico'     => $request->diagnostico,
-                    'tratamiento'     => $request->tratamiento,
-                    'fecha_ingreso'   => $request->fecha_ingreso,
-                    'updated_at'      => now(),
-                ]);
-
-            // Registro en la Bitácora
-            Auditoria::create([
-                'modulo'      => 'Pacientes',
-                'accion'      => 'Edición',
-                'descripcion' => "Se actualizaron los datos del paciente: {$request->nombre_apellido} (Cédula: {$request->cedula})",
+            $actualizado = DB::table('pacientes_internados')->where('id', $id)->update([
+                'tipo_documento' => $tipo,
+                'cedula' => $cedula,
+                'cedula_tutor' => $cedulaTutor,
+                'nombre_apellido' => trim($request->nombre_apellido),
+                'edad' => $edadCalculada,
+                'fecha_nacimiento' => $request->fecha_nacimiento,
+                'genero' => $request->genero,
+                'area_id' => $request->area_id,
+                'diagnostico' => $request->diagnostico,
+                'tratamiento' => $request->tratamiento,
+                'fecha_ingreso' => $request->fecha_ingreso,
+                'updated_at' => now(),
             ]);
 
-            return back()->with('success', 'El expediente del paciente ha sido actualizado con éxito.');
+            if (!$actualizado && !DB::table('pacientes_internados')->where('id', $id)->exists()) {
+                return back()->with('error', 'El paciente que intenta modificar no existe.');
+            }
 
+            Auditoria::create([
+                'modulo' => 'Pacientes',
+                'accion' => 'Edición',
+                'descripcion' => "Se actualizaron los datos del paciente: {$request->nombre_apellido}",
+            ]);
+
+            return back()->with('success', 'Los datos del paciente se actualizaron correctamente.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Error al actualizar el paciente: ' . $e->getMessage());
+            report($e);
+            return back()->with('error', 'Ocurrió un error al actualizar el paciente.');
         }
     }
 
     public function imprimirPdf($id)
     {
-        $paciente = DB::table('pacientes_internados')
-            ->join('areas', 'pacientes_internados.area_id', '=', 'areas.id')
-            ->select('pacientes_internados.*', 'areas.nombre_area as servicio')
-            ->where('pacientes_internados.id', $id)
-            ->first();
-
-        if (!$paciente) {
-            return back()->with('error', 'El registro del paciente no existe.');
-        }
-
-        return view('pacientes.reporte-f15', compact('paciente'));
+        return $this->generarPdf($id);
     }
 
     public function delete($id)
@@ -147,30 +383,32 @@ class PacienteController extends Controller
             $paciente = DB::table('pacientes_internados')->where('id', $id)->first();
 
             if (!$paciente) {
-                return back()->with('error', 'El registro del paciente que intenta eliminar no existe.');
+                return back()->with('error', 'El registro del paciente no existe.');
             }
 
             DB::table('pacientes_internados')->where('id', $id)->delete();
 
-            // Registro en la Bitácora
             Auditoria::create([
-                'modulo'      => 'Pacientes',
-                'accion'      => 'Borrado',
-                'descripcion' => "Se eliminó el registro clínico del paciente: {$paciente->nombre_apellido} (Cédula: {$paciente->cedula})",
+                'modulo' => 'Pacientes',
+                'accion' => 'Borrado',
+                'descripcion' => "Se eliminó el registro clínico de: {$paciente->nombre_apellido}",
             ]);
 
-            return back()->with('success', 'El registro del paciente ha sido eliminado correctamente del sistema.');
-
+            return back()->with('success', 'El registro del paciente fue eliminado correctamente.');
         } catch (\Exception $e) {
-            return back()->with('error', 'No se pudo eliminar el registro: ' . $e->getMessage());
+            report($e);
+            return back()->with('error', 'No se pudo eliminar el registro del paciente.');
         }
     }
-    
-    public function generarPdf($id)
+
+public function generarPdf($id)
     {
         $paciente = DB::table('pacientes_internados')
-            ->join('areas', 'pacientes_internados.area_id', '=', 'areas.id')
-            ->select('pacientes_internados.*', 'areas.nombre_area as servicio')
+            ->leftJoin('areas', 'pacientes_internados.area_id', '=', 'areas.id')
+            ->select(
+                'pacientes_internados.*', 
+                'areas.nombre_area as servicio'
+            )
             ->where('pacientes_internados.id', $id)
             ->first();
 
@@ -178,131 +416,15 @@ class PacienteController extends Controller
             return back()->with('error', 'El registro del paciente no existe.');
         }
 
-        // Registro en la Bitácora de la generación del reporte PDF
         Auditoria::create([
-            'modulo'      => 'Pacientes',
-            'accion'      => 'Reporte',
-            'descripcion' => "Se generó el formato PDF F15 del paciente: {$paciente->nombre_apellido} (Cédula: {$paciente->cedula})",
+            'modulo' => 'Pacientes',
+            'accion' => 'Reporte',
+            'descripcion' => "Se generó el formato de impresión PDF del paciente: {$paciente->nombre_apellido}",
         ]);
 
-        $html = '
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-            <meta charset="UTF-8">
-            <title>Formato F15 - Almacén</title>
-            <style>
-                body { font-family: "Helvetica", "Arial", sans-serif; font-size: 11px; color: #333; margin: 0; padding: 0; }
-                .header-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-                .header-title { text-align: center; font-weight: bold; font-size: 14px; text-transform: uppercase; }
-                .header-subtitle { text-align: center; font-size: 11px; font-weight: bold; margin-bottom: 10px; }
-                .institution { font-size: 10px; color: #555; }
-                
-                .info-box { width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 15px; }
-                .info-box td { padding: 6px 8px; border: 1px solid #000; vertical-align: top; }
-                .label { font-weight: bold; text-transform: uppercase; font-size: 9px; color: #111; display: block; margin-bottom: 2px; }
-                .value { font-size: 11px; font-weight: normal; color: #000; }
-                
-                .treatment-table { width: 100%; border: 1px solid #000; border-collapse: collapse; margin-bottom: 40px; }
-                .treatment-table th { background-color: #f2f2f2; padding: 6px; border: 1px solid #000; font-size: 10px; text-transform: uppercase; text-align: left; }
-                .treatment-table td { padding: 12px 8px; border: 1px solid #000; font-size: 11px; min-height: 120px; vertical-align: top; }
-                
-                .signatures-table { width: 100%; border-collapse: collapse; margin-top: 50px; page-break-inside: avoid; }
-                .signatures-table td { width: 20%; text-align: center; vertical-align: bottom; font-size: 8px; padding: 5px; }
-                .line { width: 90%; margin: 0 auto 5px auto; border-top: 1px solid #000; }
-                .footer-text { text-align: center; font-size: 9px; color: #777; margin-top: 25px; }
-            </style>
-        </head>
-        <body>
-            <table class="header-table">
-                <tr>
-                    <td class="institution" width="40%">
-                        MINISTERIO DE SALUD Y DESARROLLO SOCIAL<br>
-                        HOSPITAL GENERAL DR. TIBURCIO GARRIDO<br>
-                        CHIVACOA - ESTADO YARACUY
-                    </td>
-                    <td class="header-title" width="30%">HOJA DE SERVICIO<br>ALMACÉN</td>
-                    <td style="text-align: right; font-size: 10px;" width="30%">
-                        <strong>CONTRALOR DE EXISTENCIA</strong><br>
-                        Nº COMPROB: ________________
-                    </td>
-                </tr>
-            </table>
+        // Calculamos la edad exacta (meses, días o años) usando tu función existente
+        $edadFormateadaPdf = $this->calcularEdadTexto($paciente->fecha_nacimiento);
 
-            <table class="info-box">
-                <tr>
-                    <td width="50%">
-                        <span class="label">Servicio / Área Destinatario</span>
-                        <div class="value">' . e($paciente->servicio) . '</div>
-                    </td>
-                    <td width="50%">
-                        <span class="label">Fecha de Ingreso</span>
-                        <div class="value">' . date('d/m/Y', strtotime($paciente->fecha_ingreso)) . '</div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <span class="label">Nombre y Apellido del Paciente</span>
-                        <div class="value">' . e($paciente->nombre_apellido) . '</div>
-                    </td>
-                    <td>
-                        <span class="label">Cédula / Edad / Género</span>
-                        <div class="value">V- ' . e($paciente->cedula) . ' &nbsp;&nbsp;|&nbsp;&nbsp; ' . e($paciente->edad) . ' Años &nbsp;&nbsp;|&nbsp;&nbsp; ' . e($paciente->genero ?? 'N/A') . '</div>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2">
-                        <span class="label">Diagnóstico Inicial (Dx)</span>
-                        <div class="value">' . e($paciente->diagnostico) . '</div>
-                    </td>
-                </tr>
-            </table>
-
-            <table class="treatment-table">
-                <thead>
-                    <tr>
-                        <th>Descripción del Tratamiento / Insumos Solicitados para el Paciente</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>' . nl2br(e($paciente->tratamiento ?? 'No se especificó tratamiento médico detallado en el registro.')) . '</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <table class="signatures-table">
-                <tr>
-                    <td>
-                        <div class="line"></div>
-                        JEFE DE SERVICIO<br>SOLICITADO
-                    </td>
-                    <td>
-                        <div class="line"></div>
-                        DIRECTOR<br>DE LA INDEPENDENCIA
-                    </td>
-                    <td>
-                        <div class="line"></div>
-                        ADMINISTRADOR<br>INTENDENTE
-                    </td>
-                    <td>
-                        <div class="line"></div>
-                        CONTRALOR DE<br>EXISTENCIA
-                    </td>
-                    <td>
-                        <div class="line"></div>
-                        JEFE DEL ALMACÉN<br>DESPACHADOR
-                    </td>
-                </tr>
-            </table>
-
-            <div class="footer-text">
-                Formato Oficial de Control F15 - Repositorio de Control de Inventario y Bienes Nacionales
-            </div>
-        </body>
-        </html>';
-
-        $pdf = Pdf::loadHTML($html)->setPaper('letter', 'portrait');
-        return $pdf->download('F15_Paciente_' . $paciente->cedula . '.pdf');
+        return view('pacientes.reporte-f15', compact('paciente', 'edadFormateadaPdf'));
     }
 }
