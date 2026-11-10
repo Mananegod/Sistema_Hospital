@@ -1,5 +1,9 @@
 # Explicación de como usar el componente modal...
 
+# Si hay que volver a resetear la BD al gun dia, para un cambio de esquema grande. deben meter:
+ DROP TABLE IF EXISTS _deploy_markers;
+
+ 
 # 1. La plantilla de app (donde guardamos el head de la pagina)
 
 causa, mira, ya tenemos el layouts/plantilla del cuerpo de la pagina, la plantilla se llama (app.blade.php) y su ubicacón esta en: resources\views\layouts\app.blade.php
