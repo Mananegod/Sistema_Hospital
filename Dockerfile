@@ -1,4 +1,5 @@
-FROM php:8.3-apache
+
+FROM php:8.4-apache
 
 # ------------------------------------------------------------------
 # Dependencias del sistema y extensiones PHP
@@ -11,11 +12,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libzip-dev \
         libxml2-dev \
         libonig-dev \
+        libicu-dev \
+        libcurl4-openssl-dev \
         zip \
         unzip \
         git \
         curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure intl \
     && docker-php-ext-install -j"$(nproc)" \
         pdo \
         pdo_pgsql \
@@ -25,9 +29,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         zip \
         xml \
         mbstring \
+        intl \
         opcache \
         exif \
         pcntl \
+        fileinfo \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -56,8 +62,9 @@ RUN chmod +x /var/www/html/entrypoint.sh
 
 # ------------------------------------------------------------------
 # Dependencias PHP
-#   --no-scripts porque durante el build no hay .env y package:discover
-#   podría fallar; lo ejecutamos en runtime desde entrypoint.sh
+# ⬇️ IMPORTANTE: quitamos --no-scripts para que corran los scripts de
+#    composer y nos deje ver errores reales si algo falla. Si prefieres
+#    dejarlo, el entrypoint igual corre package:discover en runtime.
 # ------------------------------------------------------------------
 ENV COMPOSER_MEMORY_LIMIT=-1
 RUN composer install \
@@ -65,9 +72,7 @@ RUN composer install \
         --optimize-autoloader \
         --no-interaction \
         --prefer-dist \
-        --no-progress \
-        --no-scripts \
-    && composer dump-autoload --optimize --no-dev
+        --no-progress
 
 # ------------------------------------------------------------------
 # Permisos
