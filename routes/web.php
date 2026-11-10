@@ -133,7 +133,7 @@ Route::middleware([AuthHospital::class, 'admin.only'])->group(function () {
     Route::get('/pacientes/verificar-documento', [PacienteController::class, 'verificarDocumento'])->name('pacientes.verificar');
     Route::post('/pacientes/store', [PacienteController::class, 'store'])->name('pacientes.store');
     Route::post('/medicamentos', [MedicamentoController::class, 'store'])->name('medicamentos.store');
-
+    Route::post('/almacen/entrada-lote', [AlmacenController::class, 'guardarEntradaLote'])->name('almacen.entrada-lote');
 });
 
 Route::middleware(['auth'])->group(function () {

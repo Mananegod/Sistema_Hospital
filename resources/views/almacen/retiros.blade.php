@@ -51,12 +51,24 @@
         ],
         medicamentos: [
             @foreach($todosLosMedicamentos as $med)
-                { id: {{ $med->id }}, nombre: '{{ addslashes($med->nombre_medicamento) }}', stock: {{ $med->cantidad_stock ?? 0 }} },
+                { 
+                    id: {{ $med->id }}, 
+                    nombre: '{{ addslashes($med->nombre_medicamento) }}', 
+                    lote: '{{ addslashes($med->codigo_lote ?? 'S/L') }}',
+                    vencimiento: '{{ !empty($med->fecha_vencimiento) ? \Carbon\Carbon::parse($med->fecha_vencimiento)->format('d/m/Y') : 'Sin fecha' }}',
+                    stock: {{ $med->cantidad_stock ?? 0 }} 
+                },
             @endforeach
         ],
         insumos: [
             @foreach($todosLosInsumos as $ins)
-                { id: {{ $ins->id }}, nombre: '{{ addslashes($ins->nombre_insumo) }}', stock: {{ $ins->cantidad_stock ?? 0 }} },
+                { 
+                    id: {{ $ins->id }}, 
+                    nombre: '{{ addslashes($ins->nombre_insumo) }}', 
+                    lote: '{{ addslashes($ins->codigo_lote ?? 'S/L') }}',
+                    vencimiento: '{{ !empty($ins->fecha_vencimiento) ? \Carbon\Carbon::parse($ins->fecha_vencimiento)->format('d/m/Y') : 'Sin fecha' }}',
+                    stock: {{ $ins->cantidad_stock ?? 0 }} 
+                },
             @endforeach
         ],
         areas: [
@@ -211,6 +223,7 @@
                 </a>
             </div>
         </div> 
+
 {{-- SECCIÓN DE SOLICITUDES PENDIENTES (SOLO PARA ADMINISTRADORES) --}}
 @if(auth()->check() && (auth()->user()->nombre === 'Admin' || (auth()->user()->personal_id && \App\Models\Personal::where('id', auth()->user()->personal_id)->value('tipo_usuario') === 'Admin')) && isset($solicitudesPendientes) && count($solicitudesPendientes) > 0)
     <div class="mb-8 bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg shadow-sm" x-data="{ modalEditar: false, retiroEdit: { id: '', nombre: '', cantidad: 0, stock: 0 } }">
@@ -245,7 +258,6 @@
                     </div>
 
                     <div class="flex items-center gap-2 pt-3 border-t border-slate-100">
-                        {{-- Botón Permitir / Aprobar --}}
                         <form action="{{ route('almacen.retiros.aprobar', $solicitud->id) }}" method="POST" class="flex-1">
                             @csrf
                             <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded text-xs transition flex items-center justify-center gap-1 shadow-xs">
@@ -253,14 +265,12 @@
                             </button>
                         </form>
 
-                        {{-- Botón Editar cantidad --}}
                         <button type="button" 
                             @click="modalEditar = true; retiroEdit = { id: {{ $solicitud->id }}, nombre: '{{ addslashes($solicitud->nombre) }}', cantidad: {{ $solicitud->cantidad }}, stock: {{ $solicitud->stock_disponible }} }"
                             class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded text-xs transition flex items-center justify-center gap-1 shadow-xs" title="Editar cantidad y permitir">
                             <i class="fas fa-edit"></i> Editar
                         </button>
 
-                        {{-- Botón Rechazar --}}
                         <form action="{{ route('almacen.retiros.rechazar', $solicitud->id) }}" method="POST" class="flex-1" onsubmit="return confirm('¿Está seguro de rechazar esta solicitud?');">
                             @csrf
                             <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-1.5 px-3 rounded text-xs transition flex items-center justify-center gap-1 shadow-xs">
@@ -272,7 +282,6 @@
             @endforeach
         </div>
 
-        {{-- MODAL PARA EDITAR CANTIDAD ANTES DE APROBAR --}}
         <div x-show="modalEditar" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
             <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 border border-slate-100" @click.away="modalEditar = false">
                 <h3 class="text-md font-bold text-slate-900 mb-1">Ajustar Cantidad Solicitada</h3>
@@ -302,6 +311,7 @@
         </div>
     </div>
 @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
             {{-- Formularios de Retiro --}}
@@ -331,12 +341,12 @@
                     <form @submit.prevent="registrarRetiroMed()">
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-slate-600 mb-2">Medicamento</label>
+                                <label class="block text-sm font-medium text-slate-600 mb-2">Medicamento y Lote Específico</label>
                                 <select x-model="formMed.medicamento_id"
-                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="" disabled selected>Seleccione medicamento</option>
+                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold">
+                                    <option value="" disabled selected>Seleccione el lote específico</option>
                                     <template x-for="med in medicamentos" :key="med.id">
-                                        <option :value="med.id" x-text="med.nombre"></option>
+                                        <option :value="med.id" x-text="med.nombre + ' (Lote: ' + med.lote + ' | Vence: ' + med.vencimiento + ' | Stock: ' + med.stock + ')'"></option>
                                     </template>
                                 </select>
                                 <template x-if="stockMed() !== null">
@@ -380,12 +390,12 @@
                     <form @submit.prevent="registrarRetiroIns()">
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-slate-600 mb-2">Insumo Médico</label>
+                                <label class="block text-sm font-medium text-slate-600 mb-2">Insumo Médico y Lote Específico</label>
                                 <select x-model="formIns.insumo_id"
-                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="" disabled selected>Seleccione insumo médico</option>
+                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-xs font-semibold">
+                                    <option value="" disabled selected>Seleccione el lote específico</option>
                                     <template x-for="ins in insumos" :key="ins.id">
-                                        <option :value="ins.id" x-text="ins.nombre"></option>
+                                        <option :value="ins.id" x-text="ins.nombre + ' (Lote: ' + ins.lote + ' | Vence: ' + ins.vencimiento + ' | Stock: ' + ins.stock + ')'"></option>
                                     </template>
                                 </select>
                                 <template x-if="stockIns() !== null">
@@ -478,14 +488,7 @@
 
         {{-- Modal de Stock Insuficiente --}}
         <div x-show="modalStock" x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 scale-100"
-            x-transition:leave-end="opacity-0 scale-95"
-            @keydown.escape.window="cerrarModalStock()">
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
             
             <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-slate-100 relative overflow-hidden" @click.away="cerrarModalStock()">
                 <div class="flex items-center gap-4 mb-4">

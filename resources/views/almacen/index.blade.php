@@ -23,6 +23,10 @@
     categoria: 'medicamento', {{-- ASEGÚRATE DE QUE ESTE ATRIBUTO EXISTA --}}
     modalImportar: false, 
     modalMasivo: false,
+    modalEntradaLote: false,
+    modalLotesActivo: false,
+    medicamentoSeleccionadoLotes: '',
+    lotesDelMedicamento: [],
     modalTrazabilidad: false,
     modalBajaVencidos: false,
 modalVademecum: false,
@@ -45,6 +49,11 @@ modalVademecum: false,
         this.vademecumActivo = item;
         this.editando = false; // Siempre abre en modo lectura
         this.modalVademecum = true;
+    },
+    abrirModalLotes(nombreMedicamento, lotes) {
+        this.medicamentoSeleccionadoLotes = nombreMedicamento;
+        this.lotesDelMedicamento = lotes;
+        this.modalLotesActivo = true;
     },
     async buscar() {
         if (this.q.length < 2) { this.resultados = []; return; }
@@ -84,6 +93,10 @@ modalVademecum: false,
                 <button @click="modalTrazabilidad = true" 
                         class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 font-bold rounded-sm hover:bg-blue-100 transition shadow-sm text-xs uppercase tracking-wider">
                     <i class="fas fa-chart-line text-blue-600"></i> Monitoreo
+                </button>
+                <button @click="modalEntradaLote = true" 
+                        class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 text-white font-bold rounded-sm hover:bg-emerald-700 transition shadow-sm text-xs uppercase tracking-wider">
+                    <i class="fas fa-plus-circle"></i> Nuevo Lote / Entrada
                 </button>
                 <button @click="modalImportar = true" 
                         class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm hover:bg-slate-50 transition shadow-sm text-xs uppercase tracking-wider">
@@ -247,39 +260,58 @@ modalVademecum: false,
                                     </span>
                                 </td>
                                 
-                                <td class="px-4 sm:px-6 py-2 text-center">
-                                    @if(isset($item->codigo_lote) && $item->codigo_lote !== null && strlen(trim($item->codigo_lote)) > 0)
-                                        @php
-                                            $loteFormateado = trim($item->codigo_lote);
-                                            $qrGenerado = false;
-                                            $qrHtml = '';
-                                            if (class_exists('SimpleSoftwareIO\QrCode\Facades\QrCode')) {
-                                                try {
-                                                    $qrHtml = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(50)
-                                                        ->margin(1)
-                                                        ->generate(route('almacen.lote', ['codigo_lote' => $loteFormateado]));
-                                                    $qrGenerado = true;
-                                                } catch (\Exception $e) {}
-                                            }
-                                        @endphp
-                                        <div class="inline-flex flex-col items-center justify-center p-1.5 bg-white border border-slate-100 rounded-sm shadow-xs">
-                                            @if($qrGenerado && !empty($qrHtml))
-                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100">
-                                                    {!! $qrHtml !!}
-                                                </div>
-                                            @else
-                                                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100 flex items-center justify-center w-[50px] h-[50px] text-slate-400 text-[8px] uppercase font-bold">
-                                                    <i class="fas fa-qrcode text-xl text-slate-300"></i>
-                                                </div>
-                                            @endif
-                                            <a href="{{ route('almacen.lote', ['codigo_lote' => $loteFormateado]) }}" class="text-[10px] font-mono font-bold text-blue-600 hover:underline mt-1">
-                                                {{ $loteFormateado }}
-                                            </a>
-                                        </div>
-                                    @else
-                                        <span class="text-xs text-slate-400 italic font-semibold">S/L</span>
-                                    @endif
-                                </td>
+<td class="px-4 sm:px-6 py-2 text-center">
+    @if(isset($item->codigo_lote) && $item->codigo_lote !== null && strlen(trim($item->codigo_lote)) > 0)
+        @php
+            $loteFormateado = trim($item->codigo_lote);
+            $qrGenerado = false;
+            $qrHtml = '';
+            if (class_exists('SimpleSoftwareIO\QrCode\Facades\QrCode')) {
+                try {
+                    $qrHtml = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(50)
+                        ->margin(1)
+                        ->generate(route('almacen.lote', ['codigo_lote' => $loteFormateado]));
+                    $qrGenerado = true;
+                } catch (\Exception $e) {}
+            }
+
+            // Consultamos los lotes hermanos de este medicamento para el modal
+            $lotesHermanos = \Illuminate\Support\Facades\DB::table('medicamentos')
+                ->where('nombre_medicamento', $item->medicamento)
+                ->select('id', 'codigo_lote', 'cantidad_stock', 'fecha_vencimiento')
+                ->get()
+                ->toArray();
+            $totalHermanos = count($lotesHermanos);
+        @endphp
+
+        <div class="inline-flex flex-col items-center justify-center p-1.5 bg-white border border-slate-100 rounded-sm shadow-xs">
+            @if($qrGenerado && !empty($qrHtml))
+                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100">
+                    {!! $qrHtml !!}
+                </div>
+            @else
+                <div class="p-1 bg-slate-50 rounded-sm border border-slate-100 flex items-center justify-center w-[50px] h-[50px] text-slate-400 text-[8px] uppercase font-bold">
+                    <i class="fas fa-qrcode text-xl text-slate-300"></i>
+                </div>
+            @endif
+            
+            <a href="{{ route('almacen.lote', ['codigo_lote' => $loteFormateado]) }}" class="text-[10px] font-mono font-bold text-blue-600 hover:underline mt-1">
+                {{ $loteFormateado }}
+            </a>
+
+            {{-- Botón adicional para abrir el modal de lotes sin perder el QR --}}
+            @if($totalHermanos > 0)
+                <button type="button" 
+                        @click="abrirModalLotes('{{ addslashes($item->medicamento) }}', {{ json_encode($lotesHermanos) }})"
+                        class="mt-1.5 px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-sm font-bold text-[9px] uppercase tracking-wider transition shadow-xs flex items-center gap-1">
+                    <i class="fas fa-boxes"></i> Lotes ({{ $totalHermanos }})
+                </button>
+            @endif
+        </div>
+    @else
+        <span class="text-xs text-slate-400 italic font-semibold">S/L</span>
+    @endif
+</td>
 
                                 <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
                                     @if(!empty($item->fecha_vencimiento))
@@ -803,7 +835,7 @@ modalVademecum: false,
                     </button>
                 </div>
             </div>
-
+            
             <div class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 text-xs text-slate-600">
 {{-- Grid de los 4 puntos principales (Ahora totalmente editables) --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-sm border border-slate-100">
@@ -947,8 +979,152 @@ modalVademecum: false,
                 </div>
             </div>
         </form>
+        
     </div>
 </div>
+    {{-- MODAL DE ENTRADA Y REGISTRO POR LOTE INDEPENDIENTE --}}
+<div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
+     x-show="modalEntradaLote" 
+     x-cloak 
+     x-transition>
+     
+    <div class="bg-white rounded-sm max-w-md w-full border border-slate-100 overflow-hidden shadow-2xl" 
+         @click.away="modalEntradaLote = false">
+         
+        <div class="p-4 sm:p-6 border-b border-slate-50 flex justify-between items-center bg-emerald-50/50">
+            <h3 class="text-xs font-bold uppercase tracking-widest text-emerald-800 flex items-center gap-2">
+                <i class="fas fa-box-archive"></i> Registrar Lote y Stock Específico
+            </h3>
+            <button type="button" @click="modalEntradaLote = false" class="text-slate-400 hover:text-slate-600 transition">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
 
+        <form action="{{ route('almacen.entrada-lote') }}" method="POST"
+              x-on:submit="$store.loading.activate('Registrando lote y existencias...')">
+            @csrf
+
+            <div class="p-4 sm:p-6 space-y-4">
+                <div class="bg-emerald-50 p-3 rounded-sm border border-emerald-100">
+                    <p class="text-[11px] text-emerald-800 uppercase font-semibold">
+                        Esta opción creará un lote independiente o sumará unidades si el código de lote ya existe para este medicamento.
+                    </p>
+                </div>
+
+<div>
+    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Seleccionar Medicamento Existente</label>
+    <select name="nombre_medicamento" required
+            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 transition">
+        <option value="" disabled selected>-- Seleccione un medicamento --</option>
+        @foreach($inventarioConsolidado as $med)
+            <option value="{{ $med->nombre_medicamento }}">{{ $med->nombre_medicamento }}</option>
+        @endforeach
+    </select>
+</div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Código de Lote</label>
+                    <input type="text" name="codigo_lote" required placeholder="Ej: LOTE-2026-X"
+                           class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 transition">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">¿Cuántas unidades tiene esta fecha?</label>
+                    <input type="number" name="cantidad_stock" min="1" required placeholder="Ej: 250"
+                           class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 transition">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Fecha de Vencimiento de este Lote</label>
+                    <input type="date" name="fecha_vencimiento" required
+                           class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 transition">
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex gap-3">
+                <button type="button" @click="modalEntradaLote = false"
+                    class="flex-1 bg-white border border-slate-200 text-slate-600 font-bold py-3 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-sm hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition text-xs uppercase tracking-wider">
+                    Guardar Lote
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{-- MODAL DE DESGLOSE DE LOTES POR MEDICAMENTO --}}
+<div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
+     x-show="modalLotesActivo" 
+     x-cloak 
+     x-transition>
+     
+    <div class="bg-white rounded-sm max-w-2xl w-full border border-slate-100 overflow-hidden shadow-2xl max-h-[90vh] flex flex-col" 
+         @click.away="modalLotesActivo = false">
+         
+        <div class="p-4 sm:p-6 border-b border-slate-50 flex justify-between items-center bg-indigo-50/50 shrink-0">
+            <div>
+                <span class="text-[9px] font-extrabold uppercase tracking-widest text-indigo-600 block">Desglose de Existencias</span>
+                <h3 class="text-base font-extrabold text-slate-900 uppercase tracking-tight" x-text="medicamentoSeleccionadoLotes"></h3>
+            </div>
+            <button type="button" @click="modalLotesActivo = false" class="text-slate-400 hover:text-slate-600 transition">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
+            {{-- TARJETA DE RESUMEN: Suma total en almacén --}}
+            <div class="p-3.5 bg-blue-50 border border-blue-100 rounded-sm flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">Suma total en almacén:</span>
+                    <span class="text-xs text-blue-900 font-semibold" x-text="medicamentoSeleccionadoLotes"></span>
+                </div>
+                <span class="text-lg font-black font-mono text-blue-700 bg-white px-3 py-1 rounded-sm border border-blue-200 shadow-xs">
+                    <span x-text="lotesDelMedicamento.reduce((total, lote) => total + parseInt(lote.cantidad_stock || 0), 0)"></span> unds
+                </span>
+            </div>
+
+            <p class="text-xs text-slate-500">
+                A continuación se muestran todos los lotes independientes registrados para este medicamento, ordenados por trazabilidad y fecha de vencimiento:
+            </p>
+
+            <div class="border border-slate-100 rounded-sm overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase">Código de Lote</th>
+                            <th class="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase text-center">Vencimiento</th>
+                            <th class="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase text-center">Stock Disponible</th>
+                            <th class="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase text-right">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50 text-xs font-medium text-slate-600">
+                        <template x-for="lote in lotesDelMedicamento" :key="lote.id">
+                            <tr class="hover:bg-slate-50/50">
+                                <td class="px-4 py-3 font-mono font-bold text-blue-600" x-text="lote.codigo_lote"></td>
+                                <td class="px-4 py-3 text-center font-mono" x-text="lote.fecha_vencimiento ? lote.fecha_vencimiento : 'Sin fecha'"></td>
+                                <td class="px-4 py-3 text-center font-mono font-bold text-slate-800" x-text="lote.cantidad_stock + ' unds'"></td>
+                                <td class="px-4 py-3 text-right">
+                                    <a :href="'/almacen/lote/' + lote.codigo_lote" 
+                                       class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-sm font-bold text-[10px] uppercase transition">
+                                        <i class="fas fa-qrcode mr-1"></i> Ver Lote
+                                    </a>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-100 text-right shrink-0">
+            <button type="button" @click="modalLotesActivo = false"
+                    class="bg-white border border-slate-200 text-slate-600 font-bold px-5 py-2 rounded-sm hover:bg-slate-100 transition text-xs uppercase tracking-wider">
+                    Cerrar
+            </button>
+        </div>
+    </div>
+</div>
     </div>
 @endsection
