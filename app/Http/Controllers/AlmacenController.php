@@ -86,6 +86,15 @@ public function index(Request $request)
             ->paginate(50)
             ->appends($request->query());
 
+        $inventarioConsolidado = DB::table('medicamentos')
+        ->select(
+            'nombre_medicamento',
+            DB::raw('SUM(cantidad_stock) as stock_total')
+        )
+        ->groupBy('nombre_medicamento')
+        ->orderBy('nombre_medicamento', 'asc') // <-- Orden alfábetico A-Z
+        ->get();
+
         // Query 2: Insumos Médicos (Con filtro de texto opcional)
         $queryInsumos = DB::table('insumos_medicos');
 
@@ -115,7 +124,8 @@ public function index(Request $request)
             'consumoPorFecha', 
             'almacenadoHoy', 
             'fechaInicio', 
-            'fechaFin'
+            'fechaFin',
+            'inventarioConsolidado'
         ));
     }
 
@@ -1116,4 +1126,129 @@ public function actualizarVademecum(Request $request)
             return back()->with('error', 'Error al actualizar la ficha: ' . $e->getMessage());
         }
     }
+
+public function guardarEntradaLote(Request $request)
+{
+    $request->validate([
+        'nombre_medicamento' => 'required|string',
+        'codigo_lote'        => 'required|string',
+        'cantidad_stock'     => 'required|integer|min:1',
+        'fecha_vencimiento'  => 'required|date',
+    ]);
+
+    $nombreMed = strtoupper(trim($request->nombre_medicamento));
+    $codigoLote = strtoupper(trim($request->codigo_lote));
+
+    // 1. Buscamos si ya existe el medicamento exacto con ESTE mismo lote
+    $loteExistente = DB::table('medicamentos')
+        ->where('nombre_medicamento', $nombreMed)
+        ->where('codigo_lote', $codigoLote)
+        ->first();
+
+    if ($loteExistente) {
+        // Si el lote ya existe, sumamos al stock de ese lote específico
+        DB::table('medicamentos')
+            ->where('id', $loteExistente->id)
+            ->increment('cantidad_stock', $request->cantidad_stock);
+    } else {
+        // 2. Buscamos cualquier registro previo para heredar sus propiedades de forma segura
+        $medicamentoBase = DB::table('medicamentos')
+            ->where('nombre_medicamento', $nombreMed)
+            ->first();
+
+        $tipoInsumo = $medicamentoBase?->tipo_insumo ?? 'Por Determinar';
+        $presentacion = $medicamentoBase?->presentacion ?? null;
+        $stockMinimo = $medicamentoBase?->stock_minimo ?? 0;
+
+        // 3. Insertamos el nuevo lote incluyendo todos los campos requeridos por la tabla 
+        // para evitar cualquier conflicto de restricciones (Null/Default)
+        DB::table('medicamentos')->insert([
+            'nombre'                => $nombreMed, // Satisface la columna obligatoria 'nombre'
+            'nombre_medicamento'    => $nombreMed,
+            'codigo_lote'           => $codigoLote,
+            'cantidad_stock'        => (int)$request->cantidad_stock,
+            'fecha_vencimiento'     => $request->fecha_vencimiento,
+            'status_disponibilidad' => 'Disponible', // Satisface la columna 'status_disponibilidad'
+            'tipo_insumo'           => $tipoInsumo,
+            'presentacion'          => $presentacion,
+            'stock_minimo'          => $stockMinimo,
+            'created_at'            => now(),
+            'updated_at'            => now(),
+        ]);
+    }
+
+    Auditoria::create([
+        'modulo'      => 'Almacén',
+        'accion'      => 'Ingreso por Lote',
+        'descripcion' => "Se ingresaron {$request->cantidad_stock} unidades de '{$nombreMed}' al lote {$codigoLote}.",
+    ]);
+
+    return back()->with('success', '¡Lote y stock registrado correctamente de forma independiente!');
+}
+
+public function guardarRetiroInteligente(Request $request)
+{
+    $request->validate([
+        'nombre_medicamento' => 'required|string',
+        'area_id'            => 'required',
+        'cantidad_solicitada'=> 'required|integer|min:1',
+    ]);
+
+    $nombreMed = $request->nombre_medicamento;
+    $cantidadSolicitada = (int)$request->cantidad_solicitada;
+
+    // 1. Obtener todos los lotes de este medicamento que NO estén vencidos, ordenados por fecha más próxima (FEFO)
+    $lotesVigentes = DB::table('medicamentos')
+        ->where('nombre_medicamento', $nombreMed)
+        ->where('cantidad_stock', '>', 0)
+        ->where(function($q) {
+            $q->whereNull('fecha_vencimiento')
+              ->orWhere('fecha_vencimiento', '>=', now()->toDateString());
+        })
+        ->orderBy('fecha_vencimiento', 'asc')
+        ->get();
+
+    // Calcular el total disponible real en lotes vigentes
+    $totalVigente = $lotesVigentes->sum('cantidad_stock');
+
+    if ($totalVigente < $cantidadSolicitada) {
+        return back()->with('error', "STOCK INSUFICIENTE VIGENTE: Se solicitaron {$cantidadSolicitada} unidades, pero solo hay {$totalVigente} unidades en lotes no caducados. Los lotes vencidos están bloqueados por seguridad.");
+    }
+
+    // 2. Descontar de manera distribuida o por lotes vigentes en una transacción
+    DB::transaction(function () use ($lotesVigentes, $cantidadSolicitada, $request) {
+        $restantePorDescontar = $cantidadSolicitada;
+
+        foreach ($lotesVigentes as $lote) {
+            if ($restantePorDescontar <= 0) break;
+
+            $aDescontarDelLote = min($lote->cantidad_stock, $restantePorDescontar);
+
+            // Descontar stock del lote específico
+            DB::table('medicamentos')
+                ->where('id', $lote->id)
+                ->decrement('cantidad_stock', $aDescontarDelLote);
+
+            // Registrar el retiro asociado a este lote/medicamento
+            DB::table('retiros')->insert([
+                'medicamento_id' => $lote->id,
+                'area_id'        => $request->area_id,
+                'cantidad'       => $aDescontarDelLote,
+                'estado'         => 'aprobado', // O pendiente según tu flujo de admin
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
+
+            $restantePorDescontar -= $aDescontarDelLote;
+        }
+
+        Auditoria::create([
+            'modulo'      => 'Almacén',
+            'accion'      => 'Retiro Inteligente por Lotes',
+            'descripcion' => "Se procesó el retiro de {$cantidadSolicitada} unidades de '{$request->nombre_medicamento}' omitiendo lotes caducados.",
+        ]);
+    });
+
+    return back()->with('success', '¡Retiro procesado con éxito utilizando exclusivamente lotes vigentes!');
+}
 }
