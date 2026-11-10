@@ -45,6 +45,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
+
 COPY . /var/www/html
 
 RUN chmod +x /var/www/html/entrypoint.sh
