@@ -247,13 +247,13 @@
                             <span class="text-xs text-slate-400">{{ \Carbon\Carbon::parse($solicitud->created_at)->format('H:i') }}</span>
                         </div>
                         <p class="text-sm font-bold text-slate-800 mb-1">
-                            El usuario solicita retirar <span class="text-blue-600">{{ $solicitud->cantidad }} unids</span> de <span class="text-slate-900 underline">{{ $solicitud->nombre }}</span>:
+                            El usuario solicita retirar <span class="text-blue-600">{{ $solicitud->cantidad }} existencias</span> de <span class="text-slate-900 underline">{{ $solicitud->nombre }}</span>:
                         </p>
                         <p class="text-xs text-slate-600 mb-2">
                             <i class="fas fa-hospital text-slate-400 mr-1"></i> Área solicitante: <strong>{{ $solicitud->nombre_area }}</strong>
                         </p>
                         <p class="text-xs text-slate-500 mb-4">
-                            <i class="fas fa-warehouse text-slate-400 mr-1"></i> Stock en almacén: <strong class="text-slate-700">{{ $solicitud->stock_disponible }} unids</strong>
+                            <i class="fas fa-warehouse text-slate-400 mr-1"></i> Stock en almacén: <strong class="text-slate-700">{{ $solicitud->stock_disponible }} existencias</strong>
                         </p>
                     </div>
 
