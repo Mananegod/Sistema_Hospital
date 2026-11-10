@@ -710,7 +710,7 @@ modalVademecum: false,
                             </div>
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Almacenado / Entrada Hoy</p>
-                                <p class="text-xs text-emerald-600 font-semibold">Unidades agregadas el día de hoy</p>
+                                <p class="text-xs text-emerald-600 font-semibold">Existencias agregadas el día de hoy</p>
                             </div>
                         </div>
                         <span class="text-xl sm:text-2xl font-black font-mono text-emerald-700 self-end sm:self-auto">
@@ -1007,7 +1007,7 @@ modalVademecum: false,
             <div class="p-4 sm:p-6 space-y-4">
                 <div class="bg-emerald-50 p-3 rounded-sm border border-emerald-100">
                     <p class="text-[11px] text-emerald-800 uppercase font-semibold">
-                        Esta opción creará un lote independiente o sumará unidades si el código de lote ya existe para este medicamento.
+                        Esta opción creará un lote independiente o sumará existencias si el código de lote ya existe para este medicamento.
                     </p>
                 </div>
 
@@ -1029,7 +1029,7 @@ modalVademecum: false,
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">¿Cuántas unidades tiene esta fecha?</label>
+                    <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">¿Cuántas existencias tiene esta fecha?</label>
                     <input type="number" name="cantidad_stock" min="1" required placeholder="Ej: 250"
                            class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 transition">
                 </div>
