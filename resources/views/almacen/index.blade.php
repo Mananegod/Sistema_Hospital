@@ -506,7 +506,7 @@ modalVademecum: false,
             @endif
         </div>
         
-        {{-- MODAL DE EDICIÓN MASIVA --}}
+{{-- MODAL DE EDICIÓN MASIVA --}}
         <div class="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-50 p-4" 
              x-show="modalMasivo" 
              x-cloak 
@@ -517,7 +517,7 @@ modalVademecum: false,
                  
                 <div class="p-4 sm:p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <h3 class="text-xs font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                        <i class="fas fa-edit text-blue-600"></i> Edición Masiva
+                        <i class="fas fa-edit text-blue-600"></i> Edición Masiva / Aumento de Stock
                     </h3>
                     <button type="button" @click="modalMasivo = false" class="text-slate-400 hover:text-slate-600 transition">
                         <i class="fas fa-times"></i>
@@ -533,23 +533,24 @@ modalVademecum: false,
                     <div class="p-4 sm:p-6 space-y-4">
                         <div class="bg-slate-50 p-3 rounded-sm border border-slate-100">
                             <p class="text-[11px] text-slate-500 uppercase font-semibold">
-                                Afectará a <span class="text-blue-600 font-bold" x-text="seleccionados.length"></span> elementos en <span class="font-bold text-slate-700" x-text="categoria === 'insumo' ? 'Insumos Médicos' : 'Medicamentos'"></span>.
+                                Se aumentará el stock a <span class="text-blue-600 font-bold" x-text="seleccionados.length"></span> elementos en <span class="font-bold text-slate-700" x-text="categoria === 'insumo' ? 'Insumos Médicos' : 'Medicamentos'"></span>.
                             </p>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Nuevo Código de Lote</label>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Código de Lote</label>
                             <input type="text" name="codigo_lote" placeholder="Ej: LOTE-2026"
                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Nuevo Stock Disponible</label>
-                            <input type="number" name="cantidad_stock" min="0" placeholder="Ej: 150"
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Cantidad a Sumar al Stock Actual</label>
+                            <input type="number" name="cantidad_stock" min="0" placeholder="Ej: 50"
                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
+                            <span class="text-[9px] text-slate-400 mt-1 block">El número colocado se sumará al stock que ya posee cada medicamento seleccionado.</span>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Fecha de Vencimiento</label>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-2 uppercase tracking-widest">Fecha de Vencimiento (Opcional)</label>
                             <input type="date" name="fecha_vencimiento" 
                                    class="w-full bg-slate-50 border-0 rounded-sm px-4 py-3 outline-none text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 transition">
                             <span class="text-[10px] text-slate-500 mt-1 block">Déjalo vacío si no deseas modificarla.</span>
@@ -563,7 +564,7 @@ modalVademecum: false,
                         </button>
                         <button type="submit"
                             class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-sm hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition text-xs uppercase tracking-wider">
-                            Guardar
+                            Aplicar Suma
                         </button>
                     </div>
                 </form>
