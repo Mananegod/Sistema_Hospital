@@ -694,7 +694,7 @@ public function editarYAprobarRetiro(Request $request, $id)
         return view('almacen.ver_lote', compact('medicamentos', 'insumos', 'codigo_lote'));
     }
 
-    public function editarMasivo(Request $request)
+public function editarMasivo(Request $request)
     {
         $request->validate(['ids' => 'required']);
         $ids = json_decode($request->ids, true);
@@ -715,8 +715,9 @@ public function editarYAprobarRetiro(Request $request, $id)
             }
         }
 
+        // CAMBIO AQUÍ: Usamos DB::raw para sumar en lugar de reemplazar
         if ($request->filled('cantidad_stock')) {
-            $updateData['cantidad_stock'] = (int)$request->cantidad_stock;
+            $updateData['cantidad_stock'] = DB::raw('cantidad_stock + ' . (int)$request->cantidad_stock);
         }
 
         if ($request->filled('fecha_vencimiento')) {

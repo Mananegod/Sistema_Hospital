@@ -13,18 +13,20 @@
         get pacientesFiltrados() {
             let resultado = this.pacientes;
 
-            // 1. Filtrar por texto (nombre, cédula, pasaporte o tutor)
+            // 1. Filtrar por texto (nombre, cédula, pasaporte, tutor o sector)
             if (this.search && this.search.trim() !== "") {
                 const query = this.search.toLowerCase().trim();
                 resultado = resultado.filter(p => {
                     const nombre = (p.nombre || p.nombre_apellido || "").toLowerCase();
                     const cedula = (p.cedula || "").toLowerCase();
                     const cedulaTutor = (p.cedula_tutor || "").toLowerCase();
+                    const sector = (p.sector || "").toLowerCase();
                     const etiqueta = this.etiquetaDocumento(p.tipo_documento, p.cedula, p.cedula_tutor).toLowerCase();
                     
                     return nombre.includes(query) || 
                            cedula.includes(query) || 
                            cedulaTutor.includes(query) || 
+                           sector.includes(query) ||
                            etiqueta.includes(query);
                 });
             }
@@ -72,6 +74,7 @@
             edad: "",
             genero: "",
             area_id: "",
+            sector_id: "",
             diagnostico: "",
             tratamiento: "",
             fecha_ingreso: "{{ date("Y-m-d") }}"
@@ -87,6 +90,7 @@
             edad: "",
             genero: "",
             area_id: "",
+            sector_id: "",
             diagnostico: "",
             tratamiento: "",
             fecha_ingreso: ""
@@ -207,8 +211,8 @@
         async registrarPaciente() {
             this.formCreate.edad = this.calcularEdad(this.formCreate.fecha_nacimiento);
 
-            if (!this.formCreate.nombre_apellido || !this.formCreate.fecha_nacimiento || !this.formCreate.genero || !this.formCreate.area_id || !this.formCreate.diagnostico) {
-                this.mostrarAlerta("Por favor complete todos los campos obligatorios.");
+            if (!this.formCreate.nombre_apellido || !this.formCreate.fecha_nacimiento || !this.formCreate.genero || !this.formCreate.area_id || !this.formCreate.sector_id || !this.formCreate.diagnostico) {
+                this.mostrarAlerta("Por favor complete todos los campos obligatorios, incluyendo el servicio y el sector.");
                 return;
             }
 
@@ -308,6 +312,7 @@
             this.editForm.edad = paciente.edad;
             this.editForm.genero = paciente.genero;
             this.editForm.area_id = paciente.area_id;
+            this.editForm.sector_id = paciente.sector_id;
             this.editForm.diagnostico = paciente.diagnostico;
             this.editForm.tratamiento = paciente.tratamiento;
             this.editForm.fecha_ingreso = paciente.fecha_ingreso;
@@ -317,8 +322,8 @@
         actualizarPaciente() {
             this.editForm.edad = this.calcularEdad(this.editForm.fecha_nacimiento);
 
-            if (!this.editForm.genero || !this.editForm.fecha_nacimiento) {
-                this.mostrarAlerta("Debe completar el género y la fecha de nacimiento.");
+            if (!this.editForm.genero || !this.editForm.fecha_nacimiento || !this.editForm.area_id || !this.editForm.sector_id) {
+                this.mostrarAlerta("Debe completar el género, la fecha de nacimiento, el servicio y el sector.");
                 return;
             }
 
@@ -505,7 +510,17 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="md:col-span-2">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Sector de Chivacoa</label>
+                        <select x-model="formCreate.sector_id"
+                            class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                            <option value="" disabled selected>Seleccione el sector...</option>
+                            @foreach($sectores as $sector)
+                                <option value="{{ $sector->id }}">{{ $sector->nombre_sector }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
                         <label class="text-[10px] font-bold text-slate-400 px-1 uppercase tracking-widest">Diagnóstico Inicial (Dx)</label>
                         <input type="text" x-model="formCreate.diagnostico" placeholder="Indique el diagnóstico clínico..."
                             class="w-full bg-slate-50 p-4 rounded-sm border-none text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
@@ -565,7 +580,7 @@
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                             <i class="fas fa-search text-xs"></i>
                         </span>
-                        <input type="text" x-model="search" placeholder="Buscar por nombre, cédula o tutor..."
+                        <input type="text" x-model="search" placeholder="Buscar por nombre, cédula, tutor o sector..."
                             class="w-full bg-white pl-10 pr-8 py-2.5 rounded-sm border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition shadow-sm">
                         <button type="button" x-show="search.length > 0" @click="search = ''" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
                             <i class="fas fa-times text-xs"></i>
@@ -605,6 +620,7 @@
                             <th class="p-6">Paciente</th>
                             <th class="p-6 text-center">Edad / Género</th>
                             <th class="p-6">Servicio / Área</th>
+                            <th class="p-6">Sector</th>
                             <th class="p-6 text-center">Ingreso</th>
                             <th class="p-6 text-right">Acciones</th>
                         </tr>
@@ -618,6 +634,7 @@
                                 <td class="p-6">
                                     <span class="bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-sm font-bold uppercase tracking-wider" x-text="p.servicio"></span>
                                 </td>
+                                <td class="p-6 text-xs font-semibold text-slate-700" x-text="p.sector || 'No especificado'"></td>
                                 <td class="p-6 text-center text-xs text-slate-400 font-semibold" x-text="p.fecha_formateada"></td>
                                 <td class="p-6 text-right">
                                     <div class="flex items-center justify-end gap-2">
@@ -647,7 +664,7 @@
 
                         <template x-if="pacientesFiltrados.length === 0">
                             <tr>
-                                <td colspan="6" class="p-12 text-center text-slate-400 italic font-medium">
+                                <td colspan="7" class="p-12 text-center text-slate-400 italic font-medium">
                                     No se encontraron registros de pacientes que coincidan con los filtros de búsqueda o el rango de fechas seleccionado.
                                 </td>
                             </tr>
@@ -735,9 +752,15 @@
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">Nombre y Apellido</span>
                         <p class="font-bold text-slate-900 text-base mt-1" x-text="pacienteSeleccionado.nombre"></p>
                     </div>
-                    <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Servicio Solicitado</span>
-                        <p class="font-bold text-blue-600 text-sm mt-1 uppercase" x-text="pacienteSeleccionado.servicio"></p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Servicio Solicitado</span>
+                            <p class="font-bold text-blue-600 text-sm mt-1 uppercase" x-text="pacienteSeleccionado.servicio"></p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Sector de Procedencia</span>
+                            <p class="font-bold text-slate-800 text-sm mt-1 uppercase" x-text="pacienteSeleccionado.sector || 'No especificado'"></p>
+                        </div>
                     </div>
                     <div class="border-t border-slate-100 pt-4">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">Diagnóstico Inicial (Dx)</span>
@@ -806,14 +829,26 @@
                             oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')"
                             class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
                     </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Servicio / Área</label>
-                        <select x-model="editForm.area_id"
-                            class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
-                            @foreach($areas as $area)
-                                <option value="{{ $area->id }}">{{ $area->nombre_area }}</option>
-                            @endforeach
-                        </select>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Servicio / Área</label>
+                            <select x-model="editForm.area_id"
+                                class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                                @foreach($areas as $area)
+                                    <option value="{{ $area->id }}">{{ $area->nombre_area }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sector de Chivacoa</label>
+                            <select x-model="editForm.sector_id"
+                                class="w-full bg-slate-50 p-3 sm:p-4 rounded-sm border-none text-xs sm:text-sm font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 mt-2">
+                                <option value="" disabled>Seleccione el sector...</option>
+                                @foreach($sectores as $sector)
+                                    <option value="{{ $sector->id }}">{{ $sector->nombre_sector }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Diagnóstico</label>

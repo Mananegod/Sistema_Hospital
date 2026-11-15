@@ -105,6 +105,7 @@
                 <div>
                     <p class="uppercase"><span class="font-bold">CONTRALOR DE EXISTENCIA:</span> ALMACÉN CENTRAL</p>
                     <p class="uppercase mt-1"><span class="font-bold">SERVICIO DESTINATARIO:</span> <span class="underline font-bold text-sm">{{ $paciente->servicio }}</span></p>
+                    <p class="uppercase mt-1"><span class="font-bold">SECTOR (CHIVACOA):</span> <span class="font-bold">{{ $paciente->nombre_sector ?? 'No especificado' }}</span></p>
                 </div>
                 <div class="text-right">
                     <p class="uppercase"><span class="font-bold">FECHA DE INGRESO:</span> {{ \Carbon\Carbon::parse($paciente->fecha_ingreso)->format('d/m/Y') }}</p>
@@ -137,29 +138,30 @@
                     </div>
                 </div>
                 
-<div class="grid grid-cols-12 gap-4">
-    <div class="col-span-4 uppercase">
-        <span class="font-bold">EDAD:</span>
-        <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900 whitespace-nowrap">
-            @php
-                $nacimiento = \Carbon\Carbon::parse($paciente->fecha_nacimiento);
-                $hoy = \Carbon\Carbon::now();
-                $anos = (int) $nacimiento->diffInYears($hoy);
-                $mesesTotales = (int) $nacimiento->diffInMonths($hoy);
-            @endphp
+                <div class="grid grid-cols-12 gap-4">
+                    <div class="col-span-4 uppercase">
+                        <span class="font-bold">EDAD:</span>
+                        <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900 whitespace-nowrap">
+                            @php
+                                $nacimiento = \Carbon\Carbon::parse($paciente->fecha_nacimiento);
+                                $hoy = \Carbon\Carbon::now();
+                                $anos = (int) $nacimiento->diffInYears($hoy);
+                                $mesesTotales = (int) $nacimiento->diffInMonths($hoy);
+                            @endphp
 
-            @if($anos >= 1)
-                {{ $anos }} {{ $anos == 1 ? 'AÑO' : 'AÑOS' }}
-            @else
-                {{ $mesesTotales > 0 ? $mesesTotales : 1 }} {{ ($mesesTotales == 1) ? 'MES' : 'MESES' }}
-            @endif
-        </p>
-    </div>
-    <div class="col-span-8 uppercase">
-        <span class="font-bold">DIAGNÓSTICO INICIAL (Dx):</span>
-        <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900">{{ $paciente->diagnostico }}</p>
-    </div>
-</div>
+                            @if($anos >= 1)
+                                {{ $anos }} {{ $anos == 1 ? 'AÑO' : 'AÑOS' }}
+                            @else
+                                {{ $mesesTotales > 0 ? $mesesTotales : 1 }} {{ ($mesesTotales == 1) ? 'MES' : 'MESES' }}
+                            @endif
+                        </p>
+                    </div>
+                    <div class="col-span-8 uppercase">
+                        <span class="font-bold">DIAGNÓSTICO INICIAL (Dx):</span>
+                        <p class="text-sm font-bold border-b border-dashed border-black pt-0.5 text-slate-900">{{ $paciente->diagnostico }}</p>
+                    </div>
+                </div>
+            </div>
 
             {{-- Sección del Tratamiento o Pedido del Almacén (Compactado) --}}
             <div class="py-4 space-y-3">

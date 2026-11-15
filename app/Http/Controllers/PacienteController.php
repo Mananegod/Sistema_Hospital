@@ -40,10 +40,17 @@ class PacienteController extends Controller
     public function index()
     {
         $areas = DB::table('areas')->orderBy('nombre_area')->get();
+        $sectores = DB::table('sectores')->orderBy('nombre_sector')->get(); //[cite: 3, 6]
 
         $pacientes = DB::table('pacientes_internados')
             ->leftJoin('areas', 'pacientes_internados.area_id', '=', 'areas.id')
-            ->select('pacientes_internados.*', 'areas.nombre_area as servicio', 'pacientes_internados.nombre_apellido as nombre')
+            ->leftJoin('sectores', 'pacientes_internados.sector_id', '=', 'sectores.id')
+            ->select(
+                'pacientes_internados.*', 
+                'areas.nombre_area as servicio', 
+                'sectores.nombre_sector as sector', 
+                'pacientes_internados.nombre_apellido as nombre'
+            )
             ->orderByDesc('pacientes_internados.created_at')
             ->get()
             ->map(function ($paciente_item) {
@@ -66,7 +73,7 @@ class PacienteController extends Controller
                 return $paciente_item;
             });
 
-        return view('pacientes', compact('areas', 'pacientes'));
+        return view('pacientes', compact('areas', 'sectores', 'pacientes'));
     }
 
     public function verificarDocumento(Request $request)
@@ -82,6 +89,7 @@ class PacienteController extends Controller
 
         $base = DB::table('pacientes_internados')
             ->leftJoin('areas', 'pacientes_internados.area_id', '=', 'areas.id')
+            ->leftJoin('sectores', 'pacientes_internados.sector_id', '=', 'sectores.id')
             ->select(
                 'pacientes_internados.id',
                 'pacientes_internados.tipo_documento',
@@ -92,10 +100,12 @@ class PacienteController extends Controller
                 'pacientes_internados.fecha_nacimiento',
                 'pacientes_internados.genero',
                 'pacientes_internados.area_id',
+                'pacientes_internados.sector_id',
                 'pacientes_internados.diagnostico',
                 'pacientes_internados.tratamiento',
                 'pacientes_internados.fecha_ingreso',
-                'areas.nombre_area as servicio'
+                'areas.nombre_area as servicio',
+                'sectores.nombre_sector as sector'
             );
 
         if ($tipo === 'SC') {
@@ -196,6 +206,7 @@ class PacienteController extends Controller
             'fecha_nacimiento' => ['required', 'date', 'before_or_equal:today'],
             'genero' => ['required', Rule::in(['Masculino', 'Femenino', 'Otro'])],
             'area_id' => ['required', 'exists:areas,id'],
+            'sector_id' => ['required', 'exists:sectores,id'], // Validación del sector agregado
             'diagnostico' => ['required', 'string', 'max:500'],
             'tratamiento' => ['nullable', 'string'],
             'fecha_ingreso' => ['required', 'date', 'before_or_equal:2036-12-31'],
@@ -205,6 +216,7 @@ class PacienteController extends Controller
             'nombre_apellido.regex' => 'El nombre solo debe contener letras, espacios, apóstrofes, puntos o guiones.',
             'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser una fecha futura.',
             'area_id.exists' => 'El servicio o área seleccionada no es válido.',
+            'sector_id.exists' => 'El sector de Chivacoa seleccionado no es válido.',
             'fecha_ingreso.before_or_equal' => 'La fecha de ingreso no puede ser posterior al 31/12/2036.',
         ]);
 
@@ -239,6 +251,7 @@ class PacienteController extends Controller
             'fecha_nacimiento' => $request->fecha_nacimiento,
             'genero' => $request->genero,
             'area_id' => $request->area_id,
+            'sector_id' => $request->sector_id, // Se almacena el sector
             'diagnostico' => $request->diagnostico,
             'tratamiento' => $request->tratamiento,
             'fecha_ingreso' => $request->fecha_ingreso,
@@ -318,6 +331,7 @@ class PacienteController extends Controller
             'fecha_nacimiento' => ['required', 'date', 'before_or_equal:today'],
             'genero' => ['required', Rule::in(['Masculino', 'Femenino', 'Otro'])],
             'area_id' => ['required', 'exists:areas,id'],
+            'sector_id' => ['required', 'exists:sectores,id'], // Validación del sector en actualización
             'diagnostico' => ['required', 'string', 'max:500'],
             'tratamiento' => ['nullable', 'string'],
             'fecha_ingreso' => ['required', 'date', 'before_or_equal:2036-12-31'],
@@ -325,6 +339,7 @@ class PacienteController extends Controller
             'cedula.unique' => 'Ya existe otro paciente con este tipo y número de documento.',
             'nombre_apellido.regex' => 'El nombre solo debe contener letras, espacios, apóstrofes, puntos o guiones.',
             'fecha_nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser una fecha futura.',
+            'sector_id.exists' => 'El sector de Chivacoa seleccionado no es válido.',
         ]);
 
         $edadCalculada = Carbon::parse($request->fecha_nacimiento)->age;
@@ -349,6 +364,7 @@ class PacienteController extends Controller
                 'fecha_nacimiento' => $request->fecha_nacimiento,
                 'genero' => $request->genero,
                 'area_id' => $request->area_id,
+                'sector_id' => $request->sector_id, // Actualización del sector
                 'diagnostico' => $request->diagnostico,
                 'tratamiento' => $request->tratamiento,
                 'fecha_ingreso' => $request->fecha_ingreso,
@@ -401,13 +417,15 @@ class PacienteController extends Controller
         }
     }
 
-public function generarPdf($id)
+    public function generarPdf($id)
     {
         $paciente = DB::table('pacientes_internados')
             ->leftJoin('areas', 'pacientes_internados.area_id', '=', 'areas.id')
+            ->leftJoin('sectores', 'pacientes_internados.sector_id', '=', 'sectores.id')
             ->select(
                 'pacientes_internados.*', 
-                'areas.nombre_area as servicio'
+                'areas.nombre_area as servicio',
+                'sectores.nombre_sector as nombre_sector'
             )
             ->where('pacientes_internados.id', $id)
             ->first();
@@ -422,7 +440,6 @@ public function generarPdf($id)
             'descripcion' => "Se generó el formato de impresión PDF del paciente: {$paciente->nombre_apellido}",
         ]);
 
-        // Calculamos la edad exacta (meses, días o años) usando tu función existente
         $edadFormateadaPdf = $this->calcularEdadTexto($paciente->fecha_nacimiento);
 
         return view('pacientes.reporte-f15', compact('paciente', 'edadFormateadaPdf'));
